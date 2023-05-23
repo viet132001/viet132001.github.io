@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Thêm điểm</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.js"></script>
+    <link href="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            background: #ddd;
+        }
+
+        .mapboxgl-marker {
+            border-radius: 50%;
+        }
+
+        #info {
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 4px;
+            background: rgba(0, 0, 0, 0.5);
+            font-family: 'Open Sans', sans-serif;
+            font-size: 12px;
+            width: 200px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+
+    </script>
+</head>
+
+<body>
+
+    <div id="map">
+
+    </div>
+    <div id="info">
+        <table>
+            <tr>
+                <td><img src="https://media.newweb.vn/file/fPUBghG4N/w200-h200" alt="" width="30" height="30">
+                </td>
+                <td style="color: #21e341;font-weight: bold;">Icon vị trí của sale</td>
+            </tr>
+
+        </table>
+    </div>
+    <script>
+        var dataSale = [];
+        var lat = 10.760948// url.searchParams.get('lat');10.760948, 106.705611
+        var long = 106.705611//url.searchParams.get('long');
+        var basemap = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
+        var map = new maplibregl.Map({
+            container: 'map',
+            center: [long, lat],
+            zoom: 6
+        });
+        basemap.addTo(map);
+        map.on('load', () => {
+
+
+        });
+        $(document).ready(function () {
+            function btnGetData() {
+                var infoContainer = document.getElementById('info');
+                infoContainer.innerHTML = '';
+                var table = document.createElement('table');
+
+                dataSale.forEach(function (element) {
+                    var row = document.createElement('tr');
+
+                    // Tạo cột màu
+                    var colorCell = document.createElement('td');
+                    colorCell.style.backgroundColor = element.color;
+                    row.appendChild(colorCell);
+
+                    // Tạo cột biểu tượng
+                    var iconCell = document.createElement('td');
+                    var iconImg = document.createElement('img');
+                    iconImg.src = element.avatar;
+                    iconImg.width = 30;
+                    iconImg.height = 30;
+                    iconCell.appendChild(iconImg);
+                    row.appendChild(iconCell);
+
+                    // Tạo cột tên
+                    var nameCell = document.createElement('td');
+                    
+                    if(element.is_online == 1){
+                        nameCell.textContent = element.name;
+                        nameCell.style.color = '#00FF00';
+                    }else{
+                        nameCell.textContent = element.name + ' Online ' +element.time_diff;
+                    }
+                  
+                    row.appendChild(nameCell);
+
+                    // Tạo cột vị trí
+                    var locationCell = document.createElement('td');
+                    locationCell.textContent = element.location;
+                    row.appendChild(locationCell);
+
+                    table.appendChild(row);
+                });
+
+                infoContainer.appendChild(table);
+                console.log(`error2${lat}`);
+                $.ajax({
+                    url: 'https://api-daithuan.newweb.vn/v1/report-hierarchical-trees?parent_code=tranconglaptest',
+                    type: 'GET',
+                    dataType: 'json',
+                    headers: {
+                        'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS1kYWl0aHVhbi5uZXd3ZWIudm4vY2xpZW50L2F1dGgvbG9naW4iLCJpYXQiOjE2ODQ3MzgzNDAsImV4cCI6MTcxNjI3NDM0MCwibmJmIjoxNjg0NzM4MzQwLCJqdGkiOiIxQ0o1TXVDQXVoOXRZeGlhIiwic3ViIjoyMjQ5NDksInBydiI6Ijg3ZTBhZjFlZjlmZDE1ODEyZmRlYzk3MTUzYTE0ZTBiMDQ3NTQ2YWEifQ.ZXxaROwQigKNVYH9ZXB_nxPZddfZgIbQnY3HDN5sHFc', // Thay thế your-token bằng token xác thực của bạn
+                        'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
+                    },
+                    success: function (data) {
+                        console.log(data);
+                        data.data.forEach(newElement => {
+                            let isExisting = false;
+
+                            // Kiểm tra xem newElement có tồn tại trong mảng dataSale hay không
+                            for (let i = 0; i < dataSale.length; i++) {
+                                const existingElement = dataSale[i];
+                                if (existingElement.id === newElement.id) {
+                                    // Phần tử đã tồn tại, thực hiện update
+                                    dataSale[i] = newElement;
+                                    isExisting = true;
+                                    break;
+                                }
+                            }
+
+                            // Nếu newElement không tồn tại, thực hiện push vào mảng
+                            if (!isExisting) {
+                                dataSale.push(newElement);
+
+                            }
+                        });
+                        ////update con
+                        for (let i = 0; i < dataSale.length; i++) {
+                            if (dataSale[i].count_child > 0) {
+                                $.ajax({
+                                    url: `https://api-daithuan.newweb.vn/v1/report-hierarchical-trees?parent_code=${dataSale[i].code}`,
+                                    type: 'GET',
+                                    dataType: 'json',
+                                    headers: {
+                                        'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS1kYWl0aHVhbi5uZXd3ZWIudm4vY2xpZW50L2F1dGgvbG9naW4iLCJpYXQiOjE2ODQ3MzgzNDAsImV4cCI6MTcxNjI3NDM0MCwibmJmIjoxNjg0NzM4MzQwLCJqdGkiOiIxQ0o1TXVDQXVoOXRZeGlhIiwic3ViIjoyMjQ5NDksInBydiI6Ijg3ZTBhZjFlZjlmZDE1ODEyZmRlYzk3MTUzYTE0ZTBiMDQ3NTQ2YWEifQ.ZXxaROwQigKNVYH9ZXB_nxPZddfZgIbQnY3HDN5sHFc', // Thay thế your-token bằng token xác thực của bạn
+                                        'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
+                                    },
+                                    success: function (data) {
+                                        console.log(data);
+                                        data.data.forEach(newElement => {
+                                            let isExisting = false;
+
+                                            // Kiểm tra xem newElement có tồn tại trong mảng dataSale hay không
+                                            for (let i = 0; i < dataSale.length; i++) {
+                                                const existingElement = dataSale[i];
+                                                if (existingElement.id === newElement.id) {
+                                                    // Phần tử đã tồn tại, thực hiện update
+                                                    dataSale[i] = newElement;
+                                                    isExisting = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            // Nếu newElement không tồn tại, thực hiện push vào mảng
+                                            if (!isExisting) {
+                                                dataSale.push(newElement);
+
+                                            }
+                                        });
+                                        ////update con
+                                    },
+                                    error: function (error) {
+                                        // console.log(error);
+                                    }
+                                });
+                            }
+                        }
+
+                        console.log(dataSale.length);
+                        dataSale.forEach((element, i) => {
+                            var imgs = '';
+                            map.loadImage(`https://media.newweb.vn/file/fPUBghG4N/w200-h200#marker`, (error, image) => {
+                                if (error) throw error;
+                                if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
+                            });
+                            const sourceId = `${element['code']}`;
+
+                            // Kiểm tra xem source đã tồn tại hay chưa
+                            const existingSource = map.getSource(sourceId);
+                            const existingLayer = map.getLayer(sourceId);
+                            if (existingSource) {
+                                // Source đã tồn tại
+                                console.log('Source đã tồn tại');
+                                // Source đã tồn tại, thực hiện cập nhật dữ liệu cho source
+
+                                if (element['is_online'] == 0) {
+                                    if (existingLayer) {
+                                        console.log('xóa layer');
+                                        map.removeLayer(sourceId);
+                                    }
+                                    // Xóa source khỏi bản đồ
+                                    map.removeSource(sourceId);
+
+
+                                } else {
+                                    map.getSource(sourceId).setData({
+                                        'type': 'FeatureCollection',
+                                        'features': [
+                                            {
+                                                'type': 'Feature',
+                                                'properties': {
+                                                    'title': 'vtmapgl',
+                                                    'icon': 'theatre',
+                                                    'description': '<strong>' + element['name'] + '</strong>' + '<br/>' + imgs + '<br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
+                                                },
+                                                'geometry': {
+                                                    'type': 'Point',
+                                                    'coordinates': [element['long'], element['lat']],
+                                                },
+                                            }
+                                        ]
+                                    });
+                                }
+
+                            } else {
+                                // Source chưa tồn tại
+                                if (element['is_online'] != 0)
+                                    map.addSource(`${sourceId}`, {
+                                        'type': 'geojson',
+                                        'data': {
+                                            'type': 'FeatureCollection',
+                                            'features': [
+                                                {
+                                                    'type': 'Feature',
+                                                    'properties': {
+                                                        'title': 'vtmapgl',
+                                                        'icon': 'theatre',
+                                                        'description': '<strong>' + element['name'] + '</strong>' + '<br/>' + imgs + '<br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
+                                                    },
+                                                    'geometry': {
+                                                        'type': 'Point',
+                                                        'coordinates': [element['long'], element['lat']],
+                                                    },
+                                                }
+                                            ]
+                                        }
+                                    });
+                            }
+
+
+
+                            // Kiểm tra xem layer đã tồn tại hay chưa
+
+
+                            if (existingLayer) {
+                                // Layer đã tồn tại
+                                console.log('Layer đã tồn tại');
+                                console.log(existingSource);
+                                //  map.getLayer(sourceId).setData
+                            } else {
+                                // Layer chưa tồn tại
+                                if (map.getSource(sourceId)) {
+                                    console.log('adđ layer');
+                                    map.addLayer({
+                                        'id': `${sourceId}`,
+                                        'type': 'symbol',
+                                        'source': `${sourceId}`,
+                                        'layout': {
+                                            'icon-image': `avatar${sourceId}`,
+                                            'icon-size': element['type'] == 'store' ? 0.2 : 0.1,
+                                            'icon-optional': true,
+                                            'icon-allow-overlap': true,
+                                            'text-allow-overlap': true,
+                                            'text-field': `${element['name']} ${element['time_diff']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
+                                            'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
+                                            'text-anchor': 'top',
+                                            'text-size': 12,
+                                            'text-max-width': 10,
+                                            'text-line-height': 1.2,
+                                        },
+                                        'paint': {
+                                            // ...các thuộc tính paint khác
+                                            'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
+                                            'text-halo-color': '#fff',
+                                            'text-halo-width': 2,
+                                        },
+                                    });
+                                }
+                            }
+
+
+                            // map.on('click', `${layerId}`, (e) => {
+                            //     // Xử lý sự kiện khi click vào marker
+                            //     // Copy coordinates array.
+                            //     const coordinates = e.features[0].geometry.coordinates.slice();
+                            //     const description = e.features[0].properties.description;
+
+                            //     // Ensure that if the map is zoomed out such that multiple
+                            //     // copies of the feature are visible, the popup appears
+                            //     // over the copy being pointed to.
+                            //     while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                            //         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                            //     }
+
+                            //     new maplibregl.Popup()
+                            //         .setLngLat(coordinates)
+                            //         .setHTML(description)
+                            //         .addTo(map);
+                            // });
+                            // loadMarkerImage(imgUrl, `avatar${i}`).then(() => {
+                            //     // Hình ảnh đã tải thành công, tiếp tục tạo source và layer
+
+                            // }).catch((error) => {
+                            //     console.error('Error loading image:', error);
+                            // });
+                        });
+
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    }
+                });
+                setTimeout(btnGetData, 5000);
+            }
+            btnGetData();
+        });
+
+        //  $("div#info").html("<p>All new content. <em>You bet!</em></p>");
+
+    </script>
+    <button id="btnGetData">Gọi API</button>
+    <div id="output"></div>
+
+</body>
+
+</html>

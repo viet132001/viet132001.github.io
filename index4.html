@@ -92,7 +92,79 @@
         });
         $(document).ready(function () {
             function btnGetData() {
-                var infoContainer = document.getElementById('info');
+                               $.ajax({
+                    url: `https://api-daithuan.newweb.vn/v1/client/report-hierarchical-trees?parent_code=${parent_code}`,
+                    type: 'GET',
+                    dataType: 'json',
+                    headers: {
+                        'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b', // Thay thế your-token bằng token xác thực của bạn
+                        'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
+                    },
+                    success: function (data) {
+
+                        data.data.forEach(newElement => {
+                            let isExisting = false;
+
+                            // Kiểm tra xem newElement có tồn tại trong mảng dataSale hay không
+                            for (let i = 0; i < dataSale.length; i++) {
+                                const existingElement = dataSale[i];
+                                if (existingElement.id === newElement.id) {
+                                    // Phần tử đã tồn tại, thực hiện update
+                                    dataSale[i] = newElement;
+                                    isExisting = true;
+                                    break;
+                                }
+                            }
+
+                            // Nếu newElement không tồn tại, thực hiện push vào mảng
+                            if (!isExisting) {
+                                dataSale.push(newElement);
+
+                            }
+                        });
+                        ////update con
+                        for (let i = 0; i < dataSale.length; i++) {
+                            if (dataSale[i].count_child > 0) {
+                                $.ajax({
+                                    url: `https://api-daithuan.newweb.vn/v1/report-hierarchical-trees?parent_code=${dataSale[i].code}`,
+                                    type: 'GET',
+                                    dataType: 'json',
+                                    headers: {
+                                        'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS1kYWl0aHVhbi5uZXd3ZWIudm4vY2xpZW50L2F1dGgvbG9naW4iLCJpYXQiOjE2ODQ3MzgzNDAsImV4cCI6MTcxNjI3NDM0MCwibmJmIjoxNjg0NzM4MzQwLCJqdGkiOiIxQ0o1TXVDQXVoOXRZeGlhIiwic3ViIjoyMjQ5NDksInBydiI6Ijg3ZTBhZjFlZjlmZDE1ODEyZmRlYzk3MTUzYTE0ZTBiMDQ3NTQ2YWEifQ.ZXxaROwQigKNVYH9ZXB_nxPZddfZgIbQnY3HDN5sHFc', // Thay thế your-token bằng token xác thực của bạn
+                                        'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
+                                    },
+                                    success: function (data) {
+
+                                        data.data.forEach(newElement => {
+                                            let isExisting = false;
+
+                                            // Kiểm tra xem newElement có tồn tại trong mảng dataSale hay không
+                                            for (let i = 0; i < dataSale.length; i++) {
+                                                const existingElement = dataSale[i];
+                                                if (existingElement.id === newElement.id) {
+                                                    // Phần tử đã tồn tại, thực hiện update
+                                                    dataSale[i] = newElement;
+                                                    isExisting = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            // Nếu newElement không tồn tại, thực hiện push vào mảng
+                                            if (!isExisting) {
+                                                dataSale.push(newElement);
+
+                                            }
+                                        });
+                                        ////update con
+                                    },
+                                    error: function (error) {
+                                        // console.log(error);
+                                    }
+                                });
+                            }
+                        }
+
+                        var infoContainer = document.getElementById('info');
                 var infoContainerOnline = document.getElementById('info-online');
                 infoContainer.innerHTML = '';
                 infoContainerOnline.innerHTML = '';
@@ -174,79 +246,7 @@
 
                 infoContainer.appendChild(table);
                 infoContainerOnline.appendChild(tableOnline);
-                $.ajax({
-                    url: `https://api-daithuan.newweb.vn/v1/report-hierarchical-trees?parent_code=${parent_code}`,
-                    type: 'GET',
-                    dataType: 'json',
-                    headers: {
-                        'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS1kYWl0aHVhbi5uZXd3ZWIudm4vY2xpZW50L2F1dGgvbG9naW4iLCJpYXQiOjE2ODQ3MzgzNDAsImV4cCI6MTcxNjI3NDM0MCwibmJmIjoxNjg0NzM4MzQwLCJqdGkiOiIxQ0o1TXVDQXVoOXRZeGlhIiwic3ViIjoyMjQ5NDksInBydiI6Ijg3ZTBhZjFlZjlmZDE1ODEyZmRlYzk3MTUzYTE0ZTBiMDQ3NTQ2YWEifQ.ZXxaROwQigKNVYH9ZXB_nxPZddfZgIbQnY3HDN5sHFc', // Thay thế your-token bằng token xác thực của bạn
-                        'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
-                    },
-                    success: function (data) {
-
-                        data.data.forEach(newElement => {
-                            let isExisting = false;
-
-                            // Kiểm tra xem newElement có tồn tại trong mảng dataSale hay không
-                            for (let i = 0; i < dataSale.length; i++) {
-                                const existingElement = dataSale[i];
-                                if (existingElement.id === newElement.id) {
-                                    // Phần tử đã tồn tại, thực hiện update
-                                    dataSale[i] = newElement;
-                                    isExisting = true;
-                                    break;
-                                }
-                            }
-
-                            // Nếu newElement không tồn tại, thực hiện push vào mảng
-                            if (!isExisting) {
-                                dataSale.push(newElement);
-
-                            }
-                        });
-                        ////update con
-                        for (let i = 0; i < dataSale.length; i++) {
-                            if (dataSale[i].count_child > 0) {
-                                $.ajax({
-                                    url: `https://api-daithuan.newweb.vn/v1/report-hierarchical-trees?parent_code=${dataSale[i].code}`,
-                                    type: 'GET',
-                                    dataType: 'json',
-                                    headers: {
-                                        'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS1kYWl0aHVhbi5uZXd3ZWIudm4vY2xpZW50L2F1dGgvbG9naW4iLCJpYXQiOjE2ODQ3MzgzNDAsImV4cCI6MTcxNjI3NDM0MCwibmJmIjoxNjg0NzM4MzQwLCJqdGkiOiIxQ0o1TXVDQXVoOXRZeGlhIiwic3ViIjoyMjQ5NDksInBydiI6Ijg3ZTBhZjFlZjlmZDE1ODEyZmRlYzk3MTUzYTE0ZTBiMDQ3NTQ2YWEifQ.ZXxaROwQigKNVYH9ZXB_nxPZddfZgIbQnY3HDN5sHFc', // Thay thế your-token bằng token xác thực của bạn
-                                        'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
-                                    },
-                                    success: function (data) {
-
-                                        data.data.forEach(newElement => {
-                                            let isExisting = false;
-
-                                            // Kiểm tra xem newElement có tồn tại trong mảng dataSale hay không
-                                            for (let i = 0; i < dataSale.length; i++) {
-                                                const existingElement = dataSale[i];
-                                                if (existingElement.id === newElement.id) {
-                                                    // Phần tử đã tồn tại, thực hiện update
-                                                    dataSale[i] = newElement;
-                                                    isExisting = true;
-                                                    break;
-                                                }
-                                            }
-
-                                            // Nếu newElement không tồn tại, thực hiện push vào mảng
-                                            if (!isExisting) {
-                                                dataSale.push(newElement);
-
-                                            }
-                                        });
-                                        ////update con
-                                    },
-                                    error: function (error) {
-                                        // console.log(error);
-                                    }
-                                });
-                            }
-                        }
-
-
+ 
                         dataSale.forEach((element, i) => {
                             var imgs = '';
                             map.loadImage(`https://media.newweb.vn/file/fPUBghG4N/w200-h200#marker`, (error, image) => {
@@ -281,7 +281,12 @@
                                                 'properties': {
                                                     'title': 'vtmapgl',
                                                     'icon': 'theatre',
-                                                    'description': '<strong>' + element['name'] + '</strong>' + '<br/>' + imgs + '<br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
+                                                    'description': '<strong>' + element['name'] + '</strong>' +
+                                                            '</br>' + ' Doanh số :' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
+                                                            '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
+                                                            '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
+                                                            '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
+                                                            '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
                                                 },
                                                 'geometry': {
                                                     'type': 'Point',
@@ -309,6 +314,7 @@
                                                             '</br>' + ' Doanh số :' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
                                                             '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
                                                             '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
+                                                            '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
                                                             '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
                                                     },
                                                     'geometry': {
@@ -393,7 +399,7 @@
                         console.log(error);
                     }
                 });
-                setTimeout(btnGetData, 5000);
+                setTimeout(btnGetData, 30000*2);
             }
             btnGetData();
         });

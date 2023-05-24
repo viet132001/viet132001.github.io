@@ -36,6 +36,10 @@
             font-family: 'Open Sans', sans-serif;
             font-size: 12px;
             width: 200px;
+            min-height: 20px;
+            max-height: 100vh;
+            /* Đặt chiều cao tùy ý */
+            overflow-y: scroll;
         }
 
         #info-online {
@@ -47,6 +51,10 @@
             font-family: 'Open Sans', sans-serif;
             font-size: 12px;
             width: 200px;
+            min-height: 20px;
+            max-height: 100vh;
+            /* Đặt chiều cao tùy ý */
+            overflow-y: scroll;
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -92,7 +100,7 @@
         });
         $(document).ready(function () {
             function btnGetData() {
-                               $.ajax({
+                $.ajax({
                     url: `https://api-daithuan.newweb.vn/v1/client/report-hierarchical-trees?parent_code=${parent_code}`,
                     type: 'GET',
                     dataType: 'json',
@@ -165,88 +173,113 @@
                         }
 
                         var infoContainer = document.getElementById('info');
-                var infoContainerOnline = document.getElementById('info-online');
-                infoContainer.innerHTML = '';
-                infoContainerOnline.innerHTML = '';
-                var table = document.createElement('table');
-                var tableOnline = document.createElement('table');
-                dataSale.forEach(function (element) {
-                    if (element.is_online == 1) {
-                        var row = document.createElement('tr');
+                        var infoContainerOnline = document.getElementById('info-online');
+                        infoContainer.innerHTML = '';
+                        infoContainerOnline.innerHTML = '';
+                        var table = document.createElement('table');
+                        var tableOnline = document.createElement('table');
+                        dataSale.forEach(function (element) {
+                            if (element.is_online == 1) {
+                                var row = document.createElement('tr');
 
-                        // Tạo cột màu
-                        var colorCell = document.createElement('td');
-                        colorCell.style.backgroundColor = element.color;
-                        row.appendChild(colorCell);
+                                // Tạo cột màu
+                                var colorCell = document.createElement('td');
+                                colorCell.style.backgroundColor = element.color;
+                                row.appendChild(colorCell);
 
-                        // Tạo cột biểu tượng
-                        var iconCell = document.createElement('td');
-                        var iconImg = document.createElement('img');
-                        iconImg.src = element.avatar;
-                        iconImg.width = 30;
-                        iconImg.height = 30;
-                        iconCell.appendChild(iconImg);
-                        row.appendChild(iconCell);
+                                // Tạo cột biểu tượng
+                                var iconCell = document.createElement('td');
+                                var iconImg = document.createElement('img');
+                                iconImg.src = element.avatar;
+                                iconImg.width = 30;
+                                iconImg.height = 30;
+                                iconCell.appendChild(iconImg);
+                                row.appendChild(iconCell);
 
-                        // Tạo cột tên
-                        var nameCell = document.createElement('td');
+                                // Tạo cột tên
+                                var nameCell = document.createElement('td');
 
-                        if (element.is_online == 1) {
-                            nameCell.textContent = element.name;
-                            nameCell.style.color = '#00FF00';
-                        } else {
-                            nameCell.textContent = element.name + ' Online ' + element.time_diff;
-                        }
+                                if (element.is_online == 1) {
+                                    nameCell.textContent = element.name;
+                                    nameCell.style.color = '#00FF00';
+                                    nameCell.setAttribute('id', element.code);
+                                    nameCell.addEventListener('click', function () {
+                                        // Lấy ID của ô <td> được click
+                                        var clickedTdId = this.getAttribute('id');
+                                        dataSale.forEach(function (element) {
+                                            if (element.code == clickedTdId) {
 
-                        row.appendChild(nameCell);
+                                                map.flyTo({
+                                                    center: [element.long, element.lat],
+                                                    speed: 1,
+                                                    zoom: 14,
+                                                    easing(t) {
+                                                        if (t == 1) {
+                                                            map.setPitch(30);
+                                                            endFly = 1;
+                                                        }
+                                                        return t;
+                                                    }
+                                                });
+                                            }
+                                        });
 
-                        // Tạo cột vị trí
-                        var locationCell = document.createElement('td');
-                        locationCell.textContent = element.location;
-                        row.appendChild(locationCell);
+                                        // Xử lý sự kiện click tại đây, ví dụ:
+                                        console.log('Ô ' + clickedTdId + ' được click');
+                                    });
+                                } else {
+                                    nameCell.textContent = element.name + ' Online ' + element.time_diff;
+                                }
 
-                        tableOnline.appendChild(row);
-                    } else {
-                        var row = document.createElement('tr');
+                                row.appendChild(nameCell);
 
-                        // Tạo cột màu
-                        var colorCell = document.createElement('td');
-                        colorCell.style.backgroundColor = element.color;
-                        row.appendChild(colorCell);
+                                // Tạo cột vị trí
+                                var locationCell = document.createElement('td');
+                                locationCell.textContent = element.location;
+                                row.appendChild(locationCell);
 
-                        // Tạo cột biểu tượng
-                        var iconCell = document.createElement('td');
-                        var iconImg = document.createElement('img');
-                        iconImg.src = element.avatar;
-                        iconImg.width = 30;
-                        iconImg.height = 30;
-                        iconCell.appendChild(iconImg);
-                        row.appendChild(iconCell);
+                                tableOnline.appendChild(row);
+                            } else {
+                                var row = document.createElement('tr');
 
-                        // Tạo cột tên
-                        var nameCell = document.createElement('td');
+                                // Tạo cột màu
+                                var colorCell = document.createElement('td');
+                                colorCell.style.backgroundColor = element.color;
+                                row.appendChild(colorCell);
 
-                        if (element.is_online == 1) {
-                            nameCell.textContent = element.name;
-                            nameCell.style.color = '#00FF00';
-                        } else {
-                            nameCell.textContent = element.name + ' Online ' + element.time_diff;
-                        }
+                                // Tạo cột biểu tượng
+                                var iconCell = document.createElement('td');
+                                var iconImg = document.createElement('img');
+                                iconImg.src = element.avatar;
+                                iconImg.width = 30;
+                                iconImg.height = 30;
+                                iconCell.appendChild(iconImg);
+                                row.appendChild(iconCell);
 
-                        row.appendChild(nameCell);
+                                // Tạo cột tên
+                                var nameCell = document.createElement('td');
 
-                        // Tạo cột vị trí
-                        var locationCell = document.createElement('td');
-                        locationCell.textContent = element.location;
-                        row.appendChild(locationCell);
+                                if (element.is_online == 1) {
+                                    nameCell.textContent = element.name;
+                                    nameCell.style.color = '#00FF00';
+                                } else {
+                                    nameCell.textContent = element.name + ' Online ' + element.time_diff;
+                                }
 
-                        table.appendChild(row);
-                    }
-                });
+                                row.appendChild(nameCell);
 
-                infoContainer.appendChild(table);
-                infoContainerOnline.appendChild(tableOnline);
- 
+                                // Tạo cột vị trí
+                                var locationCell = document.createElement('td');
+                                locationCell.textContent = element.location;
+                                row.appendChild(locationCell);
+
+                                table.appendChild(row);
+                            }
+                        });
+
+                        infoContainer.appendChild(table);
+                        infoContainerOnline.appendChild(tableOnline);
+
                         dataSale.forEach((element, i) => {
                             var imgs = '';
                             map.loadImage(`https://media.newweb.vn/file/fPUBghG4N/w200-h200#marker`, (error, image) => {
@@ -282,11 +315,11 @@
                                                     'title': 'vtmapgl',
                                                     'icon': 'theatre',
                                                     'description': '<strong>' + element['name'] + '</strong>' +
-                                                            '</br>' + ' Doanh số :' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
-                                                            '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
-                                                            '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
-                                                            '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
-                                                            '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
+                                                        '</br>' + ' Doanh số :' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
+                                                        '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
+                                                        '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
+                                                        '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
+                                                        '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
                                                 },
                                                 'geometry': {
                                                     'type': 'Point',
@@ -399,7 +432,7 @@
                         console.log(error);
                     }
                 });
-                setTimeout(btnGetData, 30000*2);
+                setTimeout(btnGetData, 30000);
             }
             btnGetData();
         });

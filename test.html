@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Tìm đường đi giữa nhiều điểm</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.js"></script>
+  <link href="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      background: #ddd;
+    }
+
+    #run-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1;
+      background-color: white;
+      padding: 5px 10px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .running-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      display: none;
+      width: 32px;
+      height: 32px;
+      animation: running-animation 3s linear infinite;
+    }
+
+    #moving-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      display: none;
+    }
+
+    @keyframes running-animation {
+      0% {
+        transform: translate(-50%, -50%) translateX(0);
+      }
+
+      100% {
+        transform: translate(-50%, -50%) translateX(100%);
+      }
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="map">
+    <div id="run-button">Run</div>
+    <img class="running-icon" src="" alt="Running icon">
+    <div style="
+      position: absolute;
+      z-index: 1;
+      left: 10px;
+      top: 40px;
+      background-color: white;
+      padding: 5px 10px;
+      font-size: 1rem;
+    ">
+      Click trên bản đồ để xác định điểm tìm đường
+    </div>
+  </div>
+  <div id="moving-icon">
+    <img src="https://media.newweb.vn/file/fPUBghG4N/w200-h200" alt="Moving icon" style="width: 32px; height: 32px;">
+  </div>
+  <script>
+
+    $(document).ready(function () {
+      var map = new maplibregl.Map({
+        container: 'map',
+        center: [105, 17],
+        zoom: 4
+      });
+
+      /* Bản đồ nền */
+      var basemap = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
+      basemap.addTo(map);
+
+      //===Chỉ đường
+
+      //khởi tạo
+      var routingService = new ekmapplf.service.Routing({
+        apiKey: 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR',
+        profile: 'foot'
+      });
+
+      var runButton = document.getElementById('run-button');
+      var runIcon = document.querySelector('.running-icon');
+      var movingIcon = document.getElementById('moving-icon');
+
+      var points = [];
+      var markers = [];
+      var routeLayerId = 'route';
+
+      map.on('load', () => {
+
+        map.loadImage(`https://media.newweb.vn/file/fPUBghG4N/w200-h200#marker`, (error, image) => {
+        if (error) throw error;
+        if (!map.hasImage(`icon`)) map.addImage(`icon`, image);
+      });
+      map.addSource("icon", {
+        'type': 'geojson',
+        'data': {
+          'type': 'FeatureCollection',
+          'features': [
+            {
+              'type': 'Feature',
+              'properties': {
+                'title': 'vtmapgl',
+                'icon': 'theatre',
+                'description': '<strong></strong>'
+              },
+              'geometry': {
+                'type': 'Point',
+                'coordinates': [109, 10],
+              },
+            }
+          ]
+        }
+      })
+      map.addLayer({
+        'id': `icon`,
+        'type': 'symbol',
+        'source': `icon`,
+        'layout': {
+          'icon-image': `icon`,
+          'icon-size': 0.15,
+          'icon-optional': true,
+          'icon-allow-overlap': true,
+          'text-allow-overlap': true,
+          'text-field': 'Bách Dung', // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
+          'text-offset': [0, 2.25],// element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
+          'text-anchor': 'top',
+          'text-size': 12,
+          'text-max-width': 10,
+          'text-line-height': 1.2,
+        },
+        'paint': {
+          // ...các thuộc tính paint khác
+          'text-color': '#DF5E36',
+          'text-halo-color': '#fff',
+          'text-halo-width': 2,
+        },
+      });
+
+      });
+
+      map.on('click', function (evt) {
+        points.push(evt.lngLat);
+        var marker = new maplibregl.Marker()
+          .setLngLat(evt.lngLat.toArray())
+          .addTo(map);
+        markers.push(marker);
+        if (points.length >= 2) {
+          runButton.style.display = 'block';
+        }
+      });
+
+      runButton.addEventListener('click', function () {
+        if (markers.length < 2) return;
+
+        var coordinates = points.map(function (point) {
+          return point.toArray().toString();
+        }).join(';');
+
+        routingService.setCoordinates(coordinates);
+
+        runButton.style.display = 'none';
+        runIcon.style.display = 'block';
+
+        // Xóa layer đường đi hiện tại (nếu có)
+        if (map.getLayer(routeLayerId)) {
+          map.removeLayer(routeLayerId);
+        }
+
+        // Xóa dữ liệu layer đường đi hiện tại (nếu có)
+        if (map.getSource(routeLayerId)) {
+          map.removeSource(routeLayerId);
+        }
+
+        var paramRoute = {
+          overview: 'full',
+          alternatives: false,
+          steps: false,
+          geometries: 'geojson'
+        };
+        var it = 0;
+        routingService.getRoute(paramRoute, function (error, data) {
+          runIcon.style.display = 'none';
+          movingIcon.style.display = 'block';
+
+          if (error) {
+            console.error(error);
+            return;
+          }
+          if (!data.routes || data.routes.length === 0 || !data.routes[0].geometry) {
+            console.error('No route data available');
+            return;
+          }
+          var featureData = {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: data.routes[0].geometry.coordinates
+            }
+          };
+
+          map.addSource(routeLayerId, {
+            type: 'geojson',
+            data: featureData
+          });
+
+          map.addLayer({
+            id: routeLayerId,
+            type: 'line',
+            source: routeLayerId,
+            paint: {
+              'line-color': '#4882c5',
+              'line-width': 7
+            }
+          });
+
+          var startCoord = new maplibregl.LngLat(data.routes[0].geometry.coordinates[0][0], data.routes[0].geometry.coordinates[0][1]);
+          var endCoord = new maplibregl.LngLat(data.routes[0].geometry.coordinates[data.routes[0].geometry.coordinates.length - 1][0], data.routes[0].geometry.coordinates[data.routes[0].geometry.coordinates.length - 1][1]);
+
+          //    var totalDistance = startCoord.distanceTo(endCoord);
+          var totalDistance = data.routes[0].geometry.coordinates.length - 1;
+          var duration = 5000; // Thời gian di chuyển (10 giây)
+          //  var speed = 500; // Tốc độ di chuyển
+
+          var currentDistance = 0;
+          var progress = 0;
+
+          function animate() {
+            console.log(currentDistance);
+            console.log(totalDistance);
+            var delta = 1;//(totalDistance/duration);
+            console.log(delta);
+            currentDistance += delta;
+
+            progress = currentDistance / totalDistance;
+
+            if (progress >= 1) {
+              // movingIcon.style.display = 'none';
+              return;
+            }
+
+            var currentCoord = interpolateCoordinate(data.routes[0].geometry.coordinates, currentDistance);
+
+            // movingIcon.style.left = (currentCoord[0] - 16) + 'px';
+            // movingIcon.style.top = (currentCoord[1] - 16) + 'px';
+            movingIcon.style.left = (currentCoord[0] - 16) + 'px';
+            movingIcon.style.top = (currentCoord[1] - 16) + 'px';
+            map.getSource('icon').setData({
+                                        'type': 'FeatureCollection',
+                                        'features': [
+                                            {
+                                                'type': 'Feature',
+                                                'properties': {
+                                                    'title': 'vtmapgl',
+                                                    'icon': 'theatre',
+                                                    'description': '<strong></strong>' 
+                                                },
+                                                'geometry': {
+                                                    'type': 'Point',
+                                                    'coordinates': [currentCoord[1], currentCoord[0]],
+                                                },
+                                            }
+                                        ]
+                                    });
+            requestAnimationFrame(animate);
+          }
+
+          animate();
+
+          function interpolateCoordinate(coordinates, progress) {
+
+            var totalLength = coordinates.length - 1;
+            var currentLength = progress; //progress * totalLength;
+
+            var floorLength = Math.floor(currentLength);
+            var ceilLength = Math.ceil(currentLength);
+            var segmentProgress = currentLength - floorLength;
+            console.log(coordinates);
+            console.log(progress);
+            var start = coordinates[floorLength];
+            var end = coordinates[ceilLength];
+            console.log(coordinates);
+            var interpolatedLng = start[0] + (end[0] - start[0]) * segmentProgress;
+            var interpolatedLat = start[1] + (end[1] - start[1]) * segmentProgress;
+            // return [105.105298, 9.794921];
+            return [coordinates[progress][1], coordinates[progress][0]];
+            // return [interpolatedLng, interpolatedLat];
+          }
+        });
+      });
+    });
+
+
+  </script>
+</body>
+
+</html>

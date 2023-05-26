@@ -27,6 +27,16 @@
 
     #run-button {
       position: absolute;
+      top: 40px;
+      left: 10px;
+      z-index: 1;
+      background-color: white;
+      padding: 5px 10px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #rs-button {
+      position: absolute;
       top: 10px;
       left: 10px;
       z-index: 1;
@@ -35,7 +45,7 @@
       font-size: 1rem;
       cursor: pointer;
     }
-
+  
     .running-icon {
       position: absolute;
       top: 50%;
@@ -47,7 +57,6 @@
       height: 32px;
       animation: running-animation 3s linear infinite;
     }
-
     #moving-icon {
       position: absolute;
       top: 50%;
@@ -73,6 +82,7 @@
 <body>
   <div id="map">
     <div id="run-button">Run</div>
+    <input  id="rs-button" type="reset" value="Reset">
     <img class="running-icon" src="" alt="Running icon">
     <!-- <div style="
       position: absolute;
@@ -96,7 +106,7 @@
     $(document).ready(function () {
       var map = new maplibregl.Map({
         container: 'map',
-        center: [105, 10],
+        center: [108.343212,15.136311],
         zoom: 6
       });
 
@@ -115,6 +125,11 @@
       var runButton = document.getElementById('run-button');
       var runIcon = document.querySelector('.running-icon');
       var movingIcon = document.getElementById('moving-icon');
+      var rsButton = document.getElementById('rs-button');
+      rsButton.addEventListener('click', function () {
+        location.reload();
+      });
+      runButton.style.display = 'none';
       var points = [
 
       ];
@@ -130,6 +145,7 @@
         },
         success: function (data) {
           console.log(data);
+          runButton.style.display = 'block';
           if (data.data.length > 0) {
             map.flyTo({
               center: [data.data[0].shop_long, data.data[0].shop_lat],
@@ -177,16 +193,16 @@
 
       map.on('click', function (evt) {
 
-        points.push(evt.lngLat);
-        var marker = new maplibregl.Marker()
-          .setLngLat(evt.lngLat.toArray())
-          .addTo(map);
-        markers.push(marker);
-        console.log(evt.lngLat);
-        console.log(evt.lngLat.toArray());
-        if (points.length >= 2) {
-          runButton.style.display = 'block';
-        }
+        // points.push(evt.lngLat);
+        // var marker = new maplibregl.Marker()
+        //   .setLngLat(evt.lngLat.toArray())
+        //   .addTo(map);
+        // markers.push(marker);
+        // console.log(evt.lngLat);
+        // console.log(evt.lngLat.toArray());
+        // if (points.length >= 2) {
+        //   runButton.style.display = 'block';
+        // }
       });
 
       runButton.addEventListener('click', function () {
@@ -249,7 +265,7 @@
         routingService.setCoordinates(coordinates);
 
         runButton.style.display = 'none';
-        runIcon.style.display = 'block';
+        //runIcon.style.display = 'block';
 
         // Xóa layer đường đi hiện tại (nếu có)
         if (map.getLayer(routeLayerId)) {

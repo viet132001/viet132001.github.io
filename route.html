@@ -35,6 +35,7 @@
       font-size: 1rem;
       cursor: pointer;
     }
+
     #rs-button {
       position: absolute;
       top: 10px;
@@ -45,7 +46,7 @@
       font-size: 1rem;
       cursor: pointer;
     }
-  
+
     .running-icon {
       position: absolute;
       top: 50%;
@@ -57,6 +58,7 @@
       height: 32px;
       animation: running-animation 3s linear infinite;
     }
+
     #moving-icon {
       position: absolute;
       top: 50%;
@@ -75,14 +77,54 @@
         transform: translate(-50%, -50%) translateX(100%);
       }
     }
+
+    .popup {
+      display: none;
+      /* Ẩn cửa sổ ban đầu */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      /* Mờ đen nền xung quanh */
+      z-index: 9999;
+    }
+
+    .popup-content {
+      background-color: #fff;
+      width: 300px;
+      height: 200px;
+      margin: 200px auto;
+      /* Canh giữa cửa sổ */
+      padding: 20px;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .close {
+      color: #888;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 
 </head>
 
 <body>
+  <!-- Cửa sổ popup -->
+<div id="popup" class="popup">
+  <div class="popup-content">
+    <span class="close" onclick="closePopup()">&times;</span>
+    <h3>Không tìm thấy lộ trình</h3>
+    <p>Vui lòng chọn ngày khác.</p>
+  </div>
+</div>
   <div id="map">
     <div id="run-button">Run</div>
-    <input  id="rs-button" type="reset" value="Reset">
+    <input id="rs-button" type="reset" value="Reset">
     <img class="running-icon" src="" alt="Running icon">
     <!-- <div style="
       position: absolute;
@@ -100,13 +142,18 @@
     <img src="https://media.newweb.vn/file/fPUBghG4N/w200-h200" alt="Moving icon" style="width: 32px; height: 32px;">
   </div>
   <script>
+     function closePopup() {
+    var popup = document.getElementById("popup");
+    popup.style.display = "none";
+  }
     var lo = document.location.toString();
     var url = new URL(lo)
     var saleman_code = url.searchParams.get('saleman_code');
+    var date = url.searchParams.get('date');
     $(document).ready(function () {
       var map = new maplibregl.Map({
         container: 'map',
-        center: [108.343212,15.136311],
+        center: [108.343212, 15.136311],
         zoom: 6
       });
 
@@ -136,7 +183,7 @@
       var markers = [];
       var routeLayerId = 'route';
       $.ajax({
-        url: `https://api-daithuan.newweb.vn/v1/client/get-visit-history?saleman_code=${saleman_code}`,
+        url: `https://api-daithuan.newweb.vn/v1/client/get-visit-history?saleman_code=${saleman_code}&from=${date}&to=${date}`,
         type: 'GET',
         dataType: 'json',
         headers: {
@@ -145,6 +192,7 @@
         },
         success: function (data) {
           console.log(data);
+
           runButton.style.display = 'block';
           if (data.data.length > 0) {
             map.flyTo({
@@ -159,6 +207,9 @@
                 return t;
               }
             });
+          } else {
+            var popup = document.getElementById("popup");
+            popup.style.display = "block";
           }
           data.data.forEach(newElement => {
             var coordi = [newElement.shop_long, newElement.shop_lat];

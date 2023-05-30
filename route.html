@@ -27,9 +27,20 @@
 
     #run-button {
       position: absolute;
-      top: 40px;
+      top: 80px;
       left: 10px;
       z-index: 1;
+      background-color: white;
+      padding: 5px 10px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #hide-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1;
+      width: 100px;
       background-color: white;
       padding: 5px 10px;
       font-size: 1rem;
@@ -38,7 +49,7 @@
 
     #rs-button {
       position: absolute;
-      top: 10px;
+      top: 40px;
       left: 10px;
       z-index: 1;
       background-color: white;
@@ -113,7 +124,7 @@
     #info {
       position: absolute;
       top: 0;
-      left: 105px;
+      left: 185px;
       padding: 4px;
       background: rgb(254, 254, 254);
       font-family: 'Open Sans', sans-serif;
@@ -127,6 +138,9 @@
     th {
     text-align: center;
   
+  }
+  .hidden {
+    display: none;
   }
   </style>
 
@@ -144,6 +158,7 @@
   <div id="map">
     <div id="run-button">Tìm Đường</div>
     <input id="rs-button" type="reset" value="Cập nhật">
+    <input id="hide-button" onclick="toggleTable()" value="Ẩn/Hiện danh sách">
     <img class="running-icon" src="" alt="Running icon">
     <!-- <div style="
       position: absolute;
@@ -160,15 +175,27 @@
   <div id="moving-icon">
     <img src="https://media.newweb.vn/file/fPUBghG4N/w200-h200" alt="Moving icon" style="width: 32px; height: 32px;">
   </div>
+ 
   <div id="info">
     <table>
-      <td>
-        <th colspan="2">Danh sách</th>
-      </td>
+      <tr> <th>Danh sách</th></tr>
 
     </table>
   </div>
+  
   <script>
+    function toggleTable() {
+    var table = document.getElementById("info");
+    var button = document.getElementById("toggleButton");
+
+    if (table.classList.contains("hidden")) {
+      table.classList.remove("hidden");
+      button.textContent = "Ẩn bảng";
+    } else {
+      table.classList.add("hidden");
+      button.textContent = "Hiện bảng";
+    }
+  }
     function closePopup() {
       var popup = document.getElementById("popup");
       popup.style.display = "none";

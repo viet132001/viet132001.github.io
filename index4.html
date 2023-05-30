@@ -274,7 +274,7 @@
                                 // Tạo cột biểu tượng
                                 var iconCell = document.createElement('td');
                                 var iconImg = document.createElement('img');
-                                iconImg.src = element.avatar;
+                                iconImg.src = element.avatar==null?'https://media.newweb.vn/file/fPUBghG4N/w200-h200': element.avatar;
                                 iconImg.width = 30;
                                 iconImg.height = 30;
                                 iconCell.appendChild(iconImg);
@@ -334,7 +334,7 @@
                                 // Tạo cột biểu tượng
                                 var iconCell = document.createElement('td');
                                 var iconImg = document.createElement('img');
-                                iconImg.src = element.avatar;
+                                iconImg.src = element.avatar==null?'https://media.newweb.vn/file/fPUBghG4N/w200-h200': element.avatar;
                                 iconImg.width = 30;
                                 iconImg.height = 30;
                                 iconCell.appendChild(iconImg);

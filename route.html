@@ -295,8 +295,8 @@
           table.appendChild(row0);
           table.appendChild(row02);
           for (var i = 0; i < data.data.length - 1; i++) {
-            var coord1 = [data.data[i].shop_long, data.data[i].shop_lat];
-            var coord2 = [data.data[i + 1].shop_long, data.data[i + 1].shop_lat];
+            var coord1 = [data.data[i].checkin_long, data.data[i].checkin_lat];
+            var coord2 = [data.data[i + 1].checkin_long, data.data[i + 1].checkin_lat];
             var distance = calculateDistance(coord1, coord2);
             console.log("Khoảng cách giữa", coord1, "và", coord2, "là", distance.toFixed(2), "kilômét");
             ////Row 1
@@ -323,7 +323,7 @@
           runButton.style.display = 'block';
           if (data.data.length > 0) {
             map.flyTo({
-              center: [data.data[0].shop_long, data.data[0].shop_lat],
+              center: [data.data[0].checkin_long, data.data[0].checkin_lat],
               speed: 1,
               zoom: 12,
               easing(t) {
@@ -339,7 +339,7 @@
             popup.style.display = "block";
           }
           data.data.forEach((newElement, index) => {
-            var coordi = [newElement.shop_long, newElement.shop_lat];
+            var coordi = [newElement.checkin_long, newElement.checkin_lat];
             var evt = {
               lngLat: {
                 lng: coordi[0],

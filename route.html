@@ -388,54 +388,7 @@
       });
 
       runButton.addEventListener('click', function () {
-        map.loadImage(`https://media-daithuan.newweb.vn/file/G2jt1GlAb/w200-h200#marker`, (error, image) => {
-          if (error) throw error;
-          if (!map.hasImage(`icon`)) map.addImage(`icon`, image);
-        });
-        map.addSource("icon", {
-          'type': 'geojson',
-          'data': {
-            'type': 'FeatureCollection',
-            'features': [
-              {
-                'type': 'Feature',
-                'properties': {
-                  'title': 'vtmapgl',
-                  'icon': 'theatre',
-                  'description': '<strong></strong>'
-                },
-                'geometry': {
-                  'type': 'Point',
-                  'coordinates': [10, 109],
-                },
-              }
-            ]
-          }
-        })
-        map.addLayer({
-          'id': `icon`,
-          'type': 'symbol',
-          'source': `icon`,
-          'layout': {
-            'icon-image': `icon`,
-            'icon-size': 0.15,
-            'icon-optional': true,
-            'icon-allow-overlap': true,
-            'text-allow-overlap': true,
-            'text-field': `${saleman_code}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
-            'text-offset': [0, 2.25],// element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
-            'text-anchor': 'top',
-            'text-size': 12,
-            'text-max-width': 10,
-            'text-line-height': 1.2,
-          },
-          'paint': {
-            // ...các thuộc tính paint khác
-            'text-color': '#DF5E36',
-            'text-halo-color': '#fff',
-            'text-halo-width': 2,
-          },
-        });
+       
         if (markers.length < 2) return;
 
         var coordinates = points.map(function (point) {
@@ -501,7 +454,55 @@
               'line-width': 7
             }
           });
-
+          map.loadImage(`https://media-daithuan.newweb.vn/file/G2jt1GlAb/w200-h200#marker`, (error, image) => {
+          if (error) throw error;
+          if (!map.hasImage(`icon`)) map.addImage(`icon`, image);
+        });
+        map.addSource("icon", {
+          'type': 'geojson',
+          'data': {
+            'type': 'FeatureCollection',
+            'features': [
+              {
+                'type': 'Feature',
+                'properties': {
+                  'title': 'vtmapgl',
+                  'icon': 'theatre',
+                  'description': '<strong></strong>'
+                },
+                'geometry': {
+                  'type': 'Point',
+                  'coordinates': [10, 109],
+                },
+              }
+            ]
+          }
+        })
+        map.addLayer({
+          'id': `icon`,
+          'type': 'symbol',
+          'source': `icon`,
+          'layout': {
+            'icon-image': `icon`,
+            'icon-size': 0.15,
+            'icon-optional': true,
+            'icon-allow-overlap': true,
+            'text-allow-overlap': true,
+            'text-field': `${saleman_code}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
+            'text-offset': [0, 2.25],// element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
+            'text-anchor': 'top',
+            'text-size': 12,
+            'text-max-width': 10,
+            'text-line-height': 1.2,
+          },
+          'paint': {
+            // ...các thuộc tính paint khác
+            
+            'text-color': '#DF5E36',
+            'text-halo-color': '#fff',
+            'text-halo-width': 2,
+          },
+        });
           var startCoord = new maplibregl.LngLat(data.routes[0].geometry.coordinates[0][0], data.routes[0].geometry.coordinates[0][1]);
           var endCoord = new maplibregl.LngLat(data.routes[0].geometry.coordinates[data.routes[0].geometry.coordinates.length - 1][0], data.routes[0].geometry.coordinates[data.routes[0].geometry.coordinates.length - 1][1]);
 

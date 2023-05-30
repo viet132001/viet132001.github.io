@@ -109,22 +109,41 @@
       font-weight: bold;
       cursor: pointer;
     }
+
+    #info {
+      position: absolute;
+      top: 0;
+      left: 105px;
+      padding: 4px;
+      background: rgb(254, 254, 254);
+      font-family: 'Open Sans', sans-serif;
+      font-size: 12px;
+      width: 400px;
+      min-height: 20px;
+      max-height: 100vh;
+      /* Đặt chiều cao tùy ý */
+      overflow-y: scroll;
+    }
+    th {
+    text-align: center;
+  
+  }
   </style>
 
 </head>
 
 <body>
   <!-- Cửa sổ popup -->
-<div id="popup" class="popup">
-  <div class="popup-content">
-    <span class="close" onclick="closePopup()">&times;</span>
-    <h3>Không tìm thấy lộ trình</h3>
-    <p>Vui lòng chọn ngày khác.</p>
+  <div id="popup" class="popup">
+    <div class="popup-content">
+      <span class="close" onclick="closePopup()">&times;</span>
+      <h3>Không tìm thấy lộ trình</h3>
+      <p>Vui lòng chọn ngày khác.</p>
+    </div>
   </div>
-</div>
   <div id="map">
-    <div id="run-button">Run</div>
-    <input id="rs-button" type="reset" value="Reset">
+    <div id="run-button">Tìm Đường</div>
+    <input id="rs-button" type="reset" value="Cập nhật">
     <img class="running-icon" src="" alt="Running icon">
     <!-- <div style="
       position: absolute;
@@ -141,11 +160,19 @@
   <div id="moving-icon">
     <img src="https://media.newweb.vn/file/fPUBghG4N/w200-h200" alt="Moving icon" style="width: 32px; height: 32px;">
   </div>
+  <div id="info">
+    <table>
+      <td>
+        <th colspan="2">Danh sách</th>
+      </td>
+
+    </table>
+  </div>
   <script>
-     function closePopup() {
-    var popup = document.getElementById("popup");
-    popup.style.display = "none";
-  }
+    function closePopup() {
+      var popup = document.getElementById("popup");
+      popup.style.display = "none";
+    }
     var lo = document.location.toString();
     var url = new URL(lo)
     var saleman_code = url.searchParams.get('saleman_code');
@@ -192,7 +219,80 @@
         },
         success: function (data) {
           console.log(data);
+          var infoContainer = document.getElementById('info');
+          var table = document.createElement('table');
+          // Hàm để tính khoảng cách giữa hai tọa độ
+          function calculateDistance(coord1, coord2) {
+            var lat1 = coord1[1];
+            var lon1 = coord1[0];
+            var lat2 = coord2[1];
+            var lon2 = coord2[0];
 
+            var earthRadius = 6371; // Bán kính Trái Đất tính bằng kilômét
+
+            var dLat = toRadians(lat2 - lat1);
+            var dLon = toRadians(lon2 - lon1);
+
+            var a =
+              Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            var distance = earthRadius * c;
+            return distance;
+          }
+
+          // Hàm chuyển đổi độ sang radians
+          function toRadians(degrees) {
+            return degrees * (Math.PI / 180);
+          }
+          ////////////////////////
+          // Ví dụ tính khoảng cách giữa các tọa độ trong mảng coordinates
+          ///
+          var row0 = document.createElement('tr');
+          var time0 = document.createElement('td');
+          time0.textContent = data.data[0].checkin_date;
+          var km0 = document.createElement('td');
+          km0.textContent = "0.00 Km";
+          row0.appendChild(time0);
+          row0.appendChild(km0);
+
+          ///Row 2
+          var row02 = document.createElement('tr');
+          var checkin_address = document.createElement('td');
+          checkin_address.textContent = data.data[0].checkin_address;
+          checkin_address.setAttribute('style', 'border-bottom: 1px solid black;');
+          row02.appendChild(checkin_address);
+
+          table.appendChild(row0);
+          table.appendChild(row02);
+          for (var i = 0; i < data.data.length - 1; i++) {
+            var coord1 = [data.data[i].shop_long, data.data[i].shop_lat];
+            var coord2 = [data.data[i + 1].shop_long, data.data[i + 1].shop_lat];
+            var distance = calculateDistance(coord1, coord2);
+            console.log("Khoảng cách giữa", coord1, "và", coord2, "là", distance.toFixed(2), "kilômét");
+            ////Row 1
+            var row1 = document.createElement('tr');
+            var time = document.createElement('td');
+            time.textContent = data.data[i].checkin_date;
+            var km = document.createElement('td');
+            km.textContent = `${distance.toFixed(2)} Km`;
+            row1.appendChild(time);
+            row1.appendChild(km);
+
+            ///Row 2
+            var row2 = document.createElement('tr');
+            var checkin_address = document.createElement('td');
+            checkin_address.textContent = data.data[i+1].checkin_address;
+            checkin_address.setAttribute('style', 'border-bottom: 1px solid black;');
+            row2.appendChild(checkin_address);
+
+            table.appendChild(row1);
+            table.appendChild(row2);
+
+          }
+          infoContainer.appendChild(table);
           runButton.style.display = 'block';
           if (data.data.length > 0) {
             map.flyTo({
@@ -211,7 +311,7 @@
             var popup = document.getElementById("popup");
             popup.style.display = "block";
           }
-          data.data.forEach(newElement => {
+          data.data.forEach((newElement, index) => {
             var coordi = [newElement.shop_long, newElement.shop_lat];
             var evt = {
               lngLat: {
@@ -227,6 +327,10 @@
               .setLngLat([coordi[0], coordi[1]])
               .addTo(map);
             markers.push(marker);
+
+
+
+
           });
           ////update con
         },
@@ -312,7 +416,7 @@
           return `${point.lng},${point.lat}`;
           //return point.toArray().toString();
         }).join(';');
-
+        console.log(coordinates);
         routingService.setCoordinates(coordinates);
 
         runButton.style.display = 'none';
@@ -383,8 +487,8 @@
           var progress = 0;
 
           function animate() {
-            console.log(currentDistance);
-            console.log(totalDistance);
+            // console.log(currentDistance);
+            // console.log(totalDistance);
             var delta = 1;//(totalDistance/duration);
             console.log(delta);
             currentDistance += delta;
@@ -444,11 +548,11 @@
             var floorLength = Math.floor(currentLength);
             var ceilLength = Math.ceil(currentLength);
             var segmentProgress = currentLength - floorLength;
-            console.log(coordinates);
-            console.log(progress);
+            // console.log(coordinates);
+            // console.log(progress);
             var start = coordinates[floorLength];
             var end = coordinates[ceilLength];
-            console.log(coordinates);
+            // console.log(coordinates);
             var interpolatedLng = start[0] + (end[0] - start[0]) * segmentProgress;
             var interpolatedLat = start[1] + (end[1] - start[1]) * segmentProgress;
             // return [105.105298, 9.794921];

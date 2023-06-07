@@ -29,7 +29,7 @@
 
         #info {
             position: absolute;
-            top: 0;
+            top: 30;
             left: 0;
             padding: 4px;
             background: rgba(0, 0, 0, 0.5);
@@ -37,9 +37,13 @@
             font-size: 12px;
             width: 200px;
             min-height: 20px;
-            max-height: 100vh;
+            max-height: 90vh;
             /* Đặt chiều cao tùy ý */
             overflow-y: scroll;
+        }
+
+        .hidden {
+            display: none;
         }
 
         #info-online {
@@ -52,7 +56,7 @@
             font-size: 12px;
             width: 200px;
             min-height: 20px;
-            max-height: 100vh;
+            max-height: 90vh;
             /* Đặt chiều cao tùy ý */
             overflow-y: scroll;
         }
@@ -86,6 +90,18 @@
             /* Đặt chiều cao tùy ý */
 
         }
+
+        #hide-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1;
+            width: 155px;
+            background-color: white;
+            padding: 5px 10px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -98,6 +114,7 @@
     <div id="map">
 
     </div>
+
     <div id="info">
         <table>
 
@@ -144,7 +161,23 @@
             </tr>
         </table>
     </div>
+    <input id="hide-button" type="reset" onclick="toggleTable()" value="Ẩn/Hiện danh sách">
     <script>
+        function toggleTable() {
+            var table = document.getElementById("info");
+            var tableO = document.getElementById("info-online");
+            var button = document.getElementById("toggleButton");
+
+            if (table.classList.contains("hidden")) {
+                table.classList.remove("hidden");
+                tableO.classList.remove("hidden");
+                button.textContent = "Ẩn bảng";
+            } else {
+                table.classList.add("hidden");
+                tableO.classList.add("hidden");
+                button.textContent = "Hiện bảng";
+            }
+        }
         var lo = document.location.toString();
         var url = new URL(lo)
         var parent_code = url.searchParams.get('parent_code');
@@ -170,7 +203,7 @@
             var infoPlan = document.getElementById('info-plan');
             var planCell = infoPlan.querySelector('tr:nth-child(1) td');
             planCell.textContent = 'Team : ' + parent_code;
-          
+
         });
         $(document).ready(function () {
             function btnGetData() {
@@ -274,7 +307,7 @@
                                 // Tạo cột biểu tượng
                                 var iconCell = document.createElement('td');
                                 var iconImg = document.createElement('img');
-                                iconImg.src = element.avatar==null?'https://media.newweb.vn/file/fPUBghG4N/w200-h200': element.avatar;
+                                iconImg.src = element.avatar == null ? 'https://media.newweb.vn/file/fPUBghG4N/w200-h200' : element.avatar;
                                 iconImg.width = 30;
                                 iconImg.height = 30;
                                 iconCell.appendChild(iconImg);
@@ -334,7 +367,7 @@
                                 // Tạo cột biểu tượng
                                 var iconCell = document.createElement('td');
                                 var iconImg = document.createElement('img');
-                                iconImg.src = element.avatar==null?'https://media.newweb.vn/file/fPUBghG4N/w200-h200': element.avatar;
+                                iconImg.src = element.avatar == null ? 'https://media.newweb.vn/file/fPUBghG4N/w200-h200' : element.avatar;
                                 iconImg.width = 30;
                                 iconImg.height = 30;
                                 iconCell.appendChild(iconImg);
@@ -368,13 +401,13 @@
                         onlineCell.textContent = 'Số nhân viên Online :' + infoContainerOnline.getElementsByTagName('tr').length;
                         offlineCell.textContent = 'Số nhân viên Offline :' + infoContainer.getElementsByTagName('tr').length;
                         var imgs = '';
-                            map.loadImage(`https://media.newweb.vn/file/fPUBghG4N/w200-h200#marker`, (error, image) => {
-                                if (error) throw error;
-                                if (!map.hasImage(`avatarU`)) map.addImage(`avatarU`, image);
-                               // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
-                            });
+                        map.loadImage(`https://media.newweb.vn/file/fPUBghG4N/w200-h200#marker`, (error, image) => {
+                            if (error) throw error;
+                            if (!map.hasImage(`avatarU`)) map.addImage(`avatarU`, image);
+                            // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
+                        });
                         dataSale.forEach((element, i) => {
-                           
+
                             const sourceId = `${element['code']}`;
 
                             // Kiểm tra xem source đã tồn tại hay chưa

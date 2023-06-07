@@ -367,12 +367,14 @@
                         // Cập nhật giá trị online
                         onlineCell.textContent = 'Số nhân viên Online :' + infoContainerOnline.getElementsByTagName('tr').length;
                         offlineCell.textContent = 'Số nhân viên Offline :' + infoContainer.getElementsByTagName('tr').length;
-                        dataSale.forEach((element, i) => {
-                            var imgs = '';
+                        var imgs = '';
                             map.loadImage(`https://media.newweb.vn/file/fPUBghG4N/w200-h200#marker`, (error, image) => {
                                 if (error) throw error;
-                                if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
+                                if (!map.hasImage(`avatarU`)) map.addImage(`avatarU`, image);
+                               // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
                             });
+                        dataSale.forEach((element, i) => {
+                           
                             const sourceId = `${element['code']}`;
 
                             // Kiểm tra xem source đã tồn tại hay chưa
@@ -465,7 +467,7 @@
                                         'type': 'symbol',
                                         'source': `${sourceId}`,
                                         'layout': {
-                                            'icon-image': `avatar${sourceId}`,
+                                            'icon-image': `avatarU`,
                                             'icon-size': element['type'] == 'store' ? 0.2 : 0.1,
                                             'icon-optional': true,
                                             'icon-allow-overlap': true,

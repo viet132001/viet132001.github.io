@@ -35,6 +35,7 @@
       font-size: 1rem;
       cursor: pointer;
     }
+
     #hide-button {
       position: absolute;
       top: 10px;
@@ -135,13 +136,15 @@
       /* Đặt chiều cao tùy ý */
       overflow-y: scroll;
     }
+
     th {
-    text-align: center;
-  
-  }
-  .hidden {
-    display: none;
-  }
+      text-align: center;
+
+    }
+
+    .hidden {
+      display: none;
+    }
   </style>
 
 </head>
@@ -175,27 +178,29 @@
   <div id="moving-icon">
     <img src="https://media.newweb.vn/file/fPUBghG4N/w200-h200" alt="Moving icon" style="width: 32px; height: 32px;">
   </div>
- 
+
   <div id="info">
     <table>
-      <tr> <th>Danh sách</th></tr>
+      <tr>
+        <th>Danh sách</th>
+      </tr>
 
     </table>
   </div>
-  
+
   <script>
     function toggleTable() {
-    var table = document.getElementById("info");
-    var button = document.getElementById("toggleButton");
+      var table = document.getElementById("info");
+      var button = document.getElementById("toggleButton");
 
-    if (table.classList.contains("hidden")) {
-      table.classList.remove("hidden");
-      button.textContent = "Ẩn bảng";
-    } else {
-      table.classList.add("hidden");
-      button.textContent = "Hiện bảng";
+      if (table.classList.contains("hidden")) {
+        table.classList.remove("hidden");
+        button.textContent = "Ẩn bảng";
+      } else {
+        table.classList.add("hidden");
+        button.textContent = "Hiện bảng";
+      }
     }
-  }
     function closePopup() {
       var popup = document.getElementById("popup");
       popup.style.display = "none";
@@ -311,7 +316,7 @@
             ///Row 2
             var row2 = document.createElement('tr');
             var checkin_address = document.createElement('td');
-            checkin_address.textContent = data.data[i+1].checkin_address;
+            checkin_address.textContent = data.data[i + 1].checkin_address;
             checkin_address.setAttribute('style', 'border-bottom: 1px solid black;');
             row2.appendChild(checkin_address);
 
@@ -353,6 +358,16 @@
             var marker = new maplibregl.Marker()
               .setLngLat([coordi[0], coordi[1]])
               .addTo(map);
+
+
+
+            var popup = new maplibregl.Popup({ offset: 25 })
+              .setLngLat([coordi[0], coordi[1]])
+              .setHTML(`<h3> ${index==0?'Điểm đầu':(index==(data.data.length-1)?'Điểm cuối':`Điểm thứ ${index+1}`)}</h3><p> ${data.data[index].shop_name} </p>`)
+              .addTo(map);
+
+            marker.setPopup(popup);
+
             markers.push(marker);
 
 
@@ -388,7 +403,7 @@
       });
 
       runButton.addEventListener('click', function () {
-       
+
         if (markers.length < 2) return;
 
         var coordinates = points.map(function (point) {
@@ -449,60 +464,61 @@
             id: routeLayerId,
             type: 'line',
             source: routeLayerId,
+
             paint: {
               'line-color': '#4882c5',
               'line-width': 7
             }
           });
           map.loadImage(`https://media-daithuan.newweb.vn/file/G2jt1GlAb/w200-h200#marker`, (error, image) => {
-          if (error) throw error;
-          if (!map.hasImage(`icon`)) map.addImage(`icon`, image);
-        });
-        map.addSource("icon", {
-          'type': 'geojson',
-          'data': {
-            'type': 'FeatureCollection',
-            'features': [
-              {
-                'type': 'Feature',
-                'properties': {
-                  'title': 'vtmapgl',
-                  'icon': 'theatre',
-                  'description': '<strong></strong>'
-                },
-                'geometry': {
-                  'type': 'Point',
-                  'coordinates': [10, 109],
-                },
-              }
-            ]
-          }
-        })
-        map.addLayer({
-          'id': `icon`,
-          'type': 'symbol',
-          'source': `icon`,
-          'layout': {
-            'icon-image': `icon`,
-            'icon-size': 0.15,
-            'icon-optional': true,
-            'icon-allow-overlap': true,
-            'text-allow-overlap': true,
-            'text-field': `${saleman_code}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
-            'text-offset': [0, 2.25],// element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
-            'text-anchor': 'top',
-            'text-size': 12,
-            'text-max-width': 10,
-            'text-line-height': 1.2,
-          },
-          'paint': {
-            // ...các thuộc tính paint khác
-            
-            'text-color': '#DF5E36',
-            'text-halo-color': '#fff',
-            'text-halo-width': 2,
-          },
-        });
+            if (error) throw error;
+            if (!map.hasImage(`icon`)) map.addImage(`icon`, image);
+          });
+          map.addSource("icon", {
+            'type': 'geojson',
+            'data': {
+              'type': 'FeatureCollection',
+              'features': [
+                {
+                  'type': 'Feature',
+                  'properties': {
+                    'title': 'vtmapgl',
+                    'icon': 'theatre',
+                    'description': '<strong></strong>'
+                  },
+                  'geometry': {
+                    'type': 'Point',
+                    'coordinates': [10, 109],
+                  },
+                }
+              ]
+            }
+          })
+          map.addLayer({
+            'id': `icon`,
+            'type': 'symbol',
+            'source': `icon`,
+            'layout': {
+              'icon-image': `icon`,
+              'icon-size': 0.15,
+              'icon-optional': true,
+              'icon-allow-overlap': true,
+              'text-allow-overlap': true,
+              'text-field': `${saleman_code}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
+              'text-offset': [0, 2.25],// element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
+              'text-anchor': 'top',
+              'text-size': 12,
+              'text-max-width': 10,
+              'text-line-height': 1.2,
+            },
+            'paint': {
+              // ...các thuộc tính paint khác
+
+              'text-color': '#DF5E36',
+              'text-halo-color': '#fff',
+              'text-halo-width': 2,
+            },
+          });
           var startCoord = new maplibregl.LngLat(data.routes[0].geometry.coordinates[0][0], data.routes[0].geometry.coordinates[0][1]);
           var endCoord = new maplibregl.LngLat(data.routes[0].geometry.coordinates[data.routes[0].geometry.coordinates.length - 1][0], data.routes[0].geometry.coordinates[data.routes[0].geometry.coordinates.length - 1][1]);
 

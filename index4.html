@@ -95,7 +95,7 @@
         #hide-button {
             position: absolute;
             top: 150px;
-         
+
             height: 30px;
             z-index: 1;
             width: 155px;
@@ -313,7 +313,7 @@
                                 // Tạo cột biểu tượng
                                 var iconCell = document.createElement('td');
                                 var iconImg = document.createElement('img');
-                                iconImg.src = element.avatar == null ? 'https://media.newweb.vn/file/fPUBghG4N/w200-h200' : element.avatar;
+                                iconImg.src = element.avatar == null ? 'https://media-daithuan.newweb.vn/file/fPUBghG4N/w200-h200' : element.avatar;
                                 iconImg.width = 30;
                                 iconImg.height = 30;
                                 iconCell.appendChild(iconImg);
@@ -373,7 +373,7 @@
                                 // Tạo cột biểu tượng
                                 var iconCell = document.createElement('td');
                                 var iconImg = document.createElement('img');
-                                iconImg.src = element.avatar == null ? 'https://media.newweb.vn/file/fPUBghG4N/w200-h200' : element.avatar;
+                                iconImg.src = element.avatar == null ? 'https://media-daithuan.newweb.vn/file/fPUBghG4N/w200-h200' : element.avatar;
                                 iconImg.width = 30;
                                 iconImg.height = 30;
                                 iconCell.appendChild(iconImg);
@@ -398,6 +398,160 @@
                                 row.appendChild(locationCell);
 
                                 table.appendChild(row);
+                                nameCell.setAttribute('id', element.code);
+                                nameCell.addEventListener('click', function () {
+                                    // Lấy ID của ô <td> được click
+                                    var clickedTdId = this.getAttribute('id');
+                                    dataSale.forEach(function (element) {
+                                        if (element.code == clickedTdId) {
+
+                                            map.flyTo({
+                                                center: [element.long, element.lat],
+                                                speed: 1,
+                                                zoom: 14,
+                                                easing(t) {
+                                                    if (t == 1) {
+                                                        map.setPitch(30);
+                                                        endFly = 1;
+                                                    }
+                                                    return t;
+                                                }
+                                            });
+                                        }
+                                    });
+
+                                    // Xử lý sự kiện click tại đây, ví dụ:
+                                    console.log('Ô ' + clickedTdId + ' được click');
+                                    //////// 
+                                    map.loadImage(`https://media-daithuan.newweb.vn/file/fPUBghG4N#marker`, (error, image) => {
+                                        if (error) throw error;
+                                        if (!map.hasImage(`avatarU`)) map.addImage(`iconsale`, image);
+                                        // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
+                                    });
+                                    const existingSource = map.getSource(element.code);
+                                    const existingLayer = map.getLayer(element.code);
+                                    if (existingSource) {
+                                // Source đã tồn tại
+
+                                // Source đã tồn tại, thực hiện cập nhật dữ liệu cho source
+
+                              
+                                    map.getSource(sourceId).setData({
+                                        'type': 'FeatureCollection',
+                                        'features': [
+                                            {
+                                                'type': 'Feature',
+                                                'properties': {
+                                                    'title': 'vtmapgl',
+                                                    'icon': 'theatre',
+                                                    'description': '<strong>' + element['name'] + '</strong>' +
+                                                        '</br>' + ' Doanh số :' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
+                                                        '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
+                                                        '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
+                                                        '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
+                                                        '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
+                                                },
+                                                'geometry': {
+                                                    'type': 'Point',
+                                                    'coordinates': [element['long'], element['lat']],
+                                                },
+                                            }
+                                        ]
+                                    });
+                         
+
+                            } else {
+                                // Source chưa tồn tại
+                              
+                                    map.addSource(`${element.code}`, {
+                                        'type': 'geojson',
+                                        'data': {
+                                            'type': 'FeatureCollection',
+                                            'features': [
+                                                {
+                                                    'type': 'Feature',
+                                                    'properties': {
+                                                        'title': 'vtmapgl',
+                                                        'icon': 'theatre',
+                                                        'description': '<strong>' + element['name'] + '</strong>' +
+                                                            '</br>' + ' Doanh số :' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
+                                                            '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
+                                                            '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
+                                                            '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
+                                                            '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
+                                                    },
+                                                    'geometry': {
+                                                        'type': 'Point',
+                                                        'coordinates': [element['long'], element['lat']],
+                                                    },
+                                                }
+                                            ]
+                                        }
+                                    });
+                            }
+
+
+
+                            // Kiểm tra xem layer đã tồn tại hay chưa
+
+
+                            if (existingLayer) {
+                                // Layer đã tồn tại
+
+                                //  map.getLayer(sourceId).setData
+                            } else {
+                                // Layer chưa tồn tại
+                                if (map.getSource(element.code)) {
+
+                                    map.addLayer({
+                                        'id': `${element.code}`,
+                                        'type': 'symbol',
+                                        'source': `${element.code}`,
+                                        'layout': {
+                                            'icon-image': `avatarU`,
+                                            'icon-size': element['type'] == 'store' ? 0.2 : 0.1,
+                                            'icon-optional': true,
+                                            'icon-allow-overlap': true,
+                                            'text-allow-overlap': true,
+                                            'text-field': `${element['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
+                                            'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
+                                            'text-anchor': 'top',
+                                            'text-size': 12,
+                                            'text-max-width': 10,
+                                            'text-line-height': 1.2,
+                                        },
+                                        'paint': {
+                                            // ...các thuộc tính paint khác
+                                            'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
+                                            'text-halo-color': '#fff',
+                                            'text-halo-width': 2,
+                                        },
+                                    });
+                                }
+                            }
+
+
+                            map.on('click', `${sourceId}`, (e) => {
+                                // Xử lý sự kiện khi click vào marker
+                                // Copy coordinates array.
+                                const coordinates = e.features[0].geometry.coordinates.slice();
+                                const description = e.features[0].properties.description;
+
+                                // Ensure that if the map is zoomed out such that multiple
+                                // copies of the feature are visible, the popup appears
+                                // over the copy being pointed to.
+                                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                                }
+
+                                new maplibregl.Popup()
+                                    .setLngLat(coordinates)
+                                    .setHTML(description)
+                                    .addTo(map);
+                            });
+                                    ////////////-////////////////////
+
+                                });
                             }
                         });
 
@@ -407,7 +561,7 @@
                         onlineCell.textContent = 'Số nhân viên Online :' + infoContainerOnline.getElementsByTagName('tr').length;
                         offlineCell.textContent = 'Số nhân viên Offline :' + infoContainer.getElementsByTagName('tr').length;
                         var imgs = '';
-                        map.loadImage(`https://media.newweb.vn/file/fPUBghG4N/w200-h200#marker`, (error, image) => {
+                        map.loadImage(`https://media-daithuan.newweb.vn/file/fPUBghG4N#marker`, (error, image) => {
                             if (error) throw error;
                             if (!map.hasImage(`avatarU`)) map.addImage(`avatarU`, image);
                             // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);

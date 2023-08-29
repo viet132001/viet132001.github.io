@@ -478,7 +478,7 @@
                                                             '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
                                                             '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
                                                             '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
-                                                            '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
+                                                            '</br>' + ' Trạng thái :' + '<strong>' + `offline (cập nhật ${element['time_diff']})` + '</strong>'
                                                     },
                                                     'geometry': {
                                                         'type': 'Point',

@@ -28,8 +28,10 @@
     </div> -->
     <script>
         // Kiểm tra xem trình duyệt có hỗ trợ Geolocation không
+        alert('hello');
         if ("geolocation" in navigator) {
             // Lấy vị trí hiện tại của người dùng
+            alert('geolocation');
             navigator.geolocation.getCurrentPosition(function(position) {
                 var latitude = position.coords.latitude;
                 var longitude = position.coords.longitude;
@@ -37,6 +39,7 @@
                 // Hiển thị thông tin vị trí lên trang HTML
                 var locationElement = document.getElementById("location");
                 locationElement.innerHTML = "Vĩ độ: " + latitude + "<br> Kinh độ: " + longitude;
+                alert(`${latitude}`);
             });
         } else {
             // Trình duyệt không hỗ trợ Geolocation

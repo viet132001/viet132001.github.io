@@ -214,7 +214,7 @@
         $(document).ready(function () {
             function btnGetData() {
                 $.ajax({
-                    url: `https://api-daithuan.newweb.vn/v1/client/report-hierarchical-trees?parent_code=${parent_code}`,
+                    url: `https://api-daithuan.newweb.vn/v1/client/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
                     type: 'GET',
                     dataType: 'json',
                     headers: {

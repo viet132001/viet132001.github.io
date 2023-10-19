@@ -187,6 +187,7 @@
         var lo = document.location.toString();
         var url = new URL(lo)
         var parent_code = url.searchParams.get('parent_code');
+        var token = url.searchParams.get('token');
         var dataSale = [];
         var online = 0;
         var offline = 0;
@@ -214,11 +215,12 @@
         $(document).ready(function () {
             function btnGetData() {
                 $.ajax({
-                    url: `https://api-daithuan.newweb.vn/v1/client/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
+                    url : `https://api-daithuan.newweb.vn/v1/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
+                   // url: `https://api-daithuan.newweb.vn/v1/client/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
                     type: 'GET',
                     dataType: 'json',
                     headers: {
-                        'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b', // Thay thế your-token bằng token xác thực của bạn
+                        'Authorization': `Bearer ${token}`, // Thay thế your-token bằng token xác thực của bạn
                         'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
                     },
                     success: function (data) {

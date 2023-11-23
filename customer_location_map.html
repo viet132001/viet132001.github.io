@@ -430,13 +430,14 @@
                                     'type': 'geojson',
                                     'data': {
                                         'type': 'FeatureCollection',
+                                        
                                         'features': [
                                             {
                                                 'type': 'Feature',
                                                 'properties': {
                                                     'title': 'vtmapgl',
                                                     'icon': 'theatre',
-                                                    'description': '<strong>' + element['shop']['name'] + '</strong>' + '<Br/>' + imgs + '<Br/>' + ' NVKD : ' + '<strong>' + element['saleman']['name'] + '</strong>'
+                                                    'description': '<strong>' + element['shop']['name'] + '</strong>' + '<Br/>' + ' NVKD : ' + '<strong>' + element['saleman_code'] + '</strong>'
                                                         + '<Br/>' + ' SĐT : ' + '<strong>' + ((element['shop']['phone'] == null || element['shop']['phone'] == '') ? '(Không có sđt)' : element['shop']['phone']) + '</strong>'
                                                         + '<Br/>' + ' Địa chỉ : ' + '<strong>' + element['shop']['address'] + '</strong>'
                                                 },

@@ -142,7 +142,7 @@
 
         </table>
     </div>
-   
+
     <div id="info-plan">
         <table>
             <tr>
@@ -213,6 +213,7 @@
 
         });
         console.log('runing.........');
+        var markers = [];
         function getDataPlan() {
             console.log('getDataShop.........');
             first = false;
@@ -224,9 +225,9 @@
                 notVisited = 0;
                 var dataSaleCode = [];
                 map.loadImage(`https://media-daithuan.newweb.vn/file/d9hTfwCa0/w200-h200`, (error, image) => {
-                                if (error) throw error;
-                                if (!map.hasImage(`avatar`)) map.addImage(`avatar`, image);
-                            });
+                    if (error) throw error;
+                    if (!map.hasImage(`avatar`)) map.addImage(`avatar`, image);
+                });
                 dataSale.forEach(element => {
                     order += element['order_count_day'];
                     infoPlan.querySelector('tr:nth-child(4) td').textContent = 'Đơn hàng hôm nay : ' + order;
@@ -239,8 +240,8 @@
                     contentType: 'application/json', // Chỉ định loại nội dung là JSON
                     data: JSON.stringify({
                         'area': area,
-                       'parent_code':  parent_code,    
-                       'litmit': 1000,              
+                        'parent_code': parent_code,
+                        'limit': 5000,
                     }),
                     headers: {
                         'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b', // Thay thế your-token bằng token xác thực của bạn
@@ -284,7 +285,7 @@
                             var nameCell = document.createElement('td');
 
                             if (element.is_online == 1) {
-                                nameCell.textContent =element['shop']['name'] ;
+                                nameCell.textContent = element['shop']['name'];
                                 nameCell.style.color = '#00FF00';
                             } else {
                                 nameCell.textContent = element['shop_code'] + ' - ' + element['shop']['name'];
@@ -299,7 +300,7 @@
                             row.appendChild(locationCell);
 
                             table.appendChild(row);
-                            nameCell.setAttribute('id', element['shop_code'] );
+                            nameCell.setAttribute('id', element['shop_code']);
                             nameCell.addEventListener('click', function () {
                                 // Lấy ID của ô <td> được click
                                 var clickedTdId = this.getAttribute('id');
@@ -308,7 +309,7 @@
                                     if (element['shop_code'] == clickedTdId) {
 
                                         map.flyTo({
-                                            center: [element['shop']['long'] ,element['shop']['lat'] ],
+                                            center: [element['shop']['long'], element['shop']['lat']],
                                             speed: 1,
                                             zoom: 14,
                                             easing(t) {
@@ -330,11 +331,11 @@
                                 //     if (!map.hasImage(`avatarU`)) map.addImage(`iconsale`, image);
                                 //     // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
                                 // });
-                              
+
                                 // Kiểm tra xem layer đã tồn tại hay chưa
 
 
-                             
+
 
                                 // map.on('click', `${sourceId}`, (e) => {
                                 //     // Xử lý sự kiện khi click vào marker
@@ -362,162 +363,33 @@
 
 
                             infoContainer.appendChild(table);
-                        infoContainerOnline.appendChild(tableOnline);
-
-                            //////////////////////
-
-                            if (element['status'] == "CHECKOUT") {
-                                visited += 1;
-                            //    infoPlan.querySelector('tr:nth-child(2) td').textContent = 'Đã viếng thăm : ' + visited;
-                            } else {
-                                notVisited += 1;
-                                infoPlan.querySelector('tr:nth-child(3) td').textContent = 'Số khách hàng : ' + notVisited;
-                            }
-
-                            var imgs = '';
-                            // map.loadImage(`https://media-daithuan.newweb.vn/file/d9hTfwCa0/w200-h200`, (error, image) => {
-                            //     if (error) throw error;
-                            //     if (!map.hasImage(`avatar${element['shop_code']}`)) map.addImage(`avatar${element['shop_code']}`, image);
-                            // });
-                            const sourceId = `${element['shop_code']}`;
-                            console.log(element['shop_code']);
-                            // Kiểm tra xem source đã tồn tại hay chưa
-                            const existingSource = map.getSource(sourceId);
-                            const existingLayer = map.getLayer(sourceId);
-                            if (existingSource) {
-                                // Source đã tồn tại
-
-                                // Source đã tồn tại, thực hiện cập nhật dữ liệu cho source
-                                var imgs = '';
-                                element['images'].forEach((e, j) => {
-
-                                    var url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
-                                    console.log(url)
-                                    imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `
-
-                                })
-                                map.getSource(sourceId).setData({
-                                    'type': 'FeatureCollection',
-                                    'features': [
-                                        {
-                                            'type': 'Feature',
-                                            'properties': {
-                                                'title': 'vtmapgl',
-                                                'icon': 'theatre',
-                                                'description': '<strong>' + element['shop_name'] + '</strong>' + '<Br/>' + imgs + '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
-                                            },
-                                            'geometry': {
-                                                'type': 'Point',
-                                                'coordinates': [element['shop']['long'], element['shop']['lat']],
-                                            },
-                                        }
-                                    ]
-                                });
-
-                            } else {
-                                // Source chưa tồn tại
-                                var imgs = '';
-                                // if (element['shop']['avatar']) {
-                                //     element['images'].forEach((e, j) => {
-
-                                //         var url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
-                                //         console.log(url)
-                                //         imgs += `<img src="${element['shop']['avatar']}" style="width: 100px;height: 100px;"/> `
-
-                                //     })
-                                // }
-                                imgs += `<img src="${element['shop']['avatar']}" style="width: 100px;height: 100px;"/> `
-                                map.addSource(`${sourceId}`, {
-                                    'type': 'geojson',
-                                    'data': {
-                                        'type': 'FeatureCollection',
-                                        
-                                        'features': [
-                                            {
-                                                'type': 'Feature',
-                                                'properties': {
-                                                    'title': 'vtmapgl',
-                                                    'icon': 'theatre',
-                                                    'description': '<strong>' + element['shop']['name'] + '</strong>' + '<Br/>' + ' NVKD : ' + '<strong>' + element['saleman_code'] + '</strong>'
-                                                        + '<Br/>' + ' SĐT : ' + '<strong>' + ((element['shop']['phone'] == null || element['shop']['phone'] == '') ? '(Không có sđt)' : element['shop']['phone']) + '</strong>'
-                                                        + '<Br/>' + ' Địa chỉ : ' + '<strong>' + element['shop']['address'] + '</strong>'
-                                                },
-                                                'geometry': {
-                                                    'type': 'Point',
-                                                    'coordinates': [element['shop']['long'], element['shop']['lat']],
-                                                },
-                                            }
-                                        ]
-                                    }
-                                });
-                            }
+                            infoContainerOnline.appendChild(tableOnline);
 
 
-
-                            // Kiểm tra xem layer đã tồn tại hay chưa
-
-
-                            if (existingLayer) {
-                                // Layer đã tồn tại
-
-                                //  map.getLayer(sourceId).setData
-                            } else {
-                                // Layer chưa tồn tại
-                                if (map.getSource(sourceId)) {
-
-                                    map.addLayer({
-                                        'id': `${sourceId}`,
-                                        'type': 'symbol',
-                                        'source': `${sourceId}`,
-                                        'layout': {
-                                            'icon-image': `avatar`,
-                                            'icon-size': element['type'] == 'store' ? 0.2 : 0.1,
-                                            'icon-optional': true,
-                                            'icon-allow-overlap': true,
-                                            'text-allow-overlap': true,
-                                         //   'text-field': `${element['shop']['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
-                                            'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
-                                            'text-anchor': 'top',
-                                            'text-size': 12,
-                                            'text-max-width': 10,
-                                            'text-line-height': 1.2,
-                                        },
-                                        'paint': {
-                                            // ...các thuộc tính paint khác
-                                            'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
-                                            'text-halo-color': '#fff',
-                                            'text-halo-width': 2,
-                                        },
-                                    });
+                            var coordi = [element['shop']['long'], element['shop']['lat']];
+                            var evt = {
+                                lngLat: {
+                                    lng: coordi[0],
+                                    lat: coordi[1]
                                 }
-                            }
+                            };
+                        
+
+                            var marker = new maplibregl.Marker()
+                                .setLngLat([coordi[0], coordi[1]])
+                                .addTo(map);
 
 
-                            map.on('click', `${sourceId}`, (e) => {
-                                // Xử lý sự kiện khi click vào marker
-                                // Copy coordinates array.
-                                const coordinates = e.features[0].geometry.coordinates.slice();
-                                const description = e.features[0].properties.description;
 
-                                // Ensure that if the map is zoomed out such that multiple
-                                // copies of the feature are visible, the popup appears
-                                // over the copy being pointed to.
-                                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-                                }
-                                if (popup) {
-                                    popup.remove(); // Ẩn popup nếu đã tồn tại
-                                }
+                            // var popup = new maplibregl.Popup({ offset: 25 })
+                            //     .setLngLat([coordi[0], coordi[1]])
+                            //     .setHTML(`<h3> ${element['shop']['name']} </h3>`)
+                            //     .addTo(map);
 
-                                new maplibregl.Popup()
-                                    .setLngLat(coordinates)
-                                    .setHTML(description)
-                                    .addTo(map);
-                                const closeButton = popup._content.querySelector('.mapboxgl-popup-close-button');
-                                closeButton.addEventListener('click', () => {
-                                    popup.remove(); // Đóng popup khi click vào X
-                                });
-                            });
+                            // marker.setPopup(popup);
+
+                            markers.push(marker);
+
 
                         });
                     },

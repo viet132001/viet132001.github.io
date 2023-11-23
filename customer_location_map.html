@@ -222,6 +222,10 @@
                 visited = 0;
                 notVisited = 0;
                 var dataSaleCode = [];
+                map.loadImage(`https://media-daithuan.newweb.vn/file/d9hTfwCa0/w200-h200`, (error, image) => {
+                                if (error) throw error;
+                                if (!map.hasImage(`avatar`)) map.addImage(`avatar`, image);
+                            });
                 dataSale.forEach(element => {
                     order += element['order_count_day'];
                     infoPlan.querySelector('tr:nth-child(4) td').textContent = 'Đơn hàng hôm nay : ' + order;
@@ -266,7 +270,8 @@
                             // Tạo cột biểu tượng
                             var iconCell = document.createElement('td');
                             var iconImg = document.createElement('img');
-                            iconImg.src = element['shop']['avatar'] == null ? 'https://media-daithuan.newweb.vn/file/fPUBghG4N/w200-h200' : element['shop']['avatar'] ;
+                            //iconImg.src = element['shop']['avatar'] == null ? 'https://media-daithuan.newweb.vn/file/fPUBghG4N/w200-h200' : element['shop']['avatar'] ;
+                            iconImg.src = 'https://media-daithuan.newweb.vn/file/fPUBghG4N/w200-h200';
                             iconImg.width = 30;
                             iconImg.height = 30;
                             iconCell.appendChild(iconImg);
@@ -316,35 +321,35 @@
                                 // Xử lý sự kiện click tại đây, ví dụ:
                                 console.log('Ô ' + clickedTdId + ' được click');
                                 //////// 
-                                map.loadImage(`https://media-daithuan.newweb.vn/file/fPUBghG4N#marker`, (error, image) => {
-                                    if (error) throw error;
-                                    if (!map.hasImage(`avatarU`)) map.addImage(`iconsale`, image);
-                                    // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
-                                });
+                                // map.loadImage(`https://media-daithuan.newweb.vn/file/fPUBghG4N#marker`, (error, image) => {
+                                //     if (error) throw error;
+                                //     if (!map.hasImage(`avatarU`)) map.addImage(`iconsale`, image);
+                                //     // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
+                                // });
                               
                                 // Kiểm tra xem layer đã tồn tại hay chưa
 
 
                              
 
-                                map.on('click', `${sourceId}`, (e) => {
-                                    // Xử lý sự kiện khi click vào marker
-                                    // Copy coordinates array.
-                                    const coordinates = e.features[0].geometry.coordinates.slice();
-                                    const description = e.features[0].properties.description;
+                                // map.on('click', `${sourceId}`, (e) => {
+                                //     // Xử lý sự kiện khi click vào marker
+                                //     // Copy coordinates array.
+                                //     const coordinates = e.features[0].geometry.coordinates.slice();
+                                //     const description = e.features[0].properties.description;
 
-                                    // Ensure that if the map is zoomed out such that multiple
-                                    // copies of the feature are visible, the popup appears
-                                    // over the copy being pointed to.
-                                    while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                                        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-                                    }
+                                //     // Ensure that if the map is zoomed out such that multiple
+                                //     // copies of the feature are visible, the popup appears
+                                //     // over the copy being pointed to.
+                                //     while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                                //         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                                //     }
 
-                                    new maplibregl.Popup()
-                                        .setLngLat(coordinates)
-                                        .setHTML(description)
-                                        .addTo(map);
-                                });
+                                //     new maplibregl.Popup()
+                                //         .setLngLat(coordinates)
+                                //         .setHTML(description)
+                                //         .addTo(map);
+                                // });
                                 ////////////-////////////////////
 
                             });
@@ -366,10 +371,10 @@
                             }
 
                             var imgs = '';
-                            map.loadImage(`https://media-daithuan.newweb.vn/file/d9hTfwCa0/w200-h200`, (error, image) => {
-                                if (error) throw error;
-                                if (!map.hasImage(`avatar${element['shop_code']}`)) map.addImage(`avatar${element['shop_code']}`, image);
-                            });
+                            // map.loadImage(`https://media-daithuan.newweb.vn/file/d9hTfwCa0/w200-h200`, (error, image) => {
+                            //     if (error) throw error;
+                            //     if (!map.hasImage(`avatar${element['shop_code']}`)) map.addImage(`avatar${element['shop_code']}`, image);
+                            // });
                             const sourceId = `${element['shop_code']}`;
                             console.log(element['shop_code']);
                             // Kiểm tra xem source đã tồn tại hay chưa
@@ -460,7 +465,7 @@
                                         'type': 'symbol',
                                         'source': `${sourceId}`,
                                         'layout': {
-                                            'icon-image': `avatar${sourceId}`,
+                                            'icon-image': `avatar`,
                                             'icon-size': element['type'] == 'store' ? 0.2 : 0.1,
                                             'icon-optional': true,
                                             'icon-allow-overlap': true,

@@ -300,8 +300,9 @@
                             nameCell.addEventListener('click', function () {
                                 // Lấy ID của ô <td> được click
                                 var clickedTdId = this.getAttribute('id');
-                                dataSale.forEach(function (element) {
-                                    if (element.code == clickedTdId) {
+                                data.data.forEach(function (element) {
+                                    console.log('Ô zô for' + clickedTdId + ' được click');
+                                    if (element['shop_code'] == clickedTdId) {
 
                                         map.flyTo({
                                             center: [element['shop']['long'] ,element['shop']['lat'] ],

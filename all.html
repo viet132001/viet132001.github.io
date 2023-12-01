@@ -241,7 +241,7 @@
                     data: JSON.stringify({
                         'area': area,
                         'parent_code': parent_code,
-                        'limit': 5000,
+                        // 'limit': 5000,
                     }),
                     headers: {
                         'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b', // Thay thế your-token bằng token xác thực của bạn
@@ -325,42 +325,8 @@
 
                                 // Xử lý sự kiện click tại đây, ví dụ:
                                 console.log('Ô ' + clickedTdId + ' được click');
-                                //////// 
-                                // map.loadImage(`https://media-daithuan.newweb.vn/file/fPUBghG4N#marker`, (error, image) => {
-                                //     if (error) throw error;
-                                //     if (!map.hasImage(`avatarU`)) map.addImage(`iconsale`, image);
-                                //     // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
-                                // });
-
-                                // Kiểm tra xem layer đã tồn tại hay chưa
-
-
-
-
-                                // map.on('click', `${sourceId}`, (e) => {
-                                //     // Xử lý sự kiện khi click vào marker
-                                //     // Copy coordinates array.
-                                //     const coordinates = e.features[0].geometry.coordinates.slice();
-                                //     const description = e.features[0].properties.description;
-
-                                //     // Ensure that if the map is zoomed out such that multiple
-                                //     // copies of the feature are visible, the popup appears
-                                //     // over the copy being pointed to.
-                                //     while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                                //         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-                                //     }
-
-                                //     new maplibregl.Popup()
-                                //         .setLngLat(coordinates)
-                                //         .setHTML(description)
-                                //         .addTo(map);
-                                // });
-                                ////////////-////////////////////
 
                             });
-
-
-
 
                             infoContainer.appendChild(table);
                             infoContainerOnline.appendChild(tableOnline);
@@ -373,7 +339,7 @@
                                     lat: coordi[1]
                                 }
                             };
-                        
+
 
                             var marker = new maplibregl.Marker()
                                 .setLngLat([coordi[0], coordi[1]])
@@ -381,12 +347,6 @@
 
 
 
-                            // var popup = new maplibregl.Popup({ offset: 25 })
-                            //     .setLngLat([coordi[0], coordi[1]])
-                            //     .setHTML(`<h3> ${element['shop']['name']} </h3>`)
-                            //     .addTo(map);
-
-                            // marker.setPopup(popup);
 
                             markers.push(marker);
 
@@ -401,11 +361,6 @@
 
         }
         getDataPlan();
-        // function setTimeoutDataPlan() {
-        //     setTimeout(getDataPlan, 60000 * 10);
-        // }
-
-        //  $("div#info").html("<p>All new content. <em>You bet!</em></p>");
 
     </script>
     <button id="btnGetData">Gọi API</button>

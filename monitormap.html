@@ -229,7 +229,7 @@
                         console.log(data)
                         var infoPlan = document.getElementById('info-plan');
                         infoPlan.querySelector('tr:nth-child(4) td').textContent = 'Đơn hàng hôm nay : ' + data['total_order'];
-                        infoPlan.querySelector('tr:nth-child(5) td').textContent = 'Doanh số : ' + data['total_price'] + 'đ';
+                        infoPlan.querySelector('tr:nth-child(5) td').textContent = 'Doanh số : ' + data['total_price'];
                           
                         }});
             function btnGetData() {
@@ -797,7 +797,7 @@
                                 try {
                                     element['images'].forEach((e, j) => {
 
-                                        var url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
+                                        var url = `https://media.newweb.vn/file/${e['id']}`;
                                         console.log(url)
                                         imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `
 
@@ -829,7 +829,7 @@
                                 if (element['images']) {
                                     element['images'].forEach((e, j) => {
 
-                                        var url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
+                                        var url = `https://media.newweb.vn/file/${e['id']}`;
                                         console.log(url)
                                         imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `
 

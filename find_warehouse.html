@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm Vị Trí Kho Tối Ưu</title>
+    <script src="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.js"></script>
+    <link href="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            background: #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map">
+
+    </div>
+    <script>
+        var colors = [
+            '#00FF00',
+            '#0000FF',
+            '#FFFF00',
+            '#00FFFF',
+            '#FF00FF',
+            '#C0C0C0',
+            '#808080',
+            '#800000',
+            '#808000',
+            '#008000',
+            '#800080',
+            '#008080',
+            '#000080',
+            '#000000',
+            '#FFA500',
+            '#FFC0CB',
+            '#FFD700',
+        ];
+        var lo = document.location.toString();
+        var url = new URL(lo)
+        var parent_code = url.searchParams.get('parent_code');
+        var basemap = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
+        var lat = 10.760948// url.searchParams.get('lat');10.760948, 106.705611
+        var long = 106.705611//url.searchParams.get('long');
+        var map = new maplibregl.Map({
+            container: 'map',
+            center: [long, lat],
+            zoom: 6
+        });
+        var dataView;
+        basemap.addTo(map);
+        //thêm điểm trên bản đồ
+
+        map.on('zoom', updateCircleRadius);
+        const customers = [
+            // { name: 'Khách hàng 1', latitude: 20.9980, longitude: 105.4677 },
+            // { name: 'Khách hàng 2', latitude: 21.0285, longitude: 105.8542 },
+            // { name: 'Khách hàng 3', latitude: 10.752726, longitude: 106.683682 },
+            // { name: 'Khách hàng 4', latitude: 10.757095225300157, longitude: 106.68978723343145 },
+            // { name: 'Khách hàng 5', latitude: 10.754059, longitude: 106.692274 },
+            // { name: 'Khách hàng 6', latitude: 10.761900, longitude: 106.676889 },
+            // { name: 'Khách hàng 7', latitude: 10.752354, longitude: 106.671634 },
+        ];
+        $.ajax({
+            url: `https://api-daithuan.newweb.vn/v1/client/get-data-show-map`,
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json', // Chỉ định loại nội dung là JSON
+            data: JSON.stringify({
+                //'area': area,
+                'parent_code': parent_code,
+                'litmit': 1000,
+            }),
+            headers: {
+                'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b', // Thay thế your-token bằng token xác thực của bạn
+                'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
+            },
+            success: function (data) {
+
+               // console.log(data['data']);
+                data['data'].forEach(element => {
+                    var check = (element['shop'].long == null)
+                    if (check) {
+
+                    } else {
+                        if (true) {
+                            customers.push({ name: element['shop_code'], latitude: element['shop']['lat'], longitude: element['shop']['long'] })
+                        }
+
+                    }
+
+
+                    // new maplibregl.Marker(
+                    //     {
+                    //         color: colors[Math.floor(Math.random() * colors.length)],
+                    //         draggable: true
+                    //     }
+                    // )
+                    //     .setLngLat([element['shop']['long'], element['shop']['lat']])
+                    //     .addTo(map);
+                    //    console.log(element['shop_code']); 
+                });
+
+                var suitableWarehouseLocations = findSuitableWarehouseLocations(customers, maxRadius);
+
+              //  console.log('suitableWarehouseLocations2222222')
+                suitableWarehouseLocations = mergeNearbyWarehouses(suitableWarehouseLocations, 45000);
+                suitableWarehouseLocations = removeWarehouse(suitableWarehouseLocations,5)
+                dataView = suitableWarehouseLocations;
+             //   console.log(suitableWarehouseLocations);
+                map.addSource('earthquakes', {
+                    type: 'geojson',
+                    // Point to GeoJSON data. This example visualizes all M1.0+ earthquakes
+                    // from 12/22/15 to 1/21/16 as logged by USGS' Earthquake hazards program.
+                    data:
+                        'https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson',
+                    cluster: true,
+
+                    clusterMaxZoom: 14, // Max zoom to cluster points on
+                    clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+                });
+                suitableWarehouseLocations.forEach((location, index) => {
+                    calculateCenterWithDiameter(location.coveredCustomers, location.location);
+
+                    //thêm điểm màu đỏ trên bản đồ
+                    // center.latitude==NaN?center.latitude=location.location.latitude:'';
+                    // center.longitude==NaN?center.longitude=location.location.longitude:'';
+                    // new maplibregl.Marker(
+                    //     {
+                    //         color: '#FF0000',
+                    //         draggable: true
+                    //     }
+                    // )
+                    //     .setLngLat([center.longitude, center.latitude])
+                    //     .addTo(map);
+
+                    //      console.log(`Vị trí kho hàng gợi ý center: ${JSON.stringify(center)}`);
+                    // var color = colors[Math.floor(Math.random() * colors.length)];
+                    var color = '#00F7FF';
+                    location.coveredCustomers.forEach(customer => {
+                        //thêm điểm màu xanh trên bản đồ
+                        // console.log(customer);
+                        new maplibregl.Marker(
+                            {
+                                color: color,
+                                draggable: true
+
+                            }
+                        )
+                            .setLngLat([customer.longitude, customer.latitude]).setPopup(new maplibregl.Popup({ offset: 25 }) // add popups
+                                .setHTML('<h3>' + customer['name'] + '</h3><p>'+'</p>'))
+                            .addTo(map);
+
+                    });
+                   // console.log(`Vị trí kho hàng gợi ý: ${JSON.stringify(location.location)}`);
+                    warehouseInMap(location, index)
+
+                  //  console.log(`Số lượng khách hàng được phủ: ${location.customerCount} trong bán kính ${maxRadius} mét`);
+                  //  console.log(`Danh sách khách hàng được phủ: ${JSON.stringify(location.coveredCustomers)}`);
+                 //   console.log(location.coveredCustomers);
+                   // console.log('---');
+
+
+                });
+            },
+            error: function (xhr, status, error) {
+                console.log(xhr);
+            }
+        });
+        function haversineDistance(coord1, coord2) {
+            function toRadians(degrees) {
+                return degrees * (Math.PI / 180);
+            }
+            const R = 6371; // Bán kính trái đất trong kilômét
+
+            const lat1 = toRadians(coord1.latitude);
+            const lon1 = toRadians(coord1.longitude);
+            const lat2 = toRadians(coord2.latitude);
+            const lon2 = toRadians(coord2.longitude);
+
+            const dLat = lat2 - lat1;
+            const dLon = lon2 - lon1;
+
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            const distance = R * c; // Khoảng cách trong kilômét
+
+            return distance * 1000; // Chuyển đổi sang mét
+        }
+
+        function calculateCenter(points) {
+            const numPoints = points.length;
+            if (numPoints === 0) {
+                return null; // Tránh chia cho 0
+            }
+
+            if (numPoints === 1) {
+                // Nếu chỉ có một điểm, trả về tọa độ của điểm đó
+                return {
+                    latitude: points[0].latitude,
+                    longitude: points[0].longitude,
+                };
+            }
+
+            // Tính tọa độ trung tâm dựa trên số lượng điểm
+            let sumLat = 0;
+            let sumLon = 0;
+
+            for (const point of points) {
+                sumLat += parseFloat(point.latitude);
+                sumLon += parseFloat(point.longitude);
+            }
+
+
+            const center = {
+                latitude: sumLat / numPoints,
+                longitude: sumLon / numPoints,
+            };
+            return center;
+        }
+        function calculateCenterWithDiameter(coordinates, center2) {
+
+            if (coordinates.length === 0 || coordinates.length === 1) {
+                return null; // Tránh chia cho 0
+            }
+
+            const numPoints = coordinates.length;
+            let maxDistance = 0;
+            let pointA, pointB;
+
+            for (let i = 0; i < numPoints; i++) {
+                for (let j = i + 1; j < numPoints; j++) {
+                    const distance = haversineDistance(coordinates[i], coordinates[j]);
+                    if (distance > maxDistance) {
+                        maxDistance = distance;
+                        pointA = coordinates[i];
+                        pointB = coordinates[j];
+                    }
+                }
+            }
+
+            if (pointA === undefined) {
+                pointA = {
+                    latitude: 0,
+                    longitude: 0,
+                };
+            }
+            if (pointB === undefined) {
+                pointB = {
+                    latitude: 0,
+                    longitude: 0,
+                };
+            }
+
+            const center = calculateCenter(coordinates);
+            const midPoint = {
+                latitude: (pointA.latitude + pointB.latitude) / 2,
+                longitude: (pointA.longitude + pointB.longitude) / 2,
+            };
+
+            const adjustedCenter = {
+                latitude: (center.latitude + midPoint.latitude) / 2,
+                longitude: (center.longitude + midPoint.longitude) / 2,
+            };
+
+            // Kiểm tra xem có khách hàng nào thuộc nhiều hơn một kho hàng không
+            const coveredCustomerMap = new Map(); // Sử dụng Map để theo dõi khách hàng
+
+            coordinates.forEach(customer => {
+                coveredCustomerMap.set(`${customer.latitude}-${customer.longitude}`, []);
+            });
+
+            // Duyệt qua danh sách kho hàng
+            coordinates.forEach((customer, index) => {
+                const key = `${customer.latitude}-${customer.longitude}`;
+                if (coveredCustomerMap.has(key)) {
+                    coveredCustomerMap.get(key).push(index);
+                }
+            });
+
+            // Kiểm tra xem có khách hàng nào thuộc nhiều hơn một kho hàng không
+            const customersInMultipleWarehouses = Array.from(coveredCustomerMap.entries())
+                .filter(([key, warehouseIndexes]) => warehouseIndexes.length > 1)
+                .map(([key, warehouseIndexes]) => {
+                    return {
+                        key: key,
+                        warehouseIndexes: warehouseIndexes,
+                    };
+                });
+
+           // console.log('Khách hàng thuộc nhiều hơn một kho hàng:', customersInMultipleWarehouses);
+
+            return adjustedCenter;
+        }
+
+        function findSuitableWarehouseLocations(customers, maxRadius) {
+            const center = calculateCenter(customers);
+
+            // Sắp xếp khách hàng theo khoảng cách từ trung tâm tăng dần
+            const sortedCustomers = [...customers].sort((a, b) => {
+                return haversineDistance(a, center) - haversineDistance(b, center);
+            });
+
+            const warehouseLocations = [];
+            let currentRadius = 0;
+
+            while (sortedCustomers.length > 0) {
+                // Lấy khách hàng gần trung tâm nhất
+                const currentCustomer = sortedCustomers.shift();
+
+                // Tính khoảng cách từ khách hàng hiện tại đến kho hàng gần nhất
+                const distanceToNearestWarehouse = warehouseLocations.reduce((minDistance, warehouse) => {
+                    const distance = haversineDistance(currentCustomer, warehouse.location);
+                    return Math.min(minDistance, distance);
+                }, Number.MAX_SAFE_INTEGER);
+                //     console.log(currentCustomer);
+                //  const center2 = calculateCenter(currentCustomer)
+                // Nếu khoảng cách đến kho hàng gần nhất lớn hơn bán kính tối đa, tạo kho hàng mới
+                if (distanceToNearestWarehouse > maxRadius) {
+                    warehouseLocations.push({
+                        location: { latitude: currentCustomer.latitude, longitude: currentCustomer.longitude },
+                        customerCount: 1,
+                        coveredCustomers: [currentCustomer],
+                    });
+                    currentRadius = maxRadius;
+                } else {
+                    // Nếu kho hàng hiện tại vẫn còn bao phủ, tăng số lượng khách hàng được phủ và thêm vào danh sách
+                    const lastWarehouse = warehouseLocations[warehouseLocations.length - 1];
+                    lastWarehouse.customerCount++;
+                    lastWarehouse.coveredCustomers.push(currentCustomer);
+                }
+            }
+
+            return warehouseLocations;
+        }
+
+        function warehouseInMap(item, index) {
+
+           // console.log("alibaba")
+            var x = calculateCenter(item.coveredCustomers);
+            const radius = maxRadius; // Bán kính vòng tròn
+           // console.log(item);
+            new maplibregl.Marker(
+                {
+                    color: '#FF0000',
+                    draggable: true
+                }
+            )
+                .setLngLat([x.longitude, x.latitude]).setPopup(new maplibregl.Popup({ offset: 25 }) // add popups
+                                .setHTML('<h3>' + 'Kho : '+ index + '</h3><p>'+'Số lượng khách hàng dự kiến:'+ item.customerCount+'</p>'
+                                +'tọa độ :'+ item.location.latitude+',' +item.location.longitude +'</p>'))
+                            .addTo(map);
+             
+
+
+            //Vẽ vùng bao phu trên bản đồ
+            try {
+                map.addSource(`${index}`, {
+                    'type': 'geojson',
+                    'data': {
+                        'type': 'FeatureCollection',
+                        'features': [
+                            {
+                                'type': 'Feature',
+                                'properties': {
+                                    'title': 'vtmapgl',
+                                    'icon': 'theatre',
+                                },
+                                'geometry': {
+                                    'type': 'Point',
+                                    'coordinates': [x.longitude, x.latitude],
+                                },
+                            }
+                        ]
+                    }
+                });
+                const metersPerPixel = 40075016.686 / Math.pow(2, 10 + map.getZoom()); // Earth's circumference / 2^zoom
+
+                const radiusInPixels = (20000 / metersPerPixel);
+                map.addLayer({
+                    id: `${index}`,
+                    type: 'circle',
+                    source: `${index}`,
+                    paint: {
+                        'circle-color': '#11B5DA46',
+                        'circle-radius': radiusInPixels,
+                        'circle-stroke-width': 1,
+                        'circle-stroke-color': '#fff'
+                    },
+                });
+            } catch (error) {
+                console.log(error)
+            }
+
+        }
+        function mergeNearbyWarehouses(warehouseLocations, maxMergeDistance) {
+            const mergedWarehouses = [];
+
+            for (const warehouse of warehouseLocations) {
+                let merged = false;
+
+                // Check if the current warehouse can be merged with any existing merged warehouses
+                for (const mergedWarehouse of mergedWarehouses) {
+                    const distance = haversineDistance(warehouse.location, mergedWarehouse.location);
+
+                    if (distance <= maxMergeDistance) {
+                        // Merge the warehouses
+                        mergedWarehouse.customerCount += warehouse.customerCount;
+                        mergedWarehouse.coveredCustomers.push(...warehouse.coveredCustomers);
+                        merged = true;
+                        break;
+                    }
+                }
+
+                // If the warehouse cannot be merged, add it to the list of merged warehouses
+                if (!merged) {
+                    mergedWarehouses.push({ ...warehouse }); // Copy the warehouse to avoid modifying the original
+                }
+            }
+
+            return mergedWarehouses;
+        }
+        function removeWarehouse(warehouseLocations, minCustomer) {
+            var mergedWarehouses = warehouseLocations.filter(item=> item.customerCount>minCustomer);
+
+            // for (const warehouse of warehouseLocations) {
+            //     let remove = false;
+              
+               
+            //     if(warehouse.customerCount<minCustomer){
+            //         console.log('check')
+            //         console.log(warehouse);
+            //         mergedWarehouses.remove()
+            //     }
+            
+            // }
+
+            return mergedWarehouses;
+        }
+        const maxRadius = 40000; // 20 km
+        function updateCircleRadius() {
+            // Calculate meters per pixel based on the current zoom level
+            //console.log("zoo")
+            const metersPerPixel = 40075016.686 / Math.pow(2, map.getZoom());
+            const radiusInPixels = 20000000 / metersPerPixel;
+        //    console.log(radiusInPixels);
+            try {
+                dataView.forEach((location, index) => {
+                    map.setPaintProperty(`${index}`, 'circle-radius', radiusInPixels);
+                })
+            } catch (error) {
+                console.log(error)
+            }
+
+        }
+    </script>
+</body>
+
+</html>

@@ -86,7 +86,7 @@
             },
             success: function (data) {
 
-               // console.log(data['data']);
+                // console.log(data['data']);
                 data['data'].forEach(element => {
                     var check = (element['shop'].long == null)
                     if (check) {
@@ -112,11 +112,12 @@
 
                 var suitableWarehouseLocations = findSuitableWarehouseLocations(customers, maxRadius);
 
-              //  console.log('suitableWarehouseLocations2222222')
-                suitableWarehouseLocations = mergeNearbyWarehouses(suitableWarehouseLocations, 14000);
-                suitableWarehouseLocations = removeWarehouse(suitableWarehouseLocations,0)
+                //  console.log('suitableWarehouseLocations2222222')
+                suitableWarehouseLocations = mergeNearbyWarehouses(suitableWarehouseLocations, 30000);
+                suitableWarehouseLocations = mergeNearbyWarehouses(suitableWarehouseLocations, 30000);
+                suitableWarehouseLocations = removeWarehouse(suitableWarehouseLocations, 1)
                 dataView = suitableWarehouseLocations;
-             //   console.log(suitableWarehouseLocations);
+                //   console.log(suitableWarehouseLocations);
                 map.addSource('earthquakes', {
                     type: 'geojson',
                     // Point to GeoJSON data. This example visualizes all M1.0+ earthquakes
@@ -149,6 +150,11 @@
                     location.coveredCustomers.forEach(customer => {
                         //thêm điểm màu xanh trên bản đồ
                         // console.log(customer);
+                        const distanceToWarehouse = haversineDistance(customer, location.location);
+                        const distanceText = `Distance to Warehouse ${index}: ${distanceToWarehouse.toFixed(2)} meters`;
+
+                        // Add the distance information to the popup
+                        const popupContent = `<h3>${customer.name}</h3><p>${distanceText}</p>`;
                         new maplibregl.Marker(
                             {
                                 color: color,
@@ -157,17 +163,17 @@
                             }
                         )
                             .setLngLat([customer.longitude, customer.latitude]).setPopup(new maplibregl.Popup({ offset: 25 }) // add popups
-                                .setHTML('<h3>' + customer['name'] + '</h3><p>'+'</p>'))
+                                .setHTML(popupContent))
                             .addTo(map);
 
                     });
-                   // console.log(`Vị trí kho hàng gợi ý: ${JSON.stringify(location.location)}`);
+                    // console.log(`Vị trí kho hàng gợi ý: ${JSON.stringify(location.location)}`);
                     warehouseInMap(location, index)
 
-                  //  console.log(`Số lượng khách hàng được phủ: ${location.customerCount} trong bán kính ${maxRadius} mét`);
-                  //  console.log(`Danh sách khách hàng được phủ: ${JSON.stringify(location.coveredCustomers)}`);
-                 //   console.log(location.coveredCustomers);
-                   // console.log('---');
+                    //  console.log(`Số lượng khách hàng được phủ: ${location.customerCount} trong bán kính ${maxRadius} mét`);
+                    //  console.log(`Danh sách khách hàng được phủ: ${JSON.stringify(location.coveredCustomers)}`);
+                    //   console.log(location.coveredCustomers);
+                    // console.log('---');
 
 
                 });
@@ -177,6 +183,7 @@
             }
         });
         function haversineDistance(coord1, coord2) {
+          
             function toRadians(degrees) {
                 return degrees * (Math.PI / 180);
             }
@@ -196,7 +203,9 @@
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
             const distance = R * c; // Khoảng cách trong kilômét
-
+            // if(coord1.name=='MBHXDT-T166VT'){
+            //     console.log(distance * 1000)
+            // }
             return distance * 1000; // Chuyển đổi sang mét
         }
 
@@ -300,19 +309,22 @@
                     };
                 });
 
-           // console.log('Khách hàng thuộc nhiều hơn một kho hàng:', customersInMultipleWarehouses);
+            // console.log('Khách hàng thuộc nhiều hơn một kho hàng:', customersInMultipleWarehouses);
 
             return adjustedCenter;
         }
 
         function findSuitableWarehouseLocations(customers, maxRadius) {
-            const center = calculateCenter(customers);
+            const center = {
+                latitude: 10.806906,
+                longitude: 106.649476
+            }; //calculateCenter(customers);
 
             // Sắp xếp khách hàng theo khoảng cách từ trung tâm tăng dần
             const sortedCustomers = [...customers].sort((a, b) => {
                 return haversineDistance(a, center) - haversineDistance(b, center);
             });
-            // const sortedCustomers=customers;
+            // const sortedCustomers =customers;
             const warehouseLocations = [];
             let currentRadius = 0;
 
@@ -332,6 +344,7 @@
                     warehouseLocations.push({
                         location: { latitude: currentCustomer.latitude, longitude: currentCustomer.longitude },
                         customerCount: 1,
+                        warehouseID: Math.random(),
                         coveredCustomers: [currentCustomer],
                     });
                     currentRadius = maxRadius;
@@ -348,10 +361,11 @@
 
         function warehouseInMap(item, index) {
 
-           // console.log("alibaba")
+            // console.log("alibaba")
             var x = calculateCenter(item.coveredCustomers);
             const radius = maxRadius; // Bán kính vòng tròn
-           // console.log(item);
+            if (index == 27)
+                console.log(item)
             new maplibregl.Marker(
                 {
                     color: '#FF0000',
@@ -359,10 +373,10 @@
                 }
             )
                 .setLngLat([x.longitude, x.latitude]).setPopup(new maplibregl.Popup({ offset: 25 }) // add popups
-                                .setHTML('<h3>' + 'Kho : '+ index + '</h3><p>'+'Số lượng khách hàng dự kiến:'+ item.customerCount+'</p>'
-                                +'tọa độ :'+ item.location.latitude+',' +item.location.longitude +'</p>'))
-                            .addTo(map);
-             
+                    .setHTML('<h3>' + 'Kho : ' + index + '</h3><p>' + 'Số lượng khách hàng dự kiến:' + item.customerCount + '</p>'
+                        + 'tọa độ :' + item.location.latitude + ',' + item.location.longitude + '</p>'))
+                .addTo(map);
+
 
 
             //Vẽ vùng bao phu trên bản đồ
@@ -388,7 +402,7 @@
                 });
                 const metersPerPixel = 40075016.686 / Math.pow(2, 10 + map.getZoom()); // Earth's circumference / 2^zoom
 
-                const radiusInPixels = (20000 / metersPerPixel);
+                const radiusInPixels = (10000 / metersPerPixel);
                 map.addLayer({
                     id: `${index}`,
                     type: 'circle',
@@ -417,8 +431,10 @@
 
                     if (distance <= maxMergeDistance) {
                         // Merge the warehouses
+                        console.log(warehouse)
                         mergedWarehouse.customerCount += warehouse.customerCount;
                         mergedWarehouse.coveredCustomers.push(...warehouse.coveredCustomers);
+                        mergedWarehouse.location= calculateCenter(mergedWarehouse.coveredCustomers);
                         merged = true;
                         break;
                     }
@@ -433,29 +449,30 @@
             return mergedWarehouses;
         }
         function removeWarehouse(warehouseLocations, minCustomer) {
-            var mergedWarehouses = warehouseLocations.filter(item=> item.customerCount>minCustomer);
+            var mergedWarehouses = warehouseLocations.filter(item => item.customerCount > minCustomer);
 
             // for (const warehouse of warehouseLocations) {
             //     let remove = false;
-              
-               
+
+
             //     if(warehouse.customerCount<minCustomer){
             //         console.log('check')
             //         console.log(warehouse);
             //         mergedWarehouses.remove()
             //     }
-            
+
             // }
 
             return mergedWarehouses;
         }
-        const maxRadius = 35000; // 20 km
+        const maxRadius = 5000; // 20 km
+        const Radisus = 7500000;
         function updateCircleRadius() {
             // Calculate meters per pixel based on the current zoom level
             //console.log("zoo")
             const metersPerPixel = 40075016.686 / Math.pow(2, map.getZoom());
-            const radiusInPixels = 7500000 / metersPerPixel;
-        //    console.log(radiusInPixels);
+            const radiusInPixels = Radisus  / metersPerPixel;
+            //    console.log(radiusInPixels);
             try {
                 dataView.forEach((location, index) => {
                     map.setPaintProperty(`${index}`, 'circle-radius', radiusInPixels);

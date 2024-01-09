@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách khách hàng</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.js"></script>
+    <link href="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/ol@7.2.2/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.2.2/ol.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            background: #ddd;
+        }
+
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 5px;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #loadingText {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #tableContainer {
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #infoTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        #infoTable th,
+        #infoTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #infoTable th {
+            background-color: #f2f2f2;
+        }
+
+        #addWarehouseForm {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            z-index: 1001;
+            max-width: 400px;
+        }
+
+        #addWarehouseForm label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        #addWarehouseForm input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+
+        #addWarehouseForm button {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #addWarehouseForm button:hover {
+            background-color: #45a049;
+        }
+
+        #addWarehouseForm .map-hint {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #777;
+        }
+
+        #addWarehouseForm .map-hint span {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .mapboxgl-marker {
+            background-color: red;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Hover effect (nếu muốn) */
+        .mapboxgl-marker:hover {
+            background-color: orange;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="controls">
+        <label for="provinceSelect">Chọn tỉnh thành:</label>
+        <select id="provinceSelect"></select>
+        <button onclick="search()">Tìm kiếm</button>
+        <button onclick="openForm()">Tùy chỉnh tọa độ kho</button> <!-- New button to open the form -->
+    </div>
+    <div id="loadingOverlay">
+        <p id="loadingText">Đang tải dữ liệu...</p>
+    </div>
+
+    <!-- New table for displaying information -->
+    <div id="addWarehouseForm" style="display: none;">
+        <label for="warehouseName">Tên kho:</label>
+        <input type="text" id="warehouseName" name="warehouseName" required>
+
+        <label for="latitude">Latitude:</label>
+        <input type="text" id="latitude" name="latitude" required readonly disabled>
+        <span class="map-hint">Gợi ý: Chọn vị trí trên bản đồ để cập nhật Latitude <span>(Click để chọn)</span></span>
+
+        <label for="longitude">Longitude:</label>
+        <input type="text" id="longitude" name="longitude" required readonly disabled>
+        <span class="map-hint">Gợi ý: Chọn vị trí trên bản đồ để cập nhật Longitude <span>(Click để chọn)</span></span>
+
+        <button onclick="addWarehouse()">Thêm kho</button>
+        <button onclick="closeForm()">Đóng</button>
+    </div>
+    <div id="tableContainer">
+        <table id="infoTable">
+            <thead>
+                <tr>
+                    <th>Tên kho</th>
+                    <th>SL K. hàng</th>
+                    <th>Tọa độ gợi ý</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be added dynamically here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        var basemap = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
+        var map = new maplibregl.Map({
+            container: 'map',
+            zoom: 6,
+            center: [105.8002912, 20.9997219]
+        });
+        basemap.addTo(map);
+        var markers = [];
+        var warehouseMarkers = [];
+        var warehouseRadiusLayer = null;
+        var clusterLayer = null;
+        var dataU = [];
+        $.ajax({
+            url: 'https://dev-api-daithuan.newweb.vn/v0/1/cities',
+            headers: {
+                'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b'
+            },
+            success: function (data) {
+                var select = $('#provinceSelect');
+                $.each(data.data, function (index, item) {
+                    select.append($('<option>', {
+                        value: item.code,
+                        text: item.name,
+                        'data-latitude': item.latitude,
+                        'data-longitude': item.longitude
+                    }));
+                });
+            },
+            error: function (error) {
+                console.error('Error fetching data:', error);
+            }
+        });
+
+        function search() {
+            $('#loadingOverlay').show();
+            var selectedProvinceId = $('#provinceSelect').val();
+            $.ajax({
+                url: 'https://dev-api-daithuan.newweb.vn/v0/client/get-client-info-by-map?limit=99999',
+                method: 'GET',
+                data: {
+                    city_code: selectedProvinceId
+                },
+                success: function (userData) {
+                    clearMarkers();
+                    dataU = userData.data;
+                    const validUsers = userData.data.filter(user => user.lat && user.long);
+
+                    if (validUsers.length > 0) {
+                        const clusters = clusterUsers(validUsers, 20);
+                        flyToLocation(calculateAverageLocation(validUsers));
+                        addClusterMarkers(clusters);
+                    }
+
+                    $('#loadingOverlay').hide();
+                },
+                error: function (error) {
+                    console.error('Error fetching user data:', error);
+                    $('#loadingOverlay').hide();
+                }
+            });
+        }
+
+        function clearMarkers() {
+            markers.forEach(marker => marker.remove());
+            warehouseMarkers.forEach(warehouseMarker => warehouseMarker.marker.remove());
+            if (warehouseRadiusLayer) {
+                warehouseRadiusLayer.remove();
+            }
+            if (clusterLayer) {
+                clusterLayer.getSource().clear();
+            }
+
+            markers = [];
+            warehouseMarkers = [];
+
+            // Clear the table rows
+            $('#infoTable tbody').empty();
+        }
+
+        function addClusterMarkers(clusters) {
+            var index = 1;
+            clusters.forEach(cluster => {
+                const averageLocation = calculateAverageLocation(cluster.users);
+                addWarehouseMarker(averageLocation, cluster.users.length, index);
+                index++;
+                addMarkers(cluster.users);
+                // addWarehouseRadius(averageLocation, 20);
+                // addClusterPolygon(cluster.users);
+            });
+        }
+        function addMarker2(latitude, longitude) {
+            var marker = new maplibregl.Marker(
+                {
+                    color: 'blue',
+                    draggable: false
+                }
+            ).setLngLat([longitude, latitude]).addTo(map);
+
+            markers.push(marker);
+        }
+
+        function addMarkers(users) {
+            users.forEach(user => {
+                if (user.lat && user.long) {
+                    addMarker(parseFloat(user.lat), parseFloat(user.long));
+                }
+            });
+        }
+
+        function addMarker(latitude, longitude) {
+            var marker = new maplibregl.Marker().setLngLat([longitude, latitude]).addTo(map);
+            markers.push(marker);
+        }
+
+        function calculateAverageLocation(locations) {
+            const totalLat = locations.reduce((sum, loc) => sum + parseFloat(loc.lat), 0);
+            const totalLon = locations.reduce((sum, loc) => sum + parseFloat(loc.long), 0);
+            const averageLat = totalLat / locations.length;
+            const averageLon = totalLon / locations.length;
+            return { lat: averageLat, lon: averageLon };
+        }
+
+        function clusterUsers(users, radius) {
+            const clusters = [];
+
+            users.forEach(user => {
+                let addedToCluster = false;
+
+                clusters.forEach(cluster => {
+                    const center = calculateAverageLocation(cluster.users);
+
+                    const distance = calculateDistance(center, { lat: parseFloat(user.lat), lon: parseFloat(user.long) });
+
+                    if (distance <= radius) {
+                        cluster.users.push(user);
+                        addedToCluster = true;
+                    }
+                });
+
+                if (!addedToCluster) {
+                    clusters.push({ users: [user] });
+                }
+            });
+
+            return clusters;
+        }
+
+        function flyToLocation(location) {
+            console.log(location);
+            map.flyTo({
+                center: [location.lon, location.lat],
+                speed: 1,
+                zoom: 6,
+                easing(t) {
+                    if (t == 1) {
+                        map.setPitch(30);
+                    }
+                    return t;
+                }
+            });
+        }
+        function flyto(a, b) {
+            console.log(a);
+            map.flyTo({
+                center: [b, a],
+                speed: 1,
+                zoom: 10,
+                easing(t) {
+                    if (t == 1) {
+                        map.setPitch(30);
+                    }
+                    return t;
+                }
+            });
+        }
+        function addWarehouseMarker(location, userCount, index) {
+            const warehouseMarker = new maplibregl.Marker({ color: 'red', draggable: false })
+                .setLngLat([location.lon, location.lat])
+                .addTo(map);
+
+            // Add data to the table
+            const tableRow = `<tr>
+                        <td><a href="#" onclick="flyto(${location.lat},${location.lon})">${location.name || `Tên kho ${index}`}</a></td>
+                        <td>${userCount}</td>
+                        <td>${location.lat}, ${location.lon}</td>
+                     </tr>`;
+            $('#infoTable tbody').append(tableRow);
+
+            warehouseMarkers.push({ marker: warehouseMarker, userCount: userCount, index: index });
+        }
+
+
+        function addWarehouseRadius(location, radius) {
+            const circleLayer = new ol.layer.Vector({
+                source: new ol.source.Vector({
+                    features: [new ol.Feature(new ol.geom.Circle([location.lon, location.lat], radius * 1000))]
+                }),
+                style: new ol.style.Style({
+                    fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.1)' }),
+                    stroke: new ol.style.Stroke({ color: 'red', width: 2 })
+                })
+            });
+
+            // warehouseRadiusLayer = new ekmapplf.layer({ layer: circleLayer });
+            // warehouseRadiusLayer.addTo(map);
+        }
+
+        // Function to add a new warehouse
+        function addWarehouse() {
+            const warehouseName = document.getElementById("warehouseName").value;
+            const latitude = parseFloat(document.getElementById("latitude").value);
+            const longitude = parseFloat(document.getElementById("longitude").value);
+
+            if (!isNaN(latitude) && !isNaN(longitude)) {
+                const newWarehouse = {
+                    name: warehouseName,
+                    lat: latitude,
+                    lon: longitude
+                };
+
+                // Add the new warehouse to the map and update the table
+                addWarehouseMarker(newWarehouse, 0, warehouseMarkers.length + 1);
+                // flyto(latitude, longitude);
+
+                // Clear the form fields
+                document.getElementById("warehouseName").value = "";
+                document.getElementById("latitude").value = "";
+                document.getElementById("longitude").value = "";
+
+                // Close the form
+                closeForm();
+            } else {
+                alert("Please enter valid latitude and longitude.");
+            }
+        }
+        function addClusterPolygon(users) {
+            const coordinates = users.map(user => [parseFloat(user.long), parseFloat(user.lat)]);
+            coordinates.push(coordinates[0]); // Close the polygon
+            const clusterPolygon = new ol.Feature(new ol.geom.Polygon([coordinates]));
+
+            clusterLayer.getSource().addFeature(clusterPolygon);
+        }
+
+        function calculateDistance(location1, location2) {
+            const R = 6371;
+            const dLat = deg2rad(location2.lat - location1.lat);
+            const dLon = deg2rad(location2.lon - location1.lon);
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(location1.lat)) * Math.cos(deg2rad(location2.lat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c;
+            return distance;
+        }
+
+        function deg2rad(deg) {
+            return deg * (Math.PI / 180);
+        }
+        function openForm() {
+            isAddingWarehouse = true;
+            document.getElementById('addWarehouseForm').style.display = 'block';
+
+            // Add a click event listener to the map
+            map.on('click', handleMapClick);
+        }
+
+
+        function closeForm() {
+            isAddingWarehouse = false;
+            document.getElementById('addWarehouseForm').style.display = 'none';
+
+            // Remove the click event listener from the map
+            map.off('click', handleMapClick);
+        }
+
+        function addWarehouse() {
+            const warehouseName = document.getElementById("warehouseName").value;
+            const latitude = parseFloat(document.getElementById("latitude").value);
+            const longitude = parseFloat(document.getElementById("longitude").value);
+
+            if (!isNaN(latitude) && !isNaN(longitude)) {
+                const warehouseLocation = { lat: latitude, lon: longitude, name: `${warehouseName}` };
+                const existingRow = findRowByWarehouseLocation(warehouseLocation);
+
+                if (existingRow) {
+                    // Hàng đã tồn tại, cập nhật dữ liệu cho hàng đó
+                    updateTableRow(existingRow, warehouseLocation);
+                } else {
+                    // Hàng chưa tồn tại, thêm mới vào bảng
+                    addNewTableRow(warehouseLocation);
+                }
+
+                // Đặt lại form và đóng nó
+                clearForm();
+                closeForm();
+            } else {
+                alert("Chọn vị trí trên bản đồ.");
+            }
+        }
+        function findRowByWarehouseLocation(warehouseLocation) {
+            // Tìm hàng trong bảng dựa trên dữ liệu kho
+            const rows = $('#infoTable tbody tr');
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const rowData = extractDataFromRow(row);
+
+                // So sánh dữ liệu kho với dữ liệu của hàng
+                if (rowData.lat === warehouseLocation.lat && rowData.lon === warehouseLocation.lon) {
+                    return row;
+                }
+            }
+
+            return null; // Trả về null nếu không tìm thấy
+        }
+
+        function extractDataFromRow(row) {
+            // Trích xuất dữ liệu từ hàng và trả về một đối tượng
+            const columns = row.getElementsByTagName('td');
+            return {
+                name: columns[0].innerText,
+                userCount: parseInt(columns[1].innerText),
+                lat: parseFloat(columns[2].innerText.split(', ')[0]),
+                lon: parseFloat(columns[2].innerText.split(', ')[1])
+            };
+        }
+
+        function updateTableRow(row, warehouseLocation) {
+            // Cập nhật dữ liệu cho hàng đã tồn tại
+            const rowData = extractDataFromRow(row);
+            const updatedUserCount = countCustomersInRadius(warehouseLocation, dataU, 20);
+
+            // Cập nhật dữ liệu trong hàng
+            row.innerHTML = `<td><a href="#" onclick="flyto(${warehouseLocation.lat},${warehouseLocation.lon})">${warehouseLocation.name}</a></td>
+                    <td>${updatedUserCount}</td>
+                    <td>${warehouseLocation.lat}, ${warehouseLocation.lon}</td>`;
+        }
+
+        function addNewTableRow(warehouseLocation) {
+            // Thêm một hàng mới vào bảng
+            const userCount = countCustomersInRadius(warehouseLocation, dataU, 20);
+            const newRow = `<tr>
+                        <td><a href="#" onclick="flyto(${warehouseLocation.lat},${warehouseLocation.lon})">${warehouseLocation.name}</a></td>
+                        <td>${userCount}</td>
+                        <td>${warehouseLocation.lat}, ${warehouseLocation.lon}</td>
+                    </tr>`;
+            $('#infoTable tbody').append(newRow);
+
+            // Thêm marker cho kho mới
+            addMarker2(warehouseLocation.lat, warehouseLocation.lon);
+        }
+
+        function clearForm() {
+            // Đặt lại giá trị của các trường trong form
+            document.getElementById("warehouseName").value = "";
+            document.getElementById("latitude").value = "";
+            document.getElementById("longitude").value = "";
+        }
+        function handleMapClick(event) {
+            if (isAddingWarehouse) {
+                const coordinates = event.lngLat;
+                document.getElementById('latitude').value = coordinates.lat;
+                document.getElementById('longitude').value = coordinates.lng;
+                recalculateCustomersBasedOnMarkers();
+            }
+        }
+        function recalculateCustomersBasedOnMarkers() {
+            // Lấy tất cả các tọa độ kho và khách hàng từ marker và warehouseMarkers
+            const warehouseCoordinates = warehouseMarkers.map(warehouse => [warehouse.marker.getLngLat().lat, warehouse.marker.getLngLat().lng]);
+            const customerCoordinates = markers.map(marker => [marker.getLngLat().lat, marker.getLngLat().lng]);
+
+            // Kết hợp cả hai danh sách để có danh sách tất cả các tọa độ
+            const allCoordinates = [...warehouseCoordinates, ...customerCoordinates];
+
+            // Thực hiện logic tính lại số lượng khách hàng trong bán kính 20km với tất cả các tọa độ hiện tại
+            // ở đây bạn có thể sử dụng logic clusterUsers hoặc cách tính khác tùy thuộc vào yêu cầu của bạn
+            const clusters = clusterUsers(allCoordinates, 20);
+
+            // Xóa các đánh dấu và dòng trong bảng hiện tại
+            // clearMarkers();
+
+            // Cập nhật bản đồ với các clusters và thông tin khách hàng
+            if (clusters.length > 0) {
+                flyToLocation(calculateAverageLocation(allCoordinates));
+                addClusterMarkers(clusters);
+            }
+        }
+        function countCustomersInRadius(warehouse, customers, radius) {
+            const customersInRadius = customers.filter(customer => {
+                const distance = calculateDistance(
+                    {
+                        lat: warehouse.lat,
+                        lon: warehouse.lon
+                    },
+                    {
+                        lat: customer.lat,
+                        lon: customer.long
+                    }
+                );
+
+                return distance <= radius;
+            });
+            console.log(customersInRadius.length);
+            return customersInRadius.length;
+        }
+    </script>
+</body>
+
+</html>

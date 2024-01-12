@@ -48,12 +48,11 @@
             top: 0;
             left: 0;
             padding: 4px;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             font-family: 'Open Sans', sans-serif;
             font-size: 12px;
             width: 200px;
         }
-
     </style>
 </head>
 
@@ -82,12 +81,12 @@
             <tr>
                 <td><img src="https://media-daithuan.newweb.vn/file/d9hTfwCa0/w200-h200" alt="" width="30" height="30">
                 </td>
-                <td  style="color: #23EDED;font-weight: bold;">Đang Check-In</td>
+                <td style="color: #23EDED;font-weight: bold;">Đang Check-In</td>
             </tr>
             <tr>
                 <td><img src="https://media-daithuan.newweb.vn/file/d9hTfwCa0/w200-h200" alt="" width="30" height="30">
                 </td>
-                <td  style="color: #96E14A;font-weight: bold;">Đã hoàn thành</td>
+                <td style="color: #96E14A;font-weight: bold;">Đã hoàn thành</td>
             </tr>
         </table>
     </div>
@@ -149,11 +148,12 @@
             i++;
         }
         document.getElementById('info').innerHTML += `
-            <p>Số lượng NEW: ${countNew}</p>
-            <p>Số lượng CHECKIN: ${countCheckin}</p>
-            <p>Số lượng CHECKOUT: ${countCheckout}</p>
-            <p>Tổng số lượng: ${countNew+countCheckin+countCheckout}</p>
-        `;
+    <p style="color: white; padding-left: 10px;">Tổng điểm hôm nay: ${countNew + countCheckin + countCheckout}</p>
+    <p style="color: white; padding-left: 10px;">Điểm chưa viếng thăm: ${countNew}</p>
+    <p style="color: white; padding-left: 10px;">Điểm đã Checkout: ${countCheckout}</p>
+    <p style="color: white; padding-left: 10px;">Đang Checkin: ${countCheckin}</p>
+   
+`;
         /* Bản đồ nền */
         console.log(myArray[0])
         console.log(JSON.parse(`${myArray[0]}`))
@@ -207,11 +207,11 @@
 
                     var url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
                     console.log(url)
-                   if(element['tyoe']=='store'){
-                    imgs += `<img src="${url}" style="width: 150px;height: 150px;"/>`
-                   }else{
-                    imgs += `<img src=${url} alt="" width="100" height="100"> `;
-                   }
+                    if (element['tyoe'] == 'store') {
+                        imgs += `<img src="${url}" style="width: 150px;height: 150px;"/>`
+                    } else {
+                        imgs += `<img src=${url} alt="" width="100" height="100"> `;
+                    }
                 })
                 map.addSource(`${i}`, {
                     'type': 'geojson',
@@ -223,7 +223,7 @@
                                 'properties': {
                                     'title': 'vtmapgl',
                                     'icon': 'theatre',
-                                    'description': '<strong>' + element['name'] + '</strong>' +'<Br/>' +  element['address'] + '<Br/>' +'<Br/>' + imgs + '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
+                                    'description': '<strong>' + element['name'] + '</strong>' + '<Br/>' + element['address'] + '<Br/>' + '<Br/>' + imgs + '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
                                 },
                                 'geometry': {
                                     'type': 'Point',
@@ -247,7 +247,7 @@
                         'icon-allow-overlap': true,
                         'text-allow-overlap': true,
                         'text-field': `${element['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
-                        'text-offset':element['type'] == 'store' ? [0, 2.25]:[0, 1.25],
+                        'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
                         'text-anchor': 'top',
                         'text-size': 12,
                         'text-max-width': 10,

@@ -108,11 +108,21 @@
             center: [long, lat],
             zoom: 15
         });
+        var countNew = 0;
+        var countCheckin = 0;
+        var countCheckout = 0;
         const geojson = {
             'type': 'FeatureCollection',
             'features': [
                 ...dataSales.map((element, i) => {
                     console.log(element);
+                    if (element['status'] === 'NEW') {
+                        countNew++;
+                    } else if (element['status'] === 'CHECKIN') {
+                        countCheckin++;
+                    } else if (element['status'] === 'CHECKOUT') {
+                        countCheckout++;
+                    }
                     map.loadImage(`${dataSales[i]['avt']}` + '#custom_marker', (error, image) => {
                         if (error) throw error;
                         if (!map.hasImage(`avt${i}`)) map.addImage(`avt${i}`, image,
@@ -136,33 +146,14 @@
         };
         var i = 0;
         for (const marker of geojson.features) {
-            // Create a DOM element for each marker.
-
-            // const el = document.createElement('div');
-            // const width = marker.properties.iconSize[0];
-            // const height = marker.properties.iconSize[1];
-            // el.className = 'marker';
-            // el.style.backgroundImage = `url(${dataSales[i]['avt']})`;
-            // el.style.width = `10%`;
-            // el.style.height = `10%`;
-            // el.style.backgroundSize = '100%';
-
-            // el.textContent = `${dataSales[i]['is_parent']==1?'Giám sát':'sale'}  ${dataSales[i]['name']}`;
-
-            // el.addEventListener('click', () => {
-            //     window.alert(marker.properties.message);
-            //     console.log("hehe");
-            //     document.getElementById("click2").click();
-            // });
-
-            // // Add markers to the map.
-
-            // new maplibregl.Marker(el)
-            //     .setLngLat(marker.geometry.coordinates)
-            //     .addTo(map);
-
             i++;
         }
+        document.getElementById('info').innerHTML += `
+            <p>Số lượng NEW: ${countNew}</p>
+            <p>Số lượng CHECKIN: ${countCheckin}</p>
+            <p>Số lượng CHECKOUT: ${countCheckout}</p>
+            <p>Tổng số lượng: ${countNew+countCheckin+countCheckout}</p>
+        `;
         /* Bản đồ nền */
         console.log(myArray[0])
         console.log(JSON.parse(`${myArray[0]}`))
@@ -172,10 +163,6 @@
 
 
         async function getGeoJson() {
-            //   await  map.loadImage('https://api.metap.vn/images/thumb-028473-1642499172608.jpg', (error, image) => {
-            //         if (error) throw error;
-            //         if (!map.hasImage('harbor-15')) map.addImage('harbor-15', image);
-            //     });
             await map.loadImage('https://api.metap.vn/images/thumb-028473-1642499172608.jpg' + '#custom_marker', (error, image) => {
                 if (error) throw error;
                 if (!map.hasImage('harbor-15')) map.addImage('harbor-15', image,
@@ -210,22 +197,6 @@
                                 }
                             })
                         })
-                        // ...myArray.map((e) => {
-                        //     // var item = JSON.parse(`${e}`)
-
-                        //     return ({
-                        //         'type': 'Feature',
-                        //         'geometry': {
-                        //             'type': 'Point',
-                        //             'coordinates': [item[0]['lat'], item[0]['long']]
-                        //         },
-                        //         'properties': {
-                        //             "prop0": "value0",
-                        //             'title': 'vtmapgl',
-                        //             'icon': 'harbor'
-                        //         }
-                        //     })
-                        // })
                     ]
                 }
             });
@@ -252,7 +223,7 @@
                                 'properties': {
                                     'title': 'vtmapgl',
                                     'icon': 'theatre',
-                                    'description': '<strong>' + element['name'] + '</strong>' + '<Br/>' + imgs + '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
+                                    'description': '<strong>' + element['name'] + '</strong>' +'<Br/>' +  element['address'] + '<Br/>' +'<Br/>' + imgs + '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
                                 },
                                 'geometry': {
                                     'type': 'Point',

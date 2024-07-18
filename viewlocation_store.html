@@ -26,7 +26,7 @@
         #info {
             position: absolute;
             top: 10px;
-            right: 30px;
+            right: 5px;
             padding: 8px;
             background-color: rgba(255, 255, 255, 0.8);
             font-family: 'Open Sans', sans-serif;
@@ -121,8 +121,8 @@
         var start_date = url.searchParams.get('start_date');
         var end_date = url.searchParams.get('end_date');
 
-        var lat =url.searchParams.get('lat');
-        var long = url.searchParams.get('lat');
+        var lat = 10.760948// url.searchParams.get('lat');10.760948, 106.705611
+        var long = 106.705611//url.searchParams.get('long');
         var basemap = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
         var first = true;
         var visited = 0;
@@ -132,7 +132,7 @@
         var map = new maplibregl.Map({
             container: 'map',
             center: [long, lat],
-            zoom: 6
+            zoom: 10
         });
         basemap.addTo(map);
         map.on('load', () => {
@@ -162,13 +162,13 @@
                         'Custom-Header': 'Custom-Value'
                     },
                     success: function (data) {
-
+                   
                         data.data.forEach((element, i) => {
                             if (i == 0) {
                                 map.flyTo({
                                     center: [data.data[0]['shop_long'], data.data[0]['shop_lat']],
                                     speed: 1,
-                                    zoom: 8,
+                                    zoom: 10,
                                     easing(t) {
                                         if (t == 1) {
                                             map.setPitch(30);

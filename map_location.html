@@ -134,15 +134,16 @@
         var lat = 10.760948// url.searchParams.get('lat');10.760948, 106.705611
         var long = 106.705611//url.searchParams.get('long');
         try{
-             lat = url.searchParams.get('lat');
+            lat = url.searchParams.get('lat');
          long = url.searchParams.get('long');
          console.log(lat,long)
         }catch (e){
             log(lat,long)
         }
-        if(lat==null){
-             lat = 10.760948// url.searchParams.get('lat');10.760948, 106.705611
-         long = 106.705611//url.searchParams.get('long');
+        if(lat==null || lat == undefined){
+            console.log('co zô đây ko')
+         lat = 10.760948;
+         long = 106.705611;
         }
         var basemap = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
         var first = true;

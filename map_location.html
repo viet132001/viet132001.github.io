@@ -196,21 +196,21 @@
                         if (first) {
                             console.log('first');
                             console.log(dataSale);
-                            dataSale?.forEach((e,i)=>{
-                            if(i==0){
-                                map.flyTo({
-                                    center: [data.data[0]['long'], data.data[0]['lat']],
-                                    speed: 1,
-                                    zoom: 16,
-                                    easing(t) {
-                                        if (t == 1) {
-                                            map.setPitch(30);
-                                            endFly = 1;
+                            dataSale?.forEach((e, i) => {
+                                if (i == 0) {
+                                    map.flyTo({
+                                        center: [data.data[0]['long'], data.data[0]['lat']],
+                                        speed: 1,
+                                        zoom: 16,
+                                        easing(t) {
+                                            if (t == 1) {
+                                                map.setPitch(30);
+                                                endFly = 1;
+                                            }
+                                            return t;
                                         }
-                                        return t;
-                                    }
-                                });
-                            }
+                                    });
+                                }
                             });
                             getDataPlan();
                         }
@@ -252,168 +252,69 @@
                                 // Source đã tồn tại
 
                                 // Source đã tồn tại, thực hiện cập nhật dữ liệu cho source
+                                if (existingLayer) {
 
-                                if (element['is_online'] == 0) {
-                                    if (existingLayer) {
-
-                                        //      map.removeLayer(sourceId);
-                                        if (map.getSource(sourceId)) {
-
-                                            map.addLayer({
-                                                'id': `${sourceId}`,
-                                                'type': 'symbol',
-                                                'source': `${sourceId}`,
-                                                'layout': {
-                                                    'icon-image': `avatarOF`,
-                                                    'icon-size': element['type'] == 'store' ? 0.2 : 0.8,
-                                                    'icon-optional': true,
-                                                    'icon-allow-overlap': true,
-                                                    'text-allow-overlap': true,
-                                                    'text-field': `${element['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
-                                                    'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 2],
-                                                    'text-anchor': 'top',
-                                                    'text-size': 12,
-                                                    'text-max-width': 10,
-                                                    'text-line-height': 1.2,
-                                                },
-                                                'paint': {
-                                                    // ...các thuộc tính paint khác
-                                                    'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
-                                                    'text-halo-color': '#fff',
-                                                    'text-halo-width': 2,
-                                                },
-                                            });
-                                        }
-
-                                    }
-                                    // Xóa source khỏi bản đồ
-                                    //  map.removeSource(sourceId);
-                                    if (existingLayer) {
-
-                                        //      map.removeLayer(sourceId);
-                                        if (map.getSource(sourceId)) {
-
-                                            map.addLayer({
-                                                'id': `${sourceId}`,
-                                                'type': 'symbol',
-                                                'source': `${sourceId}`,
-                                                'layout': {
-                                                    'icon-image': `avatarO`,
-                                                    'icon-size': element['type'] == 'store' ? 0.2 : 0.8,
-                                                    'icon-optional': true,
-                                                    'icon-allow-overlap': true,
-                                                    'text-allow-overlap': true,
-                                                    'text-field': `${element['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
-                                                    'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 2],
-                                                    'text-anchor': 'top',
-                                                    'text-size': 12,
-                                                    'text-max-width': 10,
-                                                    'text-line-height': 1.2,
-                                                },
-                                                'paint': {
-                                                    // ...các thuộc tính paint khác
-                                                    'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
-                                                    'text-halo-color': '#fff',
-                                                    'text-halo-width': 2,
-                                                },
-                                            });
-                                        }
-
-                                    }
-
-                                } else {
-                                    map.getSource(sourceId).setData({
-                                        'type': 'FeatureCollection',
-                                        'features': [
-                                            {
-                                                'type': 'Feature',
-                                                'properties': {
-                                                    'title': 'vtmapgl',
-                                                    'icon': 'theatre',
-                                                    'description': '<strong>' + element['name'] + '</strong>' +
-                                                        '</br>' + ' Doanh số :' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
-                                                        '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
-                                                        '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
-                                                        '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
-                                                        '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
-                                                },
-                                                'geometry': {
-                                                    'type': 'Point',
-                                                    'coordinates': [element['long'], element['lat']],
-                                                },
-                                            }
-                                        ]
-                                    });
+                                    map.removeLayer(sourceId);
                                 }
-
-                            } else {
-                                // Source chưa tồn tại
-                              
-                                    map.addSource(`${sourceId}`, {
-                                        'type': 'geojson',
-                                        'data': {
-                                            'type': 'FeatureCollection',
-                                            'features': [
-                                                {
-                                                    'type': 'Feature',
-                                                    'properties': {
-                                                        'title': 'vtmapgl',
-                                                        'icon': 'theatre',
-                                                        'description': '<strong>' + element['name'] + '</strong>' +
-                                                            '</br>' + ' Doanh số :' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
-                                                            '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
-                                                            '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
-                                                            '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
-                                                            '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
-                                                    },
-                                                    'geometry': {
-                                                        'type': 'Point',
-                                                        'coordinates': [element['long'], element['lat']],
-                                                    },
-                                                }
-                                            ]
-                                        }
-                                    });
+                                // Xóa source khỏi bản đồ
+                                map.removeSource(sourceId);
                             }
-
+                            map.addSource(`${sourceId}`, {
+                                'type': 'geojson',
+                                'data': {
+                                    'type': 'FeatureCollection',
+                                    'features': [
+                                        {
+                                            'type': 'Feature',
+                                            'properties': {
+                                                'title': 'vtmapgl',
+                                                'icon': 'theatre',
+                                                'description': '<strong>' + element['name'] + '</strong>' +
+                                                    '</br>' + ' Doanh số :' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
+                                                    '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
+                                                    '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
+                                                    '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
+                                                    '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
+                                            },
+                                            'geometry': {
+                                                'type': 'Point',
+                                                'coordinates': [element['long'], element['lat']],
+                                            },
+                                        }
+                                    ]
+                                }
+                            });
 
 
                             // Kiểm tra xem layer đã tồn tại hay chưa
 
 
-                            if (existingLayer) {
-                                // Layer đã tồn tại
+                            if (map.getSource(sourceId)) {
 
-                                //  map.getLayer(sourceId).setData
-                            } else {
-                                // Layer chưa tồn tại
-                                if (map.getSource(sourceId)) {
-
-                                    map.addLayer({
-                                        'id': `${sourceId}`,
-                                        'type': 'symbol',
-                                        'source': `${sourceId}`,
-                                        'layout': {
-                                            'icon-image': element['is_online']==1? `avatarO`:`avatarOF`,
-                                            'icon-size': element['type'] == 'store' ? 0.2 : 0.8,
-                                            'icon-optional': true,
-                                            'icon-allow-overlap': true,
-                                            'text-allow-overlap': true,
-                                            'text-field': `${element['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
-                                            'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 2],
-                                            'text-anchor': 'top',
-                                            'text-size': 12,
-                                            'text-max-width': 10,
-                                            'text-line-height': 1.2,
-                                        },
-                                        'paint': {
-                                            // ...các thuộc tính paint khác
-                                            'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
-                                            'text-halo-color': '#fff',
-                                            'text-halo-width': 2,
-                                        },
-                                    });
-                                }
+                                map.addLayer({
+                                    'id': `${sourceId}`,
+                                    'type': 'symbol',
+                                    'source': `${sourceId}`,
+                                    'layout': {
+                                        'icon-image': element['is_online'] == 1 ? `avatarO` : `avatarOF`,
+                                        'icon-size': element['type'] == 'store' ? 0.2 : 0.8,
+                                        'icon-optional': true,
+                                        'icon-allow-overlap': true,
+                                        'text-allow-overlap': true,
+                                        'text-field': `${element['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
+                                        'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 2],
+                                        'text-anchor': 'top',
+                                        'text-size': 12,
+                                        'text-max-width': 10,
+                                        'text-line-height': 1.2,
+                                    },
+                                    'paint': {
+                                        // ...các thuộc tính paint khác
+                                        'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
+                                        'text-halo-color': '#fff',
+                                        'text-halo-width': 2,
+                                    },
+                                });
                             }
 
 

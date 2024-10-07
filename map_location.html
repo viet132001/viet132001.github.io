@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Thêm điểm</title>
+    <title>Vị trí</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
     <script src="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.js"></script>
     <link href="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.css" rel="stylesheet" />
@@ -149,14 +149,23 @@
 
         });
         $(document).ready(function () {
-            map.loadImage(`https://media-daithuan.newweb.vn/file/fPUBghG4N#marker`, (error, image) => {
-                            if (error) throw error;
-                            if (!map.hasImage(`avatarU`)) map.addImage(`avatarU`, image);
-                            // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
-                        });
+            map.loadImage(`../img/online.png`, (error, image) => {
+                if (error) throw error;
+                if (!map.hasImage(`avatarO`)) map.addImage(`avatarO`, image);
+                // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
+            });
+            map.loadImage(`../img/offline.png`, (error, image) => {
+                if (error) throw error;
+                if (!map.hasImage(`avatarOF`)) map.addImage(`avatarOF`, image);
+                // if (!map.hasImage(`avatar${element['code']}`)) map.addImage(`avatar${element['code']}`, image);
+            });
+            map.loadImage(`../img/logo.png`, (error, image) => {
+                if (error) throw error;
+                if (!map.hasImage(`logo`)) map.addImage(`logo`, image);
+            });
             function btnGetData() {
                 $.ajax({
-                    url: `https://api-daithuan.newweb.vn/v1/client/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
+                    url: `https://api-daithuan.newweb.vn/v1/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
                     type: 'GET',
                     dataType: 'json',
                     headers: {
@@ -187,6 +196,22 @@
                         if (first) {
                             console.log('first');
                             console.log(dataSale);
+                            dataSale?.forEach((e,i)=>{
+                            if(i==0){
+                                map.flyTo({
+                                    center: [data.data[0]['long'], data.data[0]['lat']],
+                                    speed: 1,
+                                    zoom: 16,
+                                    easing(t) {
+                                        if (t == 1) {
+                                            map.setPitch(30);
+                                            endFly = 1;
+                                        }
+                                        return t;
+                                    }
+                                });
+                            }
+                            });
                             getDataPlan();
                         }
 
@@ -210,12 +235,12 @@
 
 
 
-                               
+
                             }
                         });
 
-                     
-                      
+
+
                         dataSale.forEach((element, i) => {
 
                             const sourceId = `${element['code']}`;
@@ -231,11 +256,70 @@
                                 if (element['is_online'] == 0) {
                                     if (existingLayer) {
 
-                                        map.removeLayer(sourceId);
+                                        //      map.removeLayer(sourceId);
+                                        if (map.getSource(sourceId)) {
+
+                                            map.addLayer({
+                                                'id': `${sourceId}`,
+                                                'type': 'symbol',
+                                                'source': `${sourceId}`,
+                                                'layout': {
+                                                    'icon-image': `avatarOF`,
+                                                    'icon-size': element['type'] == 'store' ? 0.2 : 0.8,
+                                                    'icon-optional': true,
+                                                    'icon-allow-overlap': true,
+                                                    'text-allow-overlap': true,
+                                                    'text-field': `${element['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
+                                                    'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 2],
+                                                    'text-anchor': 'top',
+                                                    'text-size': 12,
+                                                    'text-max-width': 10,
+                                                    'text-line-height': 1.2,
+                                                },
+                                                'paint': {
+                                                    // ...các thuộc tính paint khác
+                                                    'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
+                                                    'text-halo-color': '#fff',
+                                                    'text-halo-width': 2,
+                                                },
+                                            });
+                                        }
+
                                     }
                                     // Xóa source khỏi bản đồ
-                                    map.removeSource(sourceId);
+                                    //  map.removeSource(sourceId);
+                                    if (existingLayer) {
 
+                                        //      map.removeLayer(sourceId);
+                                        if (map.getSource(sourceId)) {
+
+                                            map.addLayer({
+                                                'id': `${sourceId}`,
+                                                'type': 'symbol',
+                                                'source': `${sourceId}`,
+                                                'layout': {
+                                                    'icon-image': `avatarO`,
+                                                    'icon-size': element['type'] == 'store' ? 0.2 : 0.8,
+                                                    'icon-optional': true,
+                                                    'icon-allow-overlap': true,
+                                                    'text-allow-overlap': true,
+                                                    'text-field': `${element['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
+                                                    'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 2],
+                                                    'text-anchor': 'top',
+                                                    'text-size': 12,
+                                                    'text-max-width': 10,
+                                                    'text-line-height': 1.2,
+                                                },
+                                                'paint': {
+                                                    // ...các thuộc tính paint khác
+                                                    'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
+                                                    'text-halo-color': '#fff',
+                                                    'text-halo-width': 2,
+                                                },
+                                            });
+                                        }
+
+                                    }
 
                                 } else {
                                     map.getSource(sourceId).setData({
@@ -264,7 +348,7 @@
 
                             } else {
                                 // Source chưa tồn tại
-                                if (element['is_online'] != 0)
+                              
                                     map.addSource(`${sourceId}`, {
                                         'type': 'geojson',
                                         'data': {
@@ -310,13 +394,13 @@
                                         'type': 'symbol',
                                         'source': `${sourceId}`,
                                         'layout': {
-                                            'icon-image': `avatarU`,
-                                            'icon-size': element['type'] == 'store' ? 0.2 : 0.1,
+                                            'icon-image': element['is_online']==1? `avatarO`:`avatarOF`,
+                                            'icon-size': element['type'] == 'store' ? 0.2 : 0.8,
                                             'icon-optional': true,
                                             'icon-allow-overlap': true,
                                             'text-allow-overlap': true,
                                             'text-field': `${element['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
-                                            'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
+                                            'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 2],
                                             'text-anchor': 'top',
                                             'text-size': 12,
                                             'text-max-width': 10,
@@ -333,7 +417,7 @@
                             }
 
 
-                          
+
                         });
 
                     },
@@ -356,8 +440,8 @@
                 notVisited = 0;
                 var dataSaleCode = [];
                 dataSale.forEach(element => {
-                    order += element['order_count_day'];
-                    infoPlan.querySelector('tr:nth-child(4) td').textContent = 'Đơn hàng hôm nay : ' + order;
+                    // order += element['order_count_day'];
+                    //  infoPlan.querySelector('tr:nth-child(4) td').textContent = 'Đơn hàng hôm nay : ' + order;
                     dataSaleCode.push(element['code']);
                 });
                 $.ajax({
@@ -389,21 +473,17 @@
                                 });
                             }
                         }
-                        console.log(data);
                         data.data.forEach((element, i) => {
-                            if (element['status'] == "CHECKOUT") {
-                                visited += 1;
-                                infoPlan.querySelector('tr:nth-child(2) td').textContent = 'Đã viếng thăm : ' + visited;
-                            } else {
-                                notVisited += 1;
-                                infoPlan.querySelector('tr:nth-child(3) td').textContent = 'Chưa viếng thăm : ' + notVisited;
-                            }
+                            // if (element['status'] == "CHECKOUT") {
+                            //     visited += 1;
+                            //     infoPlan.querySelector('tr:nth-child(2) td').textContent = 'Đã viếng thăm : ' + visited;
+                            // } else {
+                            //     notVisited += 1;
+                            //     infoPlan.querySelector('tr:nth-child(3) td').textContent = 'Chưa viếng thăm : ' + notVisited;
+                            // }
 
                             var imgs = '';
-                            map.loadImage(`https://media-daithuan.newweb.vn/file/d9hTfwCa0/w200-h200`, (error, image) => {
-                                if (error) throw error;
-                                if (!map.hasImage(`avatar${element['shop_code']}`)) map.addImage(`avatar${element['shop_code']}`, image);
-                            });
+
                             const sourceId = `${element['shop_code']}`;
 
                             // Kiểm tra xem source đã tồn tại hay chưa
@@ -414,7 +494,7 @@
 
                                 // Source đã tồn tại, thực hiện cập nhật dữ liệu cho source
                                 var imgs = '';
-                                element['images'].forEach((e, j) => {
+                                element['images']?.forEach((e, j) => {
 
                                     var url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
                                     console.log(url)
@@ -491,15 +571,15 @@
                                         'type': 'symbol',
                                         'source': `${sourceId}`,
                                         'layout': {
-                                            'icon-image': `avatar${sourceId}`,
-                                            'icon-size': element['type'] == 'store' ? 0.2 : 0.1,
+                                            'icon-image': `logo`,
+                                            'icon-size': 0.3,
                                             'icon-optional': true,
                                             'icon-allow-overlap': true,
                                             'text-allow-overlap': true,
                                             'text-field': `${element['shop_name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
-                                            'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 1.25],
+                                            'text-offset': [0, 2],
                                             'text-anchor': 'top',
-                                            'text-size': 12,
+                                            'text-size': 5,
                                             'text-max-width': 10,
                                             'text-line-height': 1.2,
                                         },

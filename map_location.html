@@ -301,7 +301,7 @@
                                         'icon-optional': true,
                                         'icon-allow-overlap': true,
                                         'text-allow-overlap': true,
-                                        'text-field': `${element['name']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
+                                        'text-field': `  ${element['is_online']==1?element['name']:element['name']+ ' '+element['time_diff']}`, // `${element['is_parent'] == 1 ? 'Giám sát' : 'sale'} ${element['name']}`,
                                         'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 2],
                                         'text-anchor': 'top',
                                         'text-size': 12,

@@ -140,7 +140,7 @@
         }catch (e){
             log(lat,long)
         }
-        if(lat.toString()=='null' || lat.toString() == 'undefined'){
+        if(lat==null || lat.toString()=='null' || lat.toString() == 'undefined'){
             console.log('co zô đây ko')
          lat = 10.760948;
          long = 106.705611;
@@ -271,6 +271,7 @@
                                 // Xóa source khỏi bản đồ
                                 map.removeSource(sourceId);
                             }
+                            var stt =  element['is_online']==1? 'Đang online': element['time_diff']
                             map.addSource(`${sourceId}`, {
                                 'type': 'geojson',
                                 'data': {
@@ -282,11 +283,13 @@
                                                 'title': 'vtmapgl',
                                                 'icon': 'theatre',
                                                 'description': '<strong>' + element['name'] + '</strong>' +
-                                                    '</br>' + ' Doanh số :' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
-                                                    '</br>' + ' Tổng số đơn :' + '<strong>' + element['order_count'] + '</strong>' +
-                                                    '</br>' + ' Đơn hàng hôm nay :' + '<strong>' + element['order_count_day'] + '</strong>' +
-                                                    '</br>' + ' Viếng thăm hôm nay :' + '<strong>' + element['total_visit_day'] + '</strong>' +
-                                                    '</br>' + ' Trạng thái :' + '<strong>' + 'Đang online' + '</strong>'
+                                                '</br>' + ' Thiết bị : ' + '<strong>' + element['device_name'] + '</strong>' +
+                                                    '</br>' + ' Doanh số tháng: ' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
+                                                    '</br>' + ' Doanh số ngày: ' + '<strong>' + element['total_sale_day_formatted'] + '</strong>' +
+                                                    '</br>' + ' Tổng số đơn : ' + '<strong>' + element['order_count'] + '</strong>' +
+                                                    '</br>' + ' Đơn hàng hôm nay : ' + '<strong>' + element['order_count_day'] + '</strong>' +
+                                                    '</br>' + ' Viếng thăm hôm nay : ' + '<strong>' + element['total_visit_day'] + '</strong>' +
+                                                    '</br>' + ' Trạng thái : ' + '<strong>' + stt+ '</strong>'
                                             },
                                             'geometry': {
                                                 'type': 'Point',
@@ -327,6 +330,31 @@
                                         'text-halo-width': 2,
                                     },
                                 });
+                                map.on('click', `${sourceId}`, (e) => {
+                                // Xử lý sự kiện khi click vào marker
+                                // Copy coordinates array.
+                                const coordinates = e.features[0].geometry.coordinates.slice();
+                                const description = e.features[0].properties.description;
+
+                                // Ensure that if the map is zoomed out such that multiple
+                                // copies of the feature are visible, the popup appears
+                                // over the copy being pointed to.
+                                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                                }
+                                if (popup) {
+                                    popup.remove(); // Ẩn popup nếu đã tồn tại
+                                }
+
+                                new maplibregl.Popup()
+                                    .setLngLat(coordinates)
+                                    .setHTML(description)
+                                    .addTo(map);
+                                const closeButton = popup._content.querySelector('.mapboxgl-popup-close-button');
+                                closeButton.addEventListener('click', () => {
+                                    popup.remove(); // Đóng popup khi click vào X
+                                });
+                            });
                             }
 
 

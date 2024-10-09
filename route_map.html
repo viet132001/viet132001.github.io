@@ -136,12 +136,13 @@
         #info {
             position: absolute;
             top: 0;
-            right: 15px;
+            right: 1px;
             padding: 4px;
             background: rgb(254, 254, 254);
             font-family: 'Open Sans', sans-serif;
             font-size: 12px;
-            width: 400px;
+            width: 350px;
+            min-width: 320px;
             min-height: 20px;
             max-height: 80vh;
             /* Đặt chiều cao tùy ý */
@@ -191,7 +192,7 @@
             text-align: center;
 
         }
-
+      
         .hidden {
             display: none;
         }
@@ -278,8 +279,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>
-                        <span class="icon location"></span> Vị trí điểm bán đã check-in
+                    <td style="display: flex; align-items: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="20" height="20" fill="#5ca0e0">
+                            <path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/>
+                        </svg>
+                        <span style="margin-left: 8px;">Vị trí điểm bán đã check-in</span>
                     </td>
                 </tr>
             </tbody>
@@ -296,15 +300,17 @@
 
     <script>
         function toggleTable() {
-            console.log(1321)
             var table = document.getElementById("note");
+            var table2 = document.getElementById("info");
             var button = document.getElementById("toggleButton");
 
             if (table.classList.contains("hidden")) {
                 table.classList.remove("hidden");
+                table2.classList.remove("hidden");
                 //button.textContent = "Ẩn bảng";
             } else {
                 table.classList.add("hidden");
+                table2.classList.add("hidden");
                 //  button.textContent = "Hiện bảng";
             }
         }
@@ -356,11 +362,11 @@
                 if (markers.length < 2) return;
 
                 var coordinates = points.map(function (point) {
-                    console.log(point);
+                   // console.log(point);
                     return `${point.lng},${point.lat}`;
                     //return point.toArray().toString();
                 }).join(';');
-                console.log(coordinates);
+              //  console.log(coordinates);
                 routingService.setCoordinates(coordinates);
 
                 //runButton.style.display = 'none';
@@ -386,7 +392,7 @@
                 routingService.getRoute(paramRoute, function (error, data) {
                     runIcon.style.display = 'none';
                     movingIcon.style.display = 'block';
-                    console.log(data);
+                   // console.log(data);
                     if (error) {
                         console.error(error);
                         return;
@@ -435,7 +441,7 @@
                         // console.log(currentDistance);
                         // console.log(totalDistance);
                         var delta = 1;//(totalDistance/duration);
-                        console.log(delta);
+                       // console.log(delta);
                         currentDistance += delta;
 
                         progress = currentDistance / totalDistance;
@@ -494,7 +500,7 @@
                     }
                 });
             }
-           
+
             $.ajax({
                 url: `https://api-daithuan.newweb.vn/v1/client/get-visit-history?saleman_code=${saleman_code}&from=${date}&to=${date}`,
                 type: 'GET',
@@ -504,7 +510,7 @@
                     'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
                 },
                 success: function (data) {
-                    console.log(data);
+                  //  console.log(data);
                     var infoContainer = document.getElementById('info');
                     var table = document.createElement('table');
                     // Hàm để tính khoảng cách giữa hai tọa độ
@@ -557,7 +563,7 @@
                         var coord1 = [data.data[i].checkin_long, data.data[i].checkin_lat];
                         var coord2 = [data.data[i + 1].checkin_long, data.data[i + 1].checkin_lat];
                         var distance = calculateDistance(coord1, coord2);
-                        console.log("Khoảng cách giữa", coord1, "và", coord2, "là", distance.toFixed(2), "kilômét");
+                     
                         ////Row 1
                         var row1 = document.createElement('tr');
                         var time = document.createElement('td');
@@ -571,7 +577,7 @@
                         var row2 = document.createElement('tr');
                         var checkin_address = document.createElement('td');
                         checkin_address.textContent = data.data[i + 1].checkin_address;
-                        checkin_address.setAttribute('style', 'border-bottom: 1px solid black;');
+                        checkin_address.setAttribute('style', 'border-bottom: 1px solid black; w');
                         row2.appendChild(checkin_address);
 
                         table.appendChild(row1);
@@ -643,11 +649,11 @@
                 // console.log(points2)
                 // return;
                 var coordinates = points2.map(function (point) {
-                    console.log(point);
+                  //  console.log(point);
                     return `${point.lng},${point.lat}`;
                     //return point.toArray().toString();
                 }).join(';');
-                console.log(coordinates);
+               // console.log(coordinates);
                 routingService.setCoordinates(coordinates);
 
                 // runButton2.style.display = 'none';
@@ -720,7 +726,7 @@
                         // console.log(currentDistance);
                         // console.log(totalDistance);
                         var delta = 1;//(totalDistance/duration);
-                        console.log(delta);
+                      //  console.log(delta);
                         currentDistance += delta;
 
                         progress = currentDistance / totalDistance;
@@ -780,7 +786,7 @@
                 });
             }
 
-         
+
             $.ajax({
                 url: `https://api-daithuan.newweb.vn/v0/user-device-histories?user_code=${saleman_code}&from=${date} 00:00:00&to=${date} 23:59:59`,
                 type: 'GET',
@@ -790,10 +796,22 @@
                     'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
                 },
                 success: function (data) {
-                    console.log(data);
-                    //   var infoContainer = document.getElementById('info');
-                    //   var table = document.createElement('table');
-                    // Hàm để tính khoảng cách giữa hai tọa độ
+                  
+                    const filteredData = [];
+                    const timeLimit = 5 * 60 * 1000; // 5 phút tính bằng milliseconds
+
+                    data.forEach((item, index) => {
+                        if (index === 0) {
+                            filteredData.push(item); // Thêm phần tử đầu tiên
+                        } else {
+                            const lastAdded = new Date(filteredData[filteredData.length - 1].created_at);
+                            const current = new Date(item.created_at);
+                            if (current - lastAdded > timeLimit) {
+                                filteredData.push(item);
+                            }
+                        }
+                    });
+                    data = filteredData;
                     function calculateDistance(coord1, coord2) {
                         var lat1 = coord1[1];
                         var lon1 = coord1[0];

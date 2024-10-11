@@ -151,18 +151,16 @@
         var notVisited = 0;
         var order = 0;
         let popup = null;
-       
-      
-        $(document).ready(function () {
-            var map = new maplibregl.Map({
+        var map = new maplibregl.Map({
             container: 'map',
             center: [long, lat],
             zoom: 10
         });
         basemap.addTo(map);
-            map.on('load', () => {
+        map.on('load', () => {
 
-            });
+        });
+        $(document).ready(function () {
             map.loadImage(`../img/online.png`, (error, image) => {
                 if (error) throw error;
                 if (!map.hasImage(`avatarO`)) map.addImage(`avatarO`, image);
@@ -177,6 +175,8 @@
                 if (error) throw error;
                 if (!map.hasImage(`logo`)) map.addImage(`logo`, image);
             });
+            const mapDiv = document.getElementById("map");
+            mapDiv.style.width = "100%";
             function btnGetData() {
                 $.ajax({
                     url: `https://api-daithuan.newweb.vn/v1/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,

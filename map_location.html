@@ -151,14 +151,15 @@
         var notVisited = 0;
         var order = 0;
         let popup = null;
-        var map = new maplibregl.Map({
+       
+      
+        $(document).ready(function () {
+            var map = new maplibregl.Map({
             container: 'map',
             center: [long, lat],
             zoom: 10
         });
         basemap.addTo(map);
-      
-        $(document).ready(function () {
             map.on('load', () => {
 
             });

@@ -157,10 +157,11 @@
             zoom: 10
         });
         basemap.addTo(map);
-        map.on('load', () => {
-
-        });
+      
         $(document).ready(function () {
+            map.on('load', () => {
+
+            });
             map.loadImage(`../img/online.png`, (error, image) => {
                 if (error) throw error;
                 if (!map.hasImage(`avatarO`)) map.addImage(`avatarO`, image);

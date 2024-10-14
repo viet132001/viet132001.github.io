@@ -579,7 +579,11 @@
                         km.textContent = `${distance.toFixed(2)} Km`;
                         row1.appendChild(time);
                         row1.appendChild(km);
-
+                        ////
+                        var row01  = document.createElement('tr');
+                    var shopname = document.createElement('td');
+                    shopname.textContent = data.data[i+1].shop_name;
+                    row01.appendChild(shopname);
                         ///Row 2
                         var row2 = document.createElement('tr');
                         var checkin_address = document.createElement('td');
@@ -591,6 +595,7 @@
                         row2.appendChild(checkin_address);
 
                         table.appendChild(row1);
+                        table.appendChild(row01);
                         table.appendChild(row2);
 
                     }

@@ -192,7 +192,7 @@
             text-align: center;
 
         }
-      
+
         .hidden {
             display: none;
         }
@@ -206,7 +206,7 @@
         }
 
         .blue {
-            background-color: blue;
+            background-color: rgb(248, 10, 10);
         }
 
         .green {
@@ -270,18 +270,20 @@
             <tbody>
                 <tr>
                     <td>
-                        <span class="icon blue"></span> Đường đi tối ưu
+                        &nbsp; <span class="icon blue"></span> Đường đi tối ưu
                     </td>
                 </tr>
                 <tr>
                     <td>
-                        <span class="icon green"></span> Đường đi thực tế
+                        &nbsp; <span class="icon green"></span> Đường đi thực tế
                     </td>
                 </tr>
                 <tr>
                     <td style="display: flex; align-items: center;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="20" height="20" fill="#5ca0e0">
-                            <path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/>
+                        &nbsp;
+                        <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="10" cy="10" r="10" fill="yellow" />
+                            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="12" fill="black">1</text>
                         </svg>
                         <span style="margin-left: 8px;">Vị trí điểm bán đã check-in</span>
                     </td>
@@ -362,11 +364,11 @@
                 if (markers.length < 2) return;
 
                 var coordinates = points.map(function (point) {
-                   // console.log(point);
+                    // console.log(point);
                     return `${point.lng},${point.lat}`;
                     //return point.toArray().toString();
                 }).join(';');
-              //  console.log(coordinates);
+                //  console.log(coordinates);
                 routingService.setCoordinates(coordinates);
 
                 //runButton.style.display = 'none';
@@ -392,7 +394,7 @@
                 routingService.getRoute(paramRoute, function (error, data) {
                     runIcon.style.display = 'none';
                     movingIcon.style.display = 'block';
-                   // console.log(data);
+                    // console.log(data);
                     if (error) {
                         console.error(error);
                         return;
@@ -421,7 +423,7 @@
                         source: routeLayerId,
 
                         paint: {
-                            'line-color': '#4882c5',
+                            'line-color': '#FC200CFF',
                             'line-width': 4
                         }
                     });
@@ -441,7 +443,7 @@
                         // console.log(currentDistance);
                         // console.log(totalDistance);
                         var delta = 1;//(totalDistance/duration);
-                       // console.log(delta);
+                        // console.log(delta);
                         currentDistance += delta;
 
                         progress = currentDistance / totalDistance;
@@ -510,7 +512,7 @@
                     'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
                 },
                 success: function (data) {
-                  //  console.log(data);
+                    //  console.log(data);
                     var infoContainer = document.getElementById('info');
                     var table = document.createElement('table');
                     // Hàm để tính khoảng cách giữa hai tọa độ
@@ -549,7 +551,11 @@
                     km0.textContent = "0.00 Km";
                     row0.appendChild(time0);
                     row0.appendChild(km0);
-
+                    ////
+                    var row01  = document.createElement('tr');
+                    var shopname = document.createElement('td');
+                    shopname.textContent = data.data[0].shop_name;
+                    row01.appendChild(shopname);
                     ///Row 2
                     var row02 = document.createElement('tr');
                     var checkin_address = document.createElement('td');
@@ -558,12 +564,13 @@
                     row02.appendChild(checkin_address);
 
                     table.appendChild(row0);
+                    table.appendChild(row01);
                     table.appendChild(row02);
                     for (var i = 0; i < data.data.length - 1; i++) {
                         var coord1 = [data.data[i].checkin_long, data.data[i].checkin_lat];
                         var coord2 = [data.data[i + 1].checkin_long, data.data[i + 1].checkin_lat];
                         var distance = calculateDistance(coord1, coord2);
-                     
+
                         ////Row 1
                         var row1 = document.createElement('tr');
                         var time = document.createElement('td');
@@ -576,8 +583,11 @@
                         ///Row 2
                         var row2 = document.createElement('tr');
                         var checkin_address = document.createElement('td');
+                        var shop_name = document.createElement('td');
                         checkin_address.textContent = data.data[i + 1].checkin_address;
+                      
                         checkin_address.setAttribute('style', 'border-bottom: 1px solid black; w');
+                      
                         row2.appendChild(checkin_address);
 
                         table.appendChild(row1);
@@ -614,19 +624,40 @@
                         points.push(
                             evt.lngLat
                         );
-
-                        var marker = new maplibregl.Marker()
+                        var markerElement = document.createElement('div');
+                        markerElement.innerHTML = `
+    <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="25" cy="25" r="20" fill="yellow" />
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="16" fill="black">${index+1}</text>
+    </svg>
+`;
+                        var marker = new maplibregl.Marker(markerElement)
                             .setLngLat([coordi[0], coordi[1]])
                             .addTo(map);
 
 
+                        var imgs = '';
+                        data.data[index]['images']?.forEach((e, j) => {
 
+                            var url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
+                            console.log(url)
+                            imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `
+
+                        })
                         var popup = new maplibregl.Popup({ offset: 25 })
                             .setLngLat([coordi[0], coordi[1]])
-                            .setHTML(`<h3> ${index == 0 ? 'Điểm đầu' : (index == (data.data.length - 1) ? 'Điểm cuối' : `Điểm thứ ${index + 1}`)}</h3><p> ${data.data[index].shop_name} </p>`)
+                            .setHTML(`<h3> ${index == 0 ? 'Điểm đầu' : (index == (data.data.length - 1) ? 'Điểm cuối' : `Điểm thứ ${index + 1}`)}</h3><p> ${data.data[index].shop_name} </p>`+ `${data.data[index].shop_address}` + '<Br/>'   + imgs + '<Br/>' + ' Check-in : ' + '<strong>' + data.data[index]['checkin_date'] + '</strong>'
+                                + '<Br/>' + ' Check-out : ' + '<strong>' + data.data[index]['checkout_date'] + '</strong>'
+                            )
                             .addTo(map);
+                        marker.getElement().addEventListener('mouseenter', () => {
+                            popup.setLngLat(marker.getLngLat()).addTo(map);
+                        });
 
-                        marker.setPopup(popup);
+                        marker.getElement().addEventListener('mouseleave', () => {
+                            popup.remove();
+                        });
+                        popup.remove();
 
                         markers.push(marker);
 
@@ -649,11 +680,11 @@
                 // console.log(points2)
                 // return;
                 var coordinates = points2.map(function (point) {
-                  //  console.log(point);
+                    //  console.log(point);
                     return `${point.lng},${point.lat}`;
                     //return point.toArray().toString();
                 }).join(';');
-               // console.log(coordinates);
+                // console.log(coordinates);
                 routingService.setCoordinates(coordinates);
 
                 // runButton2.style.display = 'none';
@@ -726,7 +757,7 @@
                         // console.log(currentDistance);
                         // console.log(totalDistance);
                         var delta = 1;//(totalDistance/duration);
-                      //  console.log(delta);
+                        //  console.log(delta);
                         currentDistance += delta;
 
                         progress = currentDistance / totalDistance;
@@ -796,7 +827,7 @@
                     'Custom-Header': 'Custom-Value' // Thêm tiêu đề tùy chỉnh
                 },
                 success: function (data) {
-                  
+
                     const filteredData = [];
                     const timeLimit = 5 * 60 * 1000; // 5 phút tính bằng milliseconds
 

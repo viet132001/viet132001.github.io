@@ -93,21 +93,65 @@
 
         }
 
+      
+        #info {
+            position: absolute;
+            top: 0;
+            right: 1px;
+            padding: 4px;
+            background: rgb(254, 254, 254);
+            font-family: 'Open Sans', sans-serif;
+            font-size: 12px;
+            width: 350px;
+            min-width: 320px;
+            min-height: 20px;
+            max-height: 80vh;
+            /* Đặt chiều cao tùy ý */
+            overflow-y: scroll;
+        }
+        
         #hide-button {
             position: absolute;
-            top: 150px;
-
-            height: 30px;
+            top: 10px;
+            left: 10px;
             z-index: 1;
             width: 155px;
             background-color: white;
             padding: 5px 10px;
             font-size: 1rem;
             cursor: pointer;
-            transform: rotate(-90deg);
-            /* Xoay nút -90 độ để nó nằm thẳng xuống */
-            transform-origin: top left;
-            /* Đặt điểm xoay là góc trái phía trên */
+        }   
+        #hide-button {
+            background: linear-gradient(to right, #4e8bff, #024da3);
+            /* Gradient từ xanh sáng sang xanh đậm */
+            color: white;
+            /* Màu chữ */
+            border: none;
+            /* Không có viền */
+            border-radius: 5px;
+            /* Bo góc */
+            padding: 10px 15px;
+            /* Khoảng cách bên trong */
+            font-size: 14px;
+            /* Kích thước chữ */
+            cursor: pointer;
+            /* Con trỏ khi hover */
+            transition: background 0.3s;
+            /* Hiệu ứng chuyển đổi */
+        }
+        #note {
+            position: absolute;
+            top: 0;
+            left: 180px;
+            padding: 4px;
+            background: rgb(254, 254, 254);
+            font-family: 'Open Sans', sans-serif;
+            font-size: 12px;
+            width: 230px;
+            min-height: 20px;
+            max-height: 80vh;
+            /* Đặt chiều cao tùy ý */
+            overflow-y: scroll;
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -117,14 +161,52 @@
 </head>
 
 <body>
-
+  
     <div id="map">
-
+        <input id="hide-button" type="reset" onclick="toggleTable()" value="Chú thích bản đồ">
+    </div>
+    <div id="note">
+        <table>
+            <tbody>
+                <tr>
+                    <td style="display: flex; align-items: center;">
+                        <img src="../img/logonew.png" alt="logo"  style="max-width:20px"/>
+                        <span style="margin-left: 8px;">Kế hoạch chưa viếng thăm</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="display: flex; align-items: center;">
+                        <img src="../img/logocheckout.png" alt="logo"  style="max-width:20px"/>
+                        <span style="margin-left: 8px;">Kế hoạch đã viếng thăm</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="display: flex; align-items: center;">
+                        <img src="../img/logocheckoutorder.png" alt="logo"  style="max-width:20px"/>
+                        <span style="margin-left: 8px;">Kế hoạch đã viếng thăm và có đơn hàng</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
 
-
     <script>
+         function toggleTable() {
+            var table = document.getElementById("note");
+            
+            var button = document.getElementById("toggleButton");
+
+            if (table.classList.contains("hidden")) {
+                table.classList.remove("hidden");
+             
+                //button.textContent = "Ẩn bảng";
+            } else {
+                table.classList.add("hidden");
+            
+                //  button.textContent = "Hiện bảng";
+            }
+        }
         var lo = document.location.toString();
         var url = new URL(lo)
         var parent_code = url.searchParams.get('parent_code');
@@ -176,7 +258,18 @@
                 if (error) throw error;
                 if (!map.hasImage(`logo`)) map.addImage(`logo`, image);
             });
-          
+            map.loadImage(`../img/logocheckout.png`, (error, image) => {
+                if (error) throw error;
+                if (!map.hasImage(`logoCheckOut`)) map.addImage(`logoCheckOut`, image);
+            });
+            map.loadImage(`../img/logonew.png`, (error, image) => {
+                if (error) throw error;
+                if (!map.hasImage(`logoNew`)) map.addImage(`logoNew`, image);
+            });
+            map.loadImage(`../img/logocheckoutorder.png`, (error, image) => {
+                if (error) throw error;
+                if (!map.hasImage(`logocheCkoutOrder`)) map.addImage(`logocheCkoutOrder`, image);
+            });
             function btnGetData() {
                 $.ajax({
                     url: `https://api-daithuan.newweb.vn/v1/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
@@ -515,8 +608,8 @@
                                         'type': 'symbol',
                                         'source': `${sourceId}`,
                                         'layout': {
-                                            'icon-image': `logo`,
-                                            'icon-size': 0.3,
+                                            'icon-image': `${(element['status'] != 'NEW' && element['orders']!=null) ?'logocheCkoutOrder': element['status'] == 'NEW' ? 'logoNew' : element['status'] == 'CHECKOUT' ? 'logoCheckOut' : element['status'] == 'CHECKIN' ? 'logoNew' : 'logoNew'}`,
+                                            'icon-size': 0.4,
                                             'icon-optional': true,
                                             'icon-allow-overlap': true,
                                             'text-allow-overlap': true,

@@ -283,7 +283,8 @@
                         &nbsp;
                         <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="10" cy="10" r="10" fill="yellow" />
-                            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="12" fill="black">1</text>
+                            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="12"
+                                fill="black">1</text>
                         </svg>
                         <span style="margin-left: 8px;">Vị trí điểm bán đã check-in</span>
                     </td>
@@ -301,6 +302,39 @@
     </div>
 
     <script>
+        function formatTimeRange(start, end) {
+            // Chuyển đổi chuỗi thành đối tượng ngày
+            console.log(start, end)
+            if (start == null || end == null) {
+                return 'Chưa có dữ liệu'
+            }
+            function parseDate(dateStr) {
+                const parts = dateStr.split(' ');
+                const [day, month, year] = parts[0].split('-').map(Number);
+                const [hours, minutes] = parts[1].split(':').map(Number);
+                return new Date(year, month - 1, day, hours, minutes);
+            }
+
+            // Chuyển đổi chuỗi thành đối tượng ngày
+            const startDate = parseDate(start);
+            const endDate = parseDate(end);
+
+            // Lấy giờ và phút
+            const startHours = String(startDate.getHours()).padStart(2, '0');
+            const startMinutes = String(startDate.getMinutes()).padStart(2, '0');
+            const endHours = String(endDate.getHours()).padStart(2, '0');
+            const endMinutes = String(endDate.getMinutes()).padStart(2, '0');
+            const diffMs = endDate - startDate;
+            const diffMinutes = Math.floor(diffMs / 60000);
+            const hours = Math.floor(diffMinutes / 60);
+            const minutes = diffMinutes % 60;
+
+            // Định dạng đầu ra
+            const dateStr = start.split(' ')[0];
+            const formattedTimeRange = `${startHours}:${startMinutes} - ${endHours}:${endMinutes} (${dateStr}) (${hours}:${String(minutes).padStart(2, '0')} phút)`;
+
+            return formattedTimeRange;
+        }
         function toggleTable() {
             var table = document.getElementById("note");
             var table2 = document.getElementById("info");
@@ -552,7 +586,7 @@
                     row0.appendChild(time0);
                     row0.appendChild(km0);
                     ////
-                    var row01  = document.createElement('tr');
+                    var row01 = document.createElement('tr');
                     var shopname = document.createElement('td');
                     shopname.textContent = data.data[0].shop_name;
                     row01.appendChild(shopname);
@@ -574,24 +608,24 @@
                         ////Row 1
                         var row1 = document.createElement('tr');
                         var time = document.createElement('td');
-                        time.textContent = data.data[i].checkin_date;
+                        time.textContent = data.data[i + 1].checkin_date;
                         var km = document.createElement('td');
                         km.textContent = `${distance.toFixed(2)} Km`;
                         row1.appendChild(time);
                         row1.appendChild(km);
                         ////
-                        var row01  = document.createElement('tr');
-                    var shopname = document.createElement('td');
-                    shopname.textContent = data.data[i+1].shop_name;
-                    row01.appendChild(shopname);
+                        var row01 = document.createElement('tr');
+                        var shopname = document.createElement('td');
+                        shopname.textContent = data.data[i + 1].shop_name;
+                        row01.appendChild(shopname);
                         ///Row 2
                         var row2 = document.createElement('tr');
                         var checkin_address = document.createElement('td');
                         var shop_name = document.createElement('td');
                         checkin_address.textContent = data.data[i + 1].checkin_address;
-                      
+
                         checkin_address.setAttribute('style', 'border-bottom: 1px solid black; w');
-                      
+
                         row2.appendChild(checkin_address);
 
                         table.appendChild(row1);
@@ -631,9 +665,9 @@
                         );
                         var markerElement = document.createElement('div');
                         markerElement.innerHTML = `
-    <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="25" cy="25" r="20" fill="yellow" />
-        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="16" fill="black">${index+1}</text>
+    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="10" r="10" fill="yellow" />
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="16" fill="black">${index + 1}</text>
     </svg>
 `;
                         var marker = new maplibregl.Marker(markerElement)
@@ -649,10 +683,17 @@
                             imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `
 
                         })
-                        var popup = new maplibregl.Popup({ offset: 25 })
+                        var time = formatTimeRange(data.data[index]['checkin_date'], data.data[index]['checkout_date'])
+                        var hOrders = data.data[index].orders != null ? 'Có đơn hàng' : 'Không'
+                        var pType = data.data[index].plan_type == 1 ? 'Trong tuyến' : 'Ngoại tuyến'
+                        var popup = new maplibregl.Popup({ offset: 30 })
                             .setLngLat([coordi[0], coordi[1]])
-                            .setHTML(`<h3> ${index == 0 ? 'Điểm đầu' : (index == (data.data.length - 1) ? 'Điểm cuối' : `Điểm thứ ${index + 1}`)}</h3><p> ${data.data[index].shop_name} </p>`+ `${data.data[index].shop_address}` + '<Br/>'   + imgs + '<Br/>' + ' Check-in : ' + '<strong>' + data.data[index]['checkin_date'] + '</strong>'
-                                + '<Br/>' + ' Check-out : ' + '<strong>' + data.data[index]['checkout_date'] + '</strong>'
+                            .setHTML(`<p> ${data.data[index].shop_code}-${data.data[index].shop_name} </p>` +
+                                `<div style='color : grey'>${data.data[index].shop_address}</div>`
+                                + ' Thời gian : ' + time
+                                + '<Br/>' + ' Đặt hàng : ' + hOrders
+                                + '<Br/>' + ' Tuyến : ' + pType
+                                + '<Br/>' + imgs + '<Br/>'
                             )
                             .addTo(map);
                         marker.getElement().addEventListener('mouseenter', () => {

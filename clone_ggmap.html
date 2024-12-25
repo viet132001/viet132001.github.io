@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Google Maps Search Interface with Directions</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+        }
+
+        #search-box {
+            display: flex;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            padding: 5px;
+            z-index: 1000;
+        }
+
+        #search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 10px;
+            border-radius: 20px;
+            font-size: 16px;
+        }
+
+        #search-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            margin-left: 10px;
+        }
+
+        #sidebar {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 350px;
+            height: 100%;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            display: none;
+            z-index: 1000;
+        }
+
+        #results {
+            overflow-y: auto;
+            /* max-height: 400px; */
+            height: 100%;
+        }
+
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .result-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .result-item-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-item:hover {
+            background: #f9f9f9;
+        }
+
+        .popup-button {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            background: #4285F4;
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .popup-button:hover {
+            background: #2c6edf;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="search-box">
+        <input type="text" id="search-input" placeholder="Search for places..." autocomplete="off" />
+        <button id="search-button">🔍</button>
+    </div>
+    <div id="sidebar">
+        <div id="results"></div>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        const apiBaseUrl = 'https://place-api.dsp.one/api/get-customers';
+        const userCoords = { latitude: 10.820154734608463, longitude: 106.68623553620148 }; // Default user location
+
+        const routingService = {
+            setCoordinates: (coordinates) => {
+                console.log("Routing to:", coordinates);
+            }
+        };
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            center: [userCoords.longitude, userCoords.latitude],
+            zoom: 13,
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
+        });
+
+        const searchInput = document.getElementById("search-input");
+        const searchButton = document.getElementById("search-button");
+        const sidebar = document.getElementById("sidebar");
+        const resultsDiv = document.getElementById("results");
+
+        let markers = [];
+
+        navigator.geolocation.getCurrentPosition((position) => {
+            userCoords.latitude = position.coords.latitude;
+            userCoords.longitude = position.coords.longitude;
+
+            const userMarker = document.createElement("div");
+            userMarker.style.backgroundColor = "#4285F4";
+            userMarker.style.width = "15px";
+            userMarker.style.height = "15px";
+            userMarker.style.borderRadius = "50%";
+            userMarker.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
+
+            new maplibregl.Marker({ element: userMarker })
+                .setLngLat([userCoords.longitude, userCoords.latitude])
+                .addTo(map);
+
+            map.flyTo({ center: [userCoords.longitude, userCoords.latitude] });
+        });
+
+        async function fetchPlaces(keyword, radius = 3000) {
+            const url = `${apiBaseUrl}?keyword=${encodeURIComponent(keyword)}&latitude=${userCoords.latitude}&longitude=${userCoords.longitude}&radius=${radius}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Error fetching places data');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error:', error);
+                return [];
+            }
+        }
+
+        function clearMarkers() {
+            markers.forEach(marker => marker.remove());
+            markers = [];
+        }
+
+        function addMarkers(places) {
+            clearMarkers();
+
+            places.forEach((place) => {
+                const customIcon = document.createElement("div");
+                customIcon.style.backgroundColor = "#FF0000";
+                customIcon.style.width = "15px";
+                customIcon.style.height = "15px";
+                customIcon.style.borderRadius = "50%";
+                customIcon.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
+
+                const marker = new maplibregl.Marker({ element: customIcon })
+                    .setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)])
+                    .addTo(map);
+
+                const popup = new maplibregl.Popup({ closeOnClick: true })
+                    .setHTML(`
+                        <div style="font-family: Arial, sans-serif; display: flex; align-items: center;">
+                            <img src="${place.mainImage}" alt="Place Image" style="width: 50px; height: 50px; border-radius: 5px; margin-right: 10px;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 16px;">${place.title}</h3>
+                                <p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${place.address}</p>
+                                <p style="margin: 5px 0; font-size: 14px;"><strong>Rating:</strong> ${place.rating || 'N/A'} ⭐</p>
+                            </div>
+                        </div>
+                     
+                    `);
+   // <button class="popup-button" onclick="routingService.setCoordinates([${place.longitude}, ${place.latitude}])">
+                        //     Directions
+                        // </button>
+                marker.getElement().addEventListener("click", () => {
+                    popup.addTo(map).setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)]);
+                });
+
+                markers.push(marker);
+            });
+        }
+
+        function showResultsFromApi(places) {
+            resultsDiv.innerHTML = "";
+            sidebar.style.display = "block";
+
+            if (!places.length) {
+                resultsDiv.innerHTML = '<p>No places found.</p>';
+                return;
+            }
+
+            places.forEach((place) => {
+                const resultItem = document.createElement("div");
+                resultItem.className = "result-item";
+                resultItem.innerHTML = `
+                    <img src="${place.mainImage}" alt="Place Image">
+                    <div class="result-item-content">
+                        <h3 style="margin: 0; font-size: 16px;">${place.title}</h3>
+                            <div style="margin:5"> </div>
+                           <h5 style="margin: 0; font-size: 11px;">${place.address}</h5>
+                           <div style="margin:5"> </div>
+                        <p style="margin: 5px 0; font-size: 13px;">${place.rating || 'N/A'} ⭐</p>
+                    </div>
+                `;
+                resultItem.addEventListener("click", () => {
+                    map.flyTo({ center: [parseFloat(place.longitude), parseFloat(place.latitude)], zoom: 15 });
+
+                    const popup = new maplibregl.Popup({ closeOnClick: true })
+                        .setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)])
+                        .setHTML(`
+                            <div style="font-family: Arial, sans-serif; display: flex; align-items: center;">
+                              
+                                <div>
+                                    <h3 style="margin: 0; font-size: 16px;">${place.title}</h3>
+                                    <p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${place.address}</p>
+                                    <p style="margin: 5px 0; font-size: 14px;"><strong>Rating:</strong> ${place.rating || 'N/A'} ⭐</p>
+                                </div>
+                                  <img src="${place.mainImage}" alt="Place Image" style="width: 50px; height: 50px; border-radius: 5px; margin-right: 10px;">
+                            </div>
+                          
+                        `);
+                        // <button class="popup-button" onclick="routingService.setCoordinates([${place.longitude}, ${place.latitude}])">
+                        //         Directions
+                        //     </button>
+                    popup.addTo(map);
+                });
+                resultsDiv.appendChild(resultItem);
+            });
+
+            addMarkers(places);
+        }
+
+        searchButton.addEventListener("click", async () => {
+            const query = searchInput.value.trim();
+            if (query) {
+                const places = await fetchPlaces(query);
+                showResultsFromApi(places);
+            }
+        });
+    </script>
+</body>
+
+</html>

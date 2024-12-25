@@ -29,7 +29,7 @@
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            width: 400px;
+            width: 500px;
             background: #fff;
             border-radius: 20px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
@@ -46,6 +46,17 @@
             font-size: 16px;
         }
 
+        #radius-input {
+            width: 80px;
+            margin-right: 0px;
+            border: none;
+            outline: none;
+            padding: 0px;
+            border-radius: 20px;
+            font-size: 16px;
+            text-align: right;
+        }
+
         #search-button {
             background: none;
             border: none;
@@ -53,7 +64,11 @@
             font-size: 20px;
             margin-left: 10px;
         }
-
+        #search-dv {
+          
+            font-size: 15px;
+         
+        }
         #sidebar {
             position: absolute;
             top: 0px;
@@ -70,7 +85,6 @@
 
         #results {
             overflow-y: auto;
-            /* max-height: 400px; */
             height: 100%;
         }
 
@@ -116,10 +130,14 @@
 </head>
 
 <body>
-    <div id="search-box">
-        <input type="text" id="search-input" placeholder="Search for places..." autocomplete="off" />
-        <button id="search-button">🔍</button>
-    </div>
+    <form id="search-form" style="margin: 0;">
+        <div id="search-box">
+            <input type="text" id="search-input" placeholder="Search for places..." autocomplete="off" required />
+            <input type="number" id="radius-input" placeholder="Radius" min="100" step="100" value="3000" />
+            <p id="search-dv">m</p>
+            <button type="submit" id="search-button">🔍</button>
+        </div>
+    </form>
     <div id="sidebar">
         <div id="results"></div>
     </div>
@@ -143,7 +161,8 @@
         });
 
         const searchInput = document.getElementById("search-input");
-        const searchButton = document.getElementById("search-button");
+        const radiusInput = document.getElementById("radius-input");
+        const searchForm = document.getElementById("search-form");
         const sidebar = document.getElementById("sidebar");
         const resultsDiv = document.getElementById("results");
 
@@ -200,23 +219,24 @@
                     .setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)])
                     .addTo(map);
 
-                const popup = new maplibregl.Popup({ closeOnClick: true })
-                    .setHTML(`
-                        <div style="font-family: Arial, sans-serif; display: flex; align-items: center;">
-                            <img src="${place.mainImage}" alt="Place Image" style="width: 50px; height: 50px; border-radius: 5px; margin-right: 10px;">
-                            <div>
-                                <h3 style="margin: 0; font-size: 16px;">${place.title}</h3>
-                                <p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${place.address}</p>
-                                <p style="margin: 5px 0; font-size: 14px;"><strong>Rating:</strong> ${place.rating || 'N/A'} ⭐</p>
-                            </div>
-                        </div>
-                     
-                    `);
-   // <button class="popup-button" onclick="routingService.setCoordinates([${place.longitude}, ${place.latitude}])">
-                        //     Directions
-                        // </button>
+             
+
                 marker.getElement().addEventListener("click", () => {
-                    popup.addTo(map).setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)]);
+                    console.log('235')
+                    // popup.addTo(map).setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)]);
+                    const popup = new maplibregl.Popup({ closeOnClick: true })
+                        .setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)])
+                        .setHTML(`
+                            <div style="font-family: Arial, sans-serif; display: flex; align-items: center;">
+                                <div>
+                                    <h3 style="margin: 0; font-size: 16px;">${place.title}</h3>
+                                    <p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${place.address}</p>
+                                    <p style="margin: 5px 0; font-size: 14px;"><strong>Rating:</strong> ${place.rating || 'N/A'} ⭐</p>
+                                </div>
+                                <img src="${place.mainImage}" alt="Place Image" style="width: 50px; height: 50px; border-radius: 5px; margin-left: 10px;">
+                            </div>
+                        `);
+                    popup.addTo(map);
                 });
 
                 markers.push(marker);
@@ -239,9 +259,7 @@
                     <img src="${place.mainImage}" alt="Place Image">
                     <div class="result-item-content">
                         <h3 style="margin: 0; font-size: 16px;">${place.title}</h3>
-                            <div style="margin:5"> </div>
-                           <h5 style="margin: 0; font-size: 11px;">${place.address}</h5>
-                           <div style="margin:5"> </div>
+                        <h5 style="margin: 0; font-size: 11px;">${place.address}</h5>
                         <p style="margin: 5px 0; font-size: 13px;">${place.rating || 'N/A'} ⭐</p>
                     </div>
                 `;
@@ -252,19 +270,14 @@
                         .setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)])
                         .setHTML(`
                             <div style="font-family: Arial, sans-serif; display: flex; align-items: center;">
-                              
                                 <div>
                                     <h3 style="margin: 0; font-size: 16px;">${place.title}</h3>
                                     <p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${place.address}</p>
                                     <p style="margin: 5px 0; font-size: 14px;"><strong>Rating:</strong> ${place.rating || 'N/A'} ⭐</p>
                                 </div>
-                                  <img src="${place.mainImage}" alt="Place Image" style="width: 50px; height: 50px; border-radius: 5px; margin-right: 10px;">
+                                <img src="${place.mainImage}" alt="Place Image" style="width: 50px; height: 50px; border-radius: 5px; margin-left: 10px;">
                             </div>
-                          
                         `);
-                        // <button class="popup-button" onclick="routingService.setCoordinates([${place.longitude}, ${place.latitude}])">
-                        //         Directions
-                        //     </button>
                     popup.addTo(map);
                 });
                 resultsDiv.appendChild(resultItem);
@@ -273,10 +286,12 @@
             addMarkers(places);
         }
 
-        searchButton.addEventListener("click", async () => {
+        searchForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
             const query = searchInput.value.trim();
+            const radius = parseInt(radiusInput.value, 10) || 3000;
             if (query) {
-                const places = await fetchPlaces(query);
+                const places = await fetchPlaces(query, radius);
                 showResultsFromApi(places);
             }
         });

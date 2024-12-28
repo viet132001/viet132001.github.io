@@ -309,7 +309,9 @@
                 // const newLongitude = userCoords.longitude + randomOffset();
                 const location = await fetchLocation(address)
                 console.log(location)
-                if (location.length > 0) {
+                if (location.length = 0) {
+                    
+                }else{
                     const newLatitude = location.latitude;
                     const newLongitude = location.longitude;
                     userCoords.latitude = newLatitude;

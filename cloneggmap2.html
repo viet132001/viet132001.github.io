@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Google Maps Search Interface</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+        }
+
+        .settings-icon {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+
+        .settings-icon:hover {
+            background-color: #f0f0f0;
+        }
+
+        .popup {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            width: 350px;
+            background: white;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            padding: 15px;
+            display: none;
+        }
+
+        .popup label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .popup .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .popup input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .popup .icon-button {
+            width: 35px;
+            height: 35px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            margin-left: 5px;
+            margin-bottom: 10px;
+        }
+
+        .popup .icon-button:hover {
+            background-color: #357ae8;
+        }
+
+        .popup button {
+            width: 100%;
+            padding: 10px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .popup button:hover {
+            background: #357ae8;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <div class="settings-icon" id="settings-icon">
+        <img src="https://img.icons8.com/ios-filled/24/000000/settings.png" alt="Settings">
+    </div>
+
+    <div class="popup" id="popup">
+        <label for="address">Set Address:</label>
+        <div class="input-group">
+            <input type="text" id="address" placeholder="Enter address">
+            <button class="icon-button" id="use-current">
+                <img src="https://img.icons8.com/ios-filled/24/ffffff/navigation.png" alt="Current Location">
+            </button>
+        </div>
+        <button id="set-address">Set Coordinates</button>
+    </div>
+
+    <script>
+        const userCoords = { latitude: 10.820154734608463, longitude: 106.68623553620148 }; // Default user location
+
+        const routingService = {
+            setCoordinates: (coordinates) => {
+                console.log("Routing to:", coordinates);
+            }
+        };
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            center: [userCoords.longitude, userCoords.latitude],
+            zoom: 13,
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
+        });
+
+        let markers = [];
+
+        const userMarker = document.createElement("div");
+        userMarker.style.backgroundColor = "#4285F4";
+        userMarker.style.width = "15px";
+        userMarker.style.height = "15px";
+        userMarker.style.borderRadius = "50%";
+        userMarker.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
+
+        const userLocationMarker = new maplibregl.Marker({ element: userMarker })
+            .setLngLat([userCoords.longitude, userCoords.latitude])
+            .addTo(map);
+
+        navigator.geolocation.getCurrentPosition((position) => {
+            userCoords.latitude = position.coords.latitude;
+            userCoords.longitude = position.coords.longitude;
+
+            userLocationMarker.setLngLat([userCoords.longitude, userCoords.latitude]);
+
+            map.flyTo({ center: [userCoords.longitude, userCoords.latitude] });
+        });
+
+        const settingsIcon = document.getElementById("settings-icon");
+        const popup = document.getElementById("popup");
+        const setAddressButton = document.getElementById("set-address");
+        const useCurrentButton = document.getElementById("use-current");
+        const addressInput = document.getElementById("address");
+
+        settingsIcon.addEventListener("click", () => {
+            popup.style.display = popup.style.display === "block" ? "none" : "block";
+        });
+
+        setAddressButton.addEventListener("click", () => {
+            const address = addressInput.value;
+            if (address) {
+                console.log("Setting address to:", address);
+
+                // Simulate random coordinates within 10km
+                const randomOffset = () => (Math.random() - 0.5) * 0.18; // ~10km offset
+                const newLatitude = userCoords.latitude + randomOffset();
+                const newLongitude = userCoords.longitude + randomOffset();
+
+                userCoords.latitude = newLatitude;
+                userCoords.longitude = newLongitude;
+
+                userLocationMarker.setLngLat([newLongitude, newLatitude]);
+                map.flyTo({ center: [newLongitude, newLatitude] });
+
+                console.log("New coordinates set to:", { latitude: newLatitude, longitude: newLongitude });
+                popup.style.display = "none";
+            }
+        });
+
+        useCurrentButton.addEventListener("click", () => {
+            navigator.geolocation.getCurrentPosition((position) => {
+                userCoords.latitude = position.coords.latitude;
+                userCoords.longitude = position.coords.longitude;
+
+                userLocationMarker.setLngLat([userCoords.longitude, userCoords.latitude]);
+                map.flyTo({ center: [userCoords.longitude, userCoords.latitude] });
+                popup.style.display = "none";
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -64,11 +64,13 @@
             font-size: 20px;
             margin-left: 10px;
         }
+
         #search-dv {
-          
+
             font-size: 15px;
-         
+
         }
+
         #sidebar {
             position: absolute;
             top: 0px;
@@ -126,6 +128,97 @@
         .popup-button:hover {
             background: #2c6edf;
         }
+
+
+        .settings-icon {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+
+        .settings-icon:hover {
+            background-color: #f0f0f0;
+        }
+
+        .popup {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            width: 350px;
+            background: white;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            padding: 15px;
+            display: none;
+        }
+
+        .popup label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .popup .input-group {
+            display: flex;
+            align-items: center;
+           
+        }
+        .popup .err-group {
+            color: red;
+            font-size: 12px;
+          
+            display: none;
+        }
+        .popup input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .popup .icon-button {
+            width: 35px;
+            height: 35px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            margin-left: 5px;
+            margin-bottom: 10px;
+        }
+
+        .popup .icon-button:hover {
+            background-color: #357ae8;
+        }
+
+        .popup button {
+            width: 100%;
+            padding: 10px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .popup button:hover {
+            background: #357ae8;
+        }
     </style>
 </head>
 
@@ -142,9 +235,23 @@
         <div id="results"></div>
     </div>
     <div id="map"></div>
+    <div class="settings-icon" id="settings-icon">
+        <img src="https://img.icons8.com/ios-filled/24/000000/settings.png" alt="Settings">
+    </div>
 
+    <div class="popup" id="popup">
+        <label for="address">Set Address:</label>
+        <div class="input-group">
+            <input type="text" id="address" placeholder="Enter address">
+            <button class="icon-button" id="use-current">
+                <img src="https://img.icons8.com/ios-filled/24/ffffff/navigation.png" alt="Current Location">
+            </button>
+        </div>
+        <div class="err-group" id="err-group"></div>
+        <button id="set-address">Set Coordinates</button>
+    </div>
     <script>
-        const apiBaseUrl = 'https://place-api.dsp.one/api/get-customers';
+        const apiBaseUrl = 'https://place-api.dsp.one/api';
         const userCoords = { latitude: 10.820154734608463, longitude: 106.68623553620148 }; // Default user location
 
         const routingService = {
@@ -166,18 +273,72 @@
         const sidebar = document.getElementById("sidebar");
         const resultsDiv = document.getElementById("results");
 
+        const settingsIcon = document.getElementById("settings-icon");
+        const popup = document.getElementById("popup");
+        const setAddressButton = document.getElementById("set-address");
+        const useCurrentButton = document.getElementById("use-current");
+        const addressInput = document.getElementById("address");
+
+        
+        const errGroup = document.getElementById("err-group");
+        const userMarker = document.createElement("div");
+        userMarker.style.backgroundColor = "#4285F4";
+        userMarker.style.width = "15px";
+        userMarker.style.height = "15px";
+        userMarker.style.borderRadius = "50%";
+        userMarker.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
+
+        const userLocationMarker = new maplibregl.Marker({ element: userMarker })
+            .setLngLat([userCoords.longitude, userCoords.latitude])
+            .addTo(map);
+
+        settingsIcon.addEventListener("click", () => {
+            popup.style.display = popup.style.display === "block" ? "none" : "block";
+        });
+
+        setAddressButton.addEventListener("click", async () => {
+            const address = addressInput.value;
+            if (address) {
+                console.log("Setting address to:", address);
+
+                // Simulate random coordinates within 10km
+                const randomOffset = () => (Math.random() - 0.5) * 0.18; // ~10km offset
+                // const newLatitude = userCoords.latitude + randomOffset();
+                // const newLongitude = userCoords.longitude + randomOffset();
+                const location = await fetchLocation(address)
+                const newLatitude = location.latitude;
+                const newLongitude = location.longitude;
+                userCoords.latitude = newLatitude;
+                userCoords.longitude = newLongitude;
+
+                new maplibregl.Marker({ element: userMarker })
+                    .setLngLat([userCoords.longitude, userCoords.latitude])
+                    .addTo(map);
+
+                map.flyTo({ center: [userCoords.longitude, userCoords.latitude] });
+                console.log("New coordinates set to:", { latitude: newLatitude, longitude: newLongitude });
+                popup.style.display = "none";
+            }
+        });
+        useCurrentButton.addEventListener("click", () => {
+            navigator.geolocation.getCurrentPosition((position) => {
+                userCoords.latitude = position.coords.latitude;
+                userCoords.longitude = position.coords.longitude;
+
+                new maplibregl.Marker({ element: userMarker })
+                    .setLngLat([userCoords.longitude, userCoords.latitude])
+                    .addTo(map);
+
+                map.flyTo({ center: [userCoords.longitude, userCoords.latitude] });
+                popup.style.display = "none";
+            });
+        });
         let markers = [];
 
         navigator.geolocation.getCurrentPosition((position) => {
             userCoords.latitude = position.coords.latitude;
             userCoords.longitude = position.coords.longitude;
 
-            const userMarker = document.createElement("div");
-            userMarker.style.backgroundColor = "#4285F4";
-            userMarker.style.width = "15px";
-            userMarker.style.height = "15px";
-            userMarker.style.borderRadius = "50%";
-            userMarker.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
 
             new maplibregl.Marker({ element: userMarker })
                 .setLngLat([userCoords.longitude, userCoords.latitude])
@@ -187,7 +348,7 @@
         });
 
         async function fetchPlaces(keyword, radius = 3000) {
-            const url = `${apiBaseUrl}?keyword=${encodeURIComponent(keyword)}&latitude=${userCoords.latitude}&longitude=${userCoords.longitude}&radius=${radius}`;
+            const url = `${apiBaseUrl}/get-customers?keyword=${encodeURIComponent(keyword)}&latitude=${userCoords.latitude}&longitude=${userCoords.longitude}&radius=${radius}`;
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error fetching places data');
@@ -195,6 +356,23 @@
                 return data;
             } catch (error) {
                 console.error('Error:', error);
+                return [];
+            }
+        }
+        async function fetchLocation(address) {
+            const url = `${apiBaseUrl}/get-coordinates?address=${encodeURIComponent(address)}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Error fetching location data');
+                const data = await response.json();
+                console.log(data)
+                errGroup.style.display = "none"; // Hiển thị
+                errGroup.textContent = '';
+                return data;
+            } catch (error) {
+                console.error('Error:', error);
+                errGroup.style.display = "block"; // Hiển thị
+                errGroup.textContent = 'Không tìm thấy tọa độ cho địa chỉ này.';
                 return [];
             }
         }
@@ -219,30 +397,40 @@
                     .setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)])
                     .addTo(map);
 
-             
+                const popup = new maplibregl.Popup({ closeOnClick: false })
+                    .setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)])
+                    .setHTML(`
+        <div style="font-family: Arial, sans-serif; max-width: 250px; border-radius: 8px; ">
+            <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${place.title}</div>
+            <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                <span style="font-size: 14px; font-weight: bold; color: #3b3b3b; margin-right: 5px;">${place.rating}</span>
+                <span style="font-size: 14px; color: #ffb400;">${generateStars(place.rating)}</span>
+                <span style="font-size: 12px; color: #6c757d; margin-left: 5px;">(${place.reviews} reviews)</span>
+            </div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">${place.category}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">${place.address}</div>
+           
+        </div>
+    `);
 
-                marker.getElement().addEventListener("click", () => {
-                    console.log('235')
-                    // popup.addTo(map).setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)]);
-                    const popup = new maplibregl.Popup({ closeOnClick: true })
-                        .setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)])
-                        .setHTML(`
-                            <div style="font-family: Arial, sans-serif; display: flex; align-items: center;">
-                                <div>
-                                    <h3 style="margin: 0; font-size: 16px;">${place.title}</h3>
-                                    <p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${place.address}</p>
-                                    <p style="margin: 5px 0; font-size: 14px;"><strong>Rating:</strong> ${place.rating || 'N/A'} ⭐</p>
-                                </div>
-                                <img src="${place.mainImage}" alt="Place Image" style="width: 50px; height: 50px; border-radius: 5px; margin-left: 10px;">
-                            </div>
-                        `);
+                customIcon.addEventListener("mouseenter", () => {
                     popup.addTo(map);
                 });
+
+                customIcon.addEventListener("mouseleave", () => {
+                    popup.remove();
+                });
+
 
                 markers.push(marker);
             });
         }
-
+        function generateStars(rating) {
+            const fullStar = '<span style="color: #ffb400;">★</span>';
+            const emptyStar = '<span style="color: #dcdcdc;">★</span>';
+            const stars = fullStar.repeat(Math.floor(rating)) + emptyStar.repeat(5 - Math.floor(rating));
+            return stars;
+        }
         function showResultsFromApi(places) {
             resultsDiv.innerHTML = "";
             sidebar.style.display = "block";
@@ -255,35 +443,72 @@
             places.forEach((place) => {
                 const resultItem = document.createElement("div");
                 resultItem.className = "result-item";
+                resultItem.style = "display: flex; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 10px;";
+
+                // Tạo hàm render rating
+                const renderStars = (rating) => {
+                    const fullStars = Math.floor(rating); // Số sao đầy
+                    const halfStar = rating - fullStars >= 0.5; // Có sao nửa không?
+                    let starsHTML = '';
+
+                    for (let i = 0; i < fullStars; i++) {
+                        starsHTML += '<span style="color: #ffaa00; font-size: 14px;">&#9733;</span>'; // Sao đầy
+                    }
+                    if (halfStar) {
+                        starsHTML += '<span style="color: #ffaa00; font-size: 14px;">&#9734;</span>'; // Sao nửa
+                    }
+                    for (let i = fullStars + (halfStar ? 1 : 0); i < 5; i++) {
+                        starsHTML += '<span style="color: #ccc; font-size: 14px;">&#9733;</span>'; // Sao trống
+                    }
+                    return starsHTML;
+                };
+
                 resultItem.innerHTML = `
-                    <img src="${place.mainImage}" alt="Place Image">
-                    <div class="result-item-content">
-                        <h3 style="margin: 0; font-size: 16px;">${place.title}</h3>
-                        <h5 style="margin: 0; font-size: 11px;">${place.address}</h5>
-                        <p style="margin: 5px 0; font-size: 13px;">${place.rating || 'N/A'} ⭐</p>
-                    </div>
-                `;
+        <img src="${place.mainImage}" alt="Place Image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-right: 10px;">
+        <div style="flex: 1;">
+            <h3 style="margin: 0; font-size: 16px; color: #000;">${place.title}</h3>
+            <p style="margin: 0; font-size: 14px; color: #555;">${place.address}</p>
+            <p style="margin: 0; font-size: 14px; color: #555;">${place.phone}</p>
+            <div style="margin-top: 5px; display: flex; align-items: center;">
+                ${renderStars(place.rating || 0)}
+                <span style="margin-left: 10px; font-size: 12px; color: #888;">(${place.reviewCount || 0} reviews)</span>
+            </div>
+         
+        </div>
+    `;
+
                 resultItem.addEventListener("click", () => {
                     map.flyTo({ center: [parseFloat(place.longitude), parseFloat(place.latitude)], zoom: 15 });
 
+                    // Cập nhật giao diện của popup
                     const popup = new maplibregl.Popup({ closeOnClick: true })
                         .setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)])
                         .setHTML(`
-                            <div style="font-family: Arial, sans-serif; display: flex; align-items: center;">
-                                <div>
-                                    <h3 style="margin: 0; font-size: 16px;">${place.title}</h3>
-                                    <p style="margin: 5px 0; font-size: 14px;"><strong>Address:</strong> ${place.address}</p>
-                                    <p style="margin: 5px 0; font-size: 14px;"><strong>Rating:</strong> ${place.rating || 'N/A'} ⭐</p>
-                                </div>
-                                <img src="${place.mainImage}" alt="Place Image" style="width: 50px; height: 50px; border-radius: 5px; margin-left: 10px;">
-                            </div>
-                        `);
+                <div style="font-family: Arial, sans-serif; padding: 0px; border-radius: 8px;">
+                    <img src="${place.mainImage}" alt="Place Image" style="width: 100%; height: 80px; border-radius: 8px; margin-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: bold; color: #000;">${place.title}</h3>
+                    <p style="margin: 5px 0; font-size: 14px; color: #555;">Supermarket</p>
+                    <div style="display: flex; align-items: center; margin: 5px 0;">
+                        <span style="font-size: 14px; font-weight: bold; color: #444;">${place.rating}</span>
+                        <span style="margin-left: 5px; color: #ffaa00;">&#9733;</span>
+                        <span style="margin-left: 10px; font-size: 12px; color: #888;">(${place.reviewCount || 0} reviews)</span>
+                    </div>
+                 
+                    <p style="margin: 5px 0; font-size: 12px; color: #555;">${place.address}</p>
+                    <div style="margin-top: 10px; display: flex; justify-content: space-between;">
+                        <button style="background: none; border: none; font-size: 14px; color: #007bff; cursor: pointer;">Directions</button>
+                     
+                    </div>
+                </div>
+            `);
                     popup.addTo(map);
                 });
+
                 resultsDiv.appendChild(resultItem);
             });
 
             addMarkers(places);
+
         }
 
         searchForm.addEventListener("submit", async (event) => {

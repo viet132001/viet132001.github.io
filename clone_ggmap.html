@@ -227,7 +227,7 @@
 <body>
     <form id="search-form" style="margin: 0;">
         <div id="search-box">
-            <input type="text" id="search-input" placeholder="Search for places..." autocomplete="off" required />
+            <input type="text" id="search-input" placeholder="Từ khóa tìm kiếm..." autocomplete="off" required />
             <input type="number" id="radius-input" placeholder="Radius" min="100" step="100" value="3000" />
             <p id="search-dv">m</p>
             <button type="submit" id="search-button">🔍</button>
@@ -242,15 +242,15 @@
     </div>
 
     <div class="popup" id="popup">
-        <label for="address">Set Address:</label>
+        <label for="address">Tùy chỉnh tọa độ:</label>
         <div class="input-group">
-            <input type="text" id="address" placeholder="Enter address">
+            <input type="text" id="address" placeholder="Nhập địa chỉ chính xác">
             <button class="icon-button" id="use-current">
                 <img src="https://img.icons8.com/ios-filled/24/ffffff/navigation.png" alt="Current Location">
             </button>
         </div>
         <div class="err-group" id="err-group"></div>
-        <button id="set-address">Set Coordinates</button>
+        <button id="set-address">Cập nhật</button>
     </div>
     <script>
         const apiBaseUrl = 'https://place-api.dsp.one/api';
@@ -471,7 +471,7 @@
                 };
 
                 resultItem.innerHTML = `
-        <img src="${place.mainImage}" alt="Place Image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-right: 10px;">
+        <img src="${place.mainImage==null?'https://media-daithuan.newweb.vn/file/ECGuCViYQ':place.mainImage}" alt="Place Image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-right: 10px;">
         <div style="flex: 1;">
             <h3 style="margin: 0; font-size: 16px; color: #000;">${place.title}</h3>
             <p style="margin: 0; font-size: 14px; color: #555;">${place.address}</p>
@@ -503,7 +503,7 @@
                  
                     <p style="margin: 5px 0; font-size: 12px; color: #555;">${place.address}</p>
                     <div style="margin-top: 10px; display: flex; justify-content: space-between;">
-                        <button style="background: none; border: none; font-size: 14px; color: #007bff; cursor: pointer;">Directions</button>
+                        <button style="background: none; border: none; font-size: 14px; color: #007bff; cursor: pointer;"></button>
                      
                     </div>
                 </div>

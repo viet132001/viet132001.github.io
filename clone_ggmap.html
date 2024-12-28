@@ -171,14 +171,16 @@
         .popup .input-group {
             display: flex;
             align-items: center;
-           
+
         }
+
         .popup .err-group {
             color: red;
             font-size: 12px;
-          
+
             display: none;
         }
+
         .popup input {
             flex: 1;
             padding: 10px;
@@ -279,7 +281,7 @@
         const useCurrentButton = document.getElementById("use-current");
         const addressInput = document.getElementById("address");
 
-        
+
         const errGroup = document.getElementById("err-group");
         const userMarker = document.createElement("div");
         userMarker.style.backgroundColor = "#4285F4";
@@ -306,18 +308,21 @@
                 // const newLatitude = userCoords.latitude + randomOffset();
                 // const newLongitude = userCoords.longitude + randomOffset();
                 const location = await fetchLocation(address)
-                const newLatitude = location.latitude;
-                const newLongitude = location.longitude;
-                userCoords.latitude = newLatitude;
-                userCoords.longitude = newLongitude;
+                console.log(location)
+                if (location.length > 0) {
+                    const newLatitude = location.latitude;
+                    const newLongitude = location.longitude;
+                    userCoords.latitude = newLatitude;
+                    userCoords.longitude = newLongitude;
 
-                new maplibregl.Marker({ element: userMarker })
-                    .setLngLat([userCoords.longitude, userCoords.latitude])
-                    .addTo(map);
+                    new maplibregl.Marker({ element: userMarker })
+                        .setLngLat([userCoords.longitude, userCoords.latitude])
+                        .addTo(map);
 
-                map.flyTo({ center: [userCoords.longitude, userCoords.latitude] });
-                console.log("New coordinates set to:", { latitude: newLatitude, longitude: newLongitude });
-                popup.style.display = "none";
+                    map.flyTo({ center: [userCoords.longitude, userCoords.latitude] });
+                    console.log("New coordinates set to:", { latitude: newLatitude, longitude: newLongitude });
+                    popup.style.display = "none";
+                }
             }
         });
         useCurrentButton.addEventListener("click", () => {
@@ -485,7 +490,7 @@
                         .setLngLat([parseFloat(place.longitude), parseFloat(place.latitude)])
                         .setHTML(`
                 <div style="font-family: Arial, sans-serif; padding: 0px; border-radius: 8px;">
-                    <img src="${place.mainImage}" alt="Place Image" style="width: 100%; height: 80px; border-radius: 8px; margin-bottom: 10px;">
+                   
                     <h3 style="margin: 0; font-size: 16px; font-weight: bold; color: #000;">${place.title}</h3>
                     <p style="margin: 5px 0; font-size: 14px; color: #555;">Supermarket</p>
                     <div style="display: flex; align-items: center; margin: 5px 0;">

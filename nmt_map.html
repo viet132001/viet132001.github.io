@@ -103,14 +103,17 @@
     let notVisited = 0;
     let order = 0;
     let popup = null;
-
-    const map = new maplibregl.Map({
-      container: 'map',
-      style: 'https://demotiles.maplibre.org/style.json',
-      center: [long, lat],
-      zoom: 10
-    });
-
+const map = new maplibregl.Map({
+  container: 'map',
+  style: 'https://tiles.basemaps.cartocdn.com/gl/voyager-nolabels-gl-style/style.json', // thay URL bạn thích
+  center: [106.705611, 10.760948],
+  zoom: 11,
+  pitch: 30,
+  bearing: -10,
+  antialias: true
+});
+// map.addControl(new maplibregl.NavigationControl(), 'top-right');
+// map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }));
     $(document).ready(function () {
       map.loadImage(`../img/online.png`, (error, image) => {
         if (!error && !map.hasImage(`avatarO`)) map.addImage(`avatarO`, image);
@@ -174,7 +177,8 @@
                     },
                     geometry: {
                       type: 'Point',
-                      coordinates: [element.long, element.lat]
+                      coordinates: [element.long?? 105.047641
+                      , element.lat??11.732011]
                     }
                   }]
                 }

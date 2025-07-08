@@ -177,7 +177,7 @@
             });
             function btnGetData() {
                 $.ajax({
-                    url: `https://api-daithuan.newweb.vn/v1/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
+                    url: `https://api-daithuan-prod.newweb.vn/v1/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
                     type: 'GET',
                     dataType: 'json',
                     headers: {
@@ -386,7 +386,7 @@
                     dataSaleCode.push(element['code']);
                 });
                 $.ajax({
-                    url: `https://api-daithuan.newweb.vn/v1/client/get-plan-now-by-saleman?limit=999`,
+                    url: `https://api-daithuan-prod.newweb.vn/v1/client/get-plan-now-by-saleman?limit=999`,
                     type: 'POST',
                     dataType: 'json',
                     contentType: 'application/json', // Chỉ định loại nội dung là JSON

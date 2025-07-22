@@ -372,13 +372,32 @@
         },
         success: function (data) {
           data.data.forEach(element => {
+            try {
+              const parsed = JSON.parse(element.images ?? '[]');
+
+              if (Array.isArray(parsed)) {
+                images = parsed;
+              } else if (parsed && typeof parsed === 'object' && 'id' in parsed) {
+                // Nếu là object đơn, convert thành mảng 1 phần tử
+                images = [parsed];
+              }
+            } catch (error) {
+              console.error('Lỗi parse images:', error);
+              images = [];
+            }
+
+            console.log(images);
+
             const popupHTML = `
-              <strong>${element.shop_name}</strong><br/>
-              ${(element.images || []).map(img =>
-                `<img src="https://media.newweb.vn/file/${img.id}" style="width:100px; height:100px;" />`
-              ).join('<br/>')}
-              <br/>Trạng thái: <strong>${element.status}</strong>
-            `;
+  <strong>${element.shop_name}</strong><br/>
+  ${images
+                .map(
+                  (img) =>
+                    `<img src="https://media.newweb.vn/file/${img.id}" style="width:100px; height:100px;" />`
+                )
+                .join('<br/>')}
+  <br/>Trạng thái: <strong>${element.status}</strong>
+`;
 
             const wrapper = document.createElement('div');
             wrapper.style.display = 'flex';

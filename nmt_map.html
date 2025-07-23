@@ -272,7 +272,7 @@
     $(document).ready(function () {
       function btnGetData() {
         $.ajax({
-          url: `https://api-smac.newweb.vn'/v1/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
+          url: `https://api-smac.newweb.vn/v1/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
           type: 'GET',
           dataType: 'json',
           headers: {
@@ -362,7 +362,7 @@
       const dataSaleCode = dataSale.map(e => e.code);
 
       $.ajax({
-        url: `https://api-smac.newweb.vn'/v1/client/get-plan-now-by-saleman?limit=999`,
+        url: `https://api-smac.newweb.vn/v1/client/get-plan-now-by-saleman?limit=999`,
         type: 'POST',
         dataType: 'json',
         contentType: 'application/json',

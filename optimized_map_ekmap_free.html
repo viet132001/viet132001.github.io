@@ -52,10 +52,30 @@
             max-height: calc(100vh - 30px);
             overflow: visible;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .control-panel.collapsed {
+            width: auto;
+        }
+
+        .control-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .control-panel-header:hover {
+            opacity: 0.8;
         }
 
         .control-panel h3 {
-            margin: 0 0 10px 0;
+            margin: 0;
             color: #1a1a1a;
             font-size: 14px;
             font-weight: 700;
@@ -63,9 +83,44 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-align: center;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            flex: 1;
+        }
+
+        .toggle-icon {
+            font-size: 18px;
+            transition: transform 0.3s ease;
+            color: #667eea;
+            margin-left: 8px;
+        }
+
+        .toggle-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .control-panel-content {
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .control-panel-content.collapsed {
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        /* Mobile optimization */
+        @media (max-width: 768px) {
+            .control-panel {
+                top: 10px;
+                left: 10px;
+                width: auto;
+                max-width: calc(100vw - 20px);
+            }
+            
+            .control-panel.expanded {
+                width: calc(100vw - 20px);
+            }
         }
 
         .filter-group {
@@ -971,74 +1026,77 @@
         <div id="loadingText">Khởi tạo...</div>
     </div>
 
-    <div class="control-panel">
-        <h3>Map Intelligence</h3>
+    <div class="control-panel" id="controlPanel">
+        <div class="control-panel-header" onclick="toggleControlPanel()">
+            <h3>Map Intelligence</h3>
+            <span class="toggle-icon" id="toggleIcon">▼</span>
+        </div>
         
+        <div class="control-panel-content" id="controlPanelContent">
+            <div class="filter-group">
+                <div class="filter-group-title">📍 Dữ liệu bản đồ</div>
+                <label class="filter-checkbox" for="filterDaiThuan">
+                    <input type="checkbox" id="filterDaiThuan" checked>
+                    <div class="color-legend">
+                        <div class="color-dot color-orange"></div>
+                        <span>Đại Thuận</span>
+                    </div>
+                </label>
+                <label class="filter-checkbox" for="filterWall">
+                    <input type="checkbox" id="filterWall" checked>
+                    <div class="color-legend">
+                        <div class="color-dot color-red"></div>
+                        <span>Wall</span>
+                    </div>
+                </label>
+                <label class="filter-checkbox" for="filterNhaPhanPhoi">
+                    <input type="checkbox" id="filterNhaPhanPhoi" checked>
+                    <div class="color-legend">
+                        <div class="color-dot color-green"></div>
+                        <span>Nhà phân phối</span>
+                    </div>
+                </label>
+                <label class="filter-checkbox" for="filterKhoHang">
+                    <input type="checkbox" id="filterKhoHang" checked>
+                    <div class="color-legend">
+                        <div class="color-dot color-blue"></div>
+                        <span>Kho hàng</span>
+                    </div>
+                </label>
+            </div>
 
-        <div class="filter-group">
-            <div class="filter-group-title">📍 Dữ liệu bản đồ</div>
-            <label class="filter-checkbox" for="filterDaiThuan">
-                <input type="checkbox" id="filterDaiThuan" checked>
-                <div class="color-legend">
-                    <div class="color-dot color-orange"></div>
-                    <span>Đại Thuận</span>
-                </div>
-            </label>
-            <label class="filter-checkbox" for="filterWall">
-                <input type="checkbox" id="filterWall" checked>
-                <div class="color-legend">
-                    <div class="color-dot color-red"></div>
-                    <span>Wall</span>
-                </div>
-            </label>
-            <label class="filter-checkbox" for="filterNhaPhanPhoi">
-                <input type="checkbox" id="filterNhaPhanPhoi" checked>
-                <div class="color-legend">
-                    <div class="color-dot color-green"></div>
-                    <span>Nhà phân phối</span>
-                </div>
-            </label>
-            <label class="filter-checkbox" for="filterKhoHang">
-                <input type="checkbox" id="filterKhoHang" checked>
-                <div class="color-legend">
-                    <div class="color-dot color-blue"></div>
-                    <span>Kho hàng</span>
-                </div>
-            </label>
+
+            <div class="filter-group">
+                <div class="filter-group-title">⚙️ Tùy chọn</div>
+                <label class="filter-checkbox" for="enableClustering">
+                    <input type="checkbox" id="enableClustering" checked>
+                    <span>Clustering</span>
+                </label>
+                <label class="filter-checkbox" for="enableViewportCulling">
+                    <input type="checkbox" id="enableViewportCulling" checked>
+                    <span>Lọc vùng nhìn</span>
+                </label>
+                <label class="filter-checkbox" for="enableAnimation">
+                    <input type="checkbox" id="enableAnimation" checked>
+                    <span>Animation</span>
+                </label>
+                <label class="filter-checkbox" for="showLabels">
+                    <input type="checkbox" id="showLabels">
+                    <span>Nhãn</span>
+                </label>
+                <label class="filter-checkbox" for="showPopups">
+                    <input type="checkbox" id="showPopups">
+                    <span>Popup</span>
+                </label>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-group-title">🤖 AI Phân tích</div>
+                <button class="optimize-btn" onclick="openWarehouseOptimization()">
+                    🎯 Tối ưu vị trí kho
+                </button>
+            </div>
         </div>
-
-
-        <div class="filter-group">
-            <div class="filter-group-title">⚙️ Tùy chọn</div>
-            <label class="filter-checkbox" for="enableClustering">
-                <input type="checkbox" id="enableClustering" checked>
-                <span>Clustering</span>
-            </label>
-            <label class="filter-checkbox" for="enableViewportCulling">
-                <input type="checkbox" id="enableViewportCulling" checked>
-                <span>Lọc vùng nhìn</span>
-            </label>
-            <label class="filter-checkbox" for="enableAnimation">
-                <input type="checkbox" id="enableAnimation" checked>
-                <span>Animation</span>
-            </label>
-            <label class="filter-checkbox" for="showLabels">
-                <input type="checkbox" id="showLabels">
-                <span>Nhãn</span>
-            </label>
-            <label class="filter-checkbox" for="showPopups">
-                <input type="checkbox" id="showPopups">
-                <span>Popup</span>
-            </label>
-        </div>
-
-        <div class="filter-group">
-            <div class="filter-group-title">🤖 AI Phân tích</div>
-            <button class="optimize-btn" onclick="openWarehouseOptimization()">
-                🎯 Tối ưu vị trí kho
-            </button>
-        </div>
-
     </div>
 
     <!-- <div class="map-style-selector">
@@ -1979,6 +2037,42 @@
 
         // Khởi tạo ứng dụng
         init();
+
+        // ===== CONTROL PANEL TOGGLE FEATURE =====
+        function toggleControlPanel() {
+            const panel = document.getElementById('controlPanel');
+            const content = document.getElementById('controlPanelContent');
+            const icon = document.getElementById('toggleIcon');
+            
+            content.classList.toggle('collapsed');
+            icon.classList.toggle('collapsed');
+            
+            if (content.classList.contains('collapsed')) {
+                panel.classList.add('collapsed');
+            } else {
+                panel.classList.remove('collapsed');
+            }
+            
+            // Lưu trạng thái vào localStorage
+            localStorage.setItem('controlPanelCollapsed', content.classList.contains('collapsed'));
+        }
+
+        // Auto-collapse on mobile devices
+        function initControlPanelState() {
+            const isMobile = window.innerWidth <= 768;
+            const savedState = localStorage.getItem('controlPanelCollapsed');
+            
+            // Nếu là mobile và chưa có saved state, mặc định collapse
+            if (isMobile && savedState === null) {
+                toggleControlPanel();
+            } else if (savedState === 'true') {
+                // Nếu đã lưu state là collapsed, thì collapse
+                toggleControlPanel();
+            }
+        }
+
+        // Gọi khi page load xong
+        setTimeout(initControlPanelState, 100);
 
         // ===== WAREHOUSE OPTIMIZATION FEATURE =====
         let miniMap = null;

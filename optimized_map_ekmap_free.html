@@ -109,17 +109,270 @@
             overflow: hidden;
         }
 
-        /* Mobile optimization */
+        /* Floating Action Buttons */
+        .floating-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .mobile-toggle-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            font-size: 24px;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-toggle-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .mobile-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Warehouse Optimization Floating Button */
+        .warehouse-fab {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(67, 233, 123, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .warehouse-fab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(67, 233, 123, 0.5);
+        }
+
+        .warehouse-fab:active {
+            transform: translateY(0);
+        }
+
+        /* Desktop: Show warehouse button in corner */
+        @media (min-width: 769px) {
+            #warehouseFabDesktop {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 999;
+                display: flex !important;
+            }
+
+            .floating-buttons {
+                display: none !important;
+            }
+        }
+
+        /* Backdrop for mobile */
+        .control-panel-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .control-panel-backdrop.active {
+            opacity: 1;
+        }
+
+        /* Drag Handle for mobile */
+        .drag-handle {
+            display: none;
+            width: 40px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 2px;
+            margin: 0 auto 12px;
+            cursor: grab;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* Mobile optimization - Bottom Sheet Style */
         @media (max-width: 768px) {
             .control-panel {
-                top: 10px;
-                left: 10px;
-                width: auto;
-                max-width: calc(100vw - 20px);
+                position: fixed;
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                max-width: 100%;
+                max-height: 70vh;
+                border-radius: 20px 20px 0 0;
+                padding: 16px;
+                transform: translateY(100%);
+                transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
             }
             
-            .control-panel.expanded {
-                width: calc(100vw - 20px);
+            .control-panel.mobile-open {
+                transform: translateY(0);
+            }
+
+            .control-panel.collapsed {
+                width: 100%;
+            }
+
+            .control-panel-header {
+                margin-bottom: 12px;
+                padding-bottom: 12px;
+            }
+
+            .control-panel h3 {
+                font-size: 16px;
+            }
+
+            .drag-handle {
+                display: block;
+            }
+
+            .mobile-toggle-btn {
+                display: flex;
+                width: 52px;
+                height: 52px;
+                font-size: 24px;
+            }
+
+            .floating-buttons.hidden {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .warehouse-fab {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
+
+            .control-panel-content {
+                max-height: calc(70vh - 100px);
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .control-panel-content.collapsed {
+                max-height: calc(70vh - 100px);
+                overflow: auto;
+            }
+
+            /* Hide toggle icon on mobile, use drag handle instead */
+            .toggle-icon {
+                display: none;
+            }
+        }
+
+        /* Tablet optimization */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .control-panel {
+                width: 280px;
+            }
+        }
+
+        /* Touch-friendly improvements for mobile */
+        @media (max-width: 768px) {
+            .filter-checkbox {
+                min-height: 44px;
+                padding: 10px;
+                margin-bottom: 8px;
+            }
+
+            .filter-checkbox input[type="checkbox"] {
+                transform: scale(1.3);
+            }
+
+            .filter-group-title {
+                font-size: 12px;
+                margin-bottom: 10px;
+            }
+
+            .optimize-btn {
+                min-height: 48px;
+                font-size: 15px;
+                margin-top: 12px;
+            }
+
+            /* Smooth scrolling */
+            .control-panel-content {
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Better tap highlighting */
+            button, .filter-checkbox {
+                -webkit-tap-highlight-color: rgba(102, 126, 234, 0.2);
+            }
+
+            /* Prevent zoom on double tap */
+            * {
+                touch-action: manipulation;
+            }
+
+            /* Adjust zoom controls position for mobile */
+            .zoom-controls {
+                top: 15px;
+                right: 15px;
+                bottom: auto;
+                flex-direction: row;
+                border-radius: 30px;
+            }
+
+            .zoom-controls.visible {
+                display: flex;
+            }
+
+            .zoom-btn {
+                width: 48px;
+                height: 48px;
+                border-right: 1px solid rgba(0,0,0,0.05);
+                border-bottom: none;
+            }
+
+            .zoom-btn:last-child {
+                border-right: none;
+            }
+
+            .btn-icon {
+                font-size: 16px;
+                margin-bottom: 0;
+            }
+
+            .btn-text {
+                font-size: 8px;
             }
         }
 
@@ -240,48 +493,6 @@
             box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
         }
 
-        .performance-info {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(30,30,30,0.9) 100%);
-            backdrop-filter: blur(20px);
-            color: #e2e8f0;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 11px;
-            z-index: 1000;
-            min-width: 140px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-        }
-
-        .stats-header {
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 8px;
-            text-align: center;
-            font-size: 12px;
-        }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-            align-items: center;
-        }
-
-        .stat-label {
-            color: #a0aec0;
-            font-size: 10px;
-        }
-
-        .stat-value {
-            color: #e2e8f0;
-            font-weight: 600;
-            font-size: 11px;
-        }
 
         .loading {
             position: absolute;
@@ -322,8 +533,17 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 16px rgba(0,0,0,0.08);
             border: 1px solid rgba(255,255,255,0.2);
             overflow: hidden;
-            display: flex;
+            display: none;
             flex-direction: column;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+        }
+
+        .zoom-controls.visible {
+            display: flex;
+            opacity: 1;
+            transform: translateX(0);
         }
 
         .zoom-btn {
@@ -925,6 +1145,130 @@
             color: #667eea;
         }
 
+        /* Simple Warehouse Table */
+        .warehouse-simple-table {
+            width: 100%;
+            max-height: 400px;
+            overflow-x: auto;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .warehouse-simple-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            table-layout: fixed;
+        }
+
+        .warehouse-simple-table thead {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            z-index: 10;
+        }
+
+        .warehouse-simple-table th {
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .warehouse-simple-table th:nth-child(1) {
+            width: 10%;
+        }
+
+        .warehouse-simple-table th:nth-child(2) {
+            width: 35%;
+        }
+
+        .warehouse-simple-table th:nth-child(3) {
+            width: 10%;
+        }
+
+        .warehouse-simple-table th:nth-child(4) {
+            width: 13%;
+        }
+
+        .warehouse-simple-table th:nth-child(5) {
+            width: 16%;
+        }
+
+        .warehouse-simple-table th:nth-child(6) {
+            width: 16%;
+        }
+
+        .warehouse-simple-table tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s;
+        }
+
+        .warehouse-simple-table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+            cursor: pointer;
+        }
+
+        .warehouse-simple-table td {
+            padding: 10px 12px;
+            color: #333;
+        }
+
+        .warehouse-simple-table .warehouse-id {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .warehouse-simple-table .location-cell {
+            font-size: 10.5px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .warehouse-simple-table .text-right {
+            text-align: right;
+        }
+
+        .warehouse-list-section {
+            padding: 0;
+        }
+
+        .convert-address-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .convert-address-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .convert-address-btn:active {
+            transform: translateY(0);
+        }
+
+        .convert-address-btn.loading {
+            opacity: 0.7;
+            cursor: wait;
+        }
+
         /* Chart Legend */
         .chart-legend {
             display: flex;
@@ -1026,7 +1370,29 @@
         <div id="loadingText">Khởi tạo...</div>
     </div>
 
+    <!-- Floating Action Buttons -->
+    <div class="floating-buttons" id="floatingButtons">
+        <button class="mobile-toggle-btn" onclick="toggleMobilePanel()" title="Điều khiển bản đồ">
+            ⚙️
+        </button>
+        <button class="warehouse-fab" onclick="openWarehouseOptimization()" title="Tính toán AI - Tìm vị trí kho tối ưu">
+            <span>🤖</span>
+            <span>Tìm vị trí kho</span>
+        </button>
+    </div>
+
+    <!-- Warehouse FAB for Desktop -->
+    <button class="warehouse-fab" onclick="openWarehouseOptimization()" title="Tính toán AI - Tìm vị trí kho tối ưu" style="display: none;" id="warehouseFabDesktop">
+        <span>🤖</span>
+        <span>Tìm vị trí kho</span>
+    </button>
+
+    <!-- Backdrop for mobile -->
+    <div class="control-panel-backdrop" id="controlPanelBackdrop" onclick="closeMobilePanel()"></div>
+
     <div class="control-panel" id="controlPanel">
+        <div class="drag-handle" id="dragHandle"></div>
+        
         <div class="control-panel-header" onclick="toggleControlPanel()">
             <h3>Map Intelligence</h3>
             <span class="toggle-icon" id="toggleIcon">▼</span>
@@ -1067,9 +1433,9 @@
 
 
             <div class="filter-group">
-                <div class="filter-group-title">⚙️ Tùy chọn</div>
+                <div class="filter-group-title">⚙️ Tùy chọn hiển thị</div>
                 <label class="filter-checkbox" for="enableClustering">
-                    <input type="checkbox" id="enableClustering" checked>
+                    <input type="checkbox" id="enableClustering">
                     <span>Clustering</span>
                 </label>
                 <label class="filter-checkbox" for="enableViewportCulling">
@@ -1091,10 +1457,11 @@
             </div>
 
             <div class="filter-group">
-                <div class="filter-group-title">🤖 AI Phân tích</div>
-                <button class="optimize-btn" onclick="openWarehouseOptimization()">
-                    🎯 Tối ưu vị trí kho
-                </button>
+                <div class="filter-group-title">🎛️ Công cụ bổ sung</div>
+                <label class="filter-checkbox" for="showZoomControls">
+                    <input type="checkbox" id="showZoomControls">
+                    <span>Hiện điều khiển zoom</span>
+                </label>
             </div>
         </div>
     </div>
@@ -1105,7 +1472,7 @@
         </div>
     </div> -->
 
-    <div class="zoom-controls">
+    <div class="zoom-controls" id="zoomControls">
         <button class="zoom-btn" onclick="zoomToAll()">
             <span class="btn-icon">🏠</span>
             <span class="btn-text">Tất cả</span>
@@ -1129,26 +1496,6 @@
     </div>
 
 
-    <div class="performance-info" id="performanceInfo">
-        <div class="stats-header">📊 Performance Stats</div>
-        <div class="stat-item">
-            <span class="stat-label">Tổng:</span>
-            <span class="stat-value" id="totalPoints">0</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Hiển thị:</span>
-            <span class="stat-value" id="visiblePoints">0</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">FPS:</span>
-            <span class="stat-value" id="fpsCounter">0</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Zoom:</span>
-            <span class="stat-value" id="currentZoom">0</span>
-        </div>
-    </div>
-
     <!-- Warehouse Optimization Modal -->
     <div class="warehouse-modal" id="warehouseModal">
         <div class="warehouse-modal-content">
@@ -1160,15 +1507,16 @@
             <!-- Settings -->
             <div class="warehouse-settings">
                 <div class="warehouse-setting-row">
-                    <span class="warehouse-setting-label">Số lượng kho cần tạo:</span>
-                    <input type="number" id="warehouseCount" class="warehouse-setting-input" value="100" min="1" max="200">
+                    <span class="warehouse-setting-label">Số lượng kho dự kiến:</span>
+                    <input type="number" id="warehouseCount" class="warehouse-setting-input" value="80" min="1" max="200">
                 </div>
                 <div class="warehouse-setting-row">
                     <span class="warehouse-setting-label">Dữ liệu nguồn:</span>
                     <span style="font-size: 12px; color: #667eea; font-weight: 600;" id="dataSourceInfo">Đang tải...</span>
                 </div>
                 <button class="optimize-btn" onclick="runOptimization()" style="margin-top: 15px;">
-                    🔄 Tính toán lại
+                        Tính toán vị trí kho
+                    <div style="font-size: 10px; margin-top: 3px; opacity: 0.8;">Sử dụng thuật toán K-Means++</div>
                 </button>
             </div>
 
@@ -1193,11 +1541,8 @@
                     <button class="warehouse-tab active" onclick="switchWarehouseTab('map')">
                         🗺️ Bản đồ
                     </button>
-                    <button class="warehouse-tab" onclick="switchWarehouseTab('chart')">
-                        📊 Biểu đồ
-                    </button>
-                    <button class="warehouse-tab" onclick="switchWarehouseTab('table')">
-                        📋 Danh sách
+                    <button class="warehouse-tab" onclick="switchWarehouseTab('data')">
+                        📋 Dữ liệu tìm được
                     </button>
                 </div>
 
@@ -1206,22 +1551,23 @@
                     <div class="warehouse-mini-map" id="warehouseMiniMap"></div>
                 </div>
 
-                <!-- Tab Content: Chart -->
-                <div class="warehouse-tab-content" id="tabChart">
-                    <div class="warehouse-chart-container">
-                        <canvas id="warehouseChart"></canvas>
+                <!-- Tab Content: Data Table -->
+                <div class="warehouse-tab-content" id="tabData">
+                    <div class="warehouse-list-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div style="color: #666; font-size: 13px; font-weight: 600;">
+                                📊 Tổng: <span id="totalWarehousesCount">0</span> kho
+                            </div>
+                            <button class="convert-address-btn" id="convertAddressBtn" onclick="toggleAddressConversion()">
+                                <span id="convertBtnIcon">📍</span>
+                                <span id="convertBtnText">Chuyển sang địa chỉ</span>
+                            </button>
+                        </div>
+                        <div class="warehouse-simple-table" id="warehouseSimpleTable">
+                            <!-- Table will be generated here -->
+                        </div>
                     </div>
                 </div>
-
-                <!-- Tab Content: Table -->
-                <div class="warehouse-tab-content" id="tabTable">
-                    <div class="warehouse-table-container" id="warehouseTableContainer">
-                        <!-- Table will be generated here -->
-                    </div>
-                </div>
-
-                <!-- Results Summary - HIỂN THỊ DƯỚI TABS -->
-                <div class="warehouse-results" id="warehouseResults"></div>
             </div>
         </div>
     </div>
@@ -1244,13 +1590,9 @@
         let dataSources = {}; // Lưu trữ các nguồn dữ liệu khác nhau
         let dataTypes = {}; // Lưu trữ thông tin về các loại dữ liệu
         
-        // FPS Counter
-        let fps = 0;
-        let frameCount = 0;
-        let lastTime = performance.now();
         
         // Unlimited display mode
-        let unlimitedDisplay = false;
+        let unlimitedDisplay = true;
 
         // Hàm xóa tất cả layer và source an toàn
         function clearMapLayers() {
@@ -1799,8 +2141,6 @@
                 map.getCanvas().style.cursor = '';
             });
 
-            // Cập nhật thống kê
-            updateStats(data.length);
         }
 
         function getTypeName(type) {
@@ -1813,25 +2153,6 @@
             return names[type] || type;
         }
 
-        // FPS Counter
-        function updateFPS() {
-            frameCount++;
-            const currentTime = performance.now();
-            if (currentTime >= lastTime + 1000) {
-                fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
-                frameCount = 0;
-                lastTime = currentTime;
-                document.getElementById('fpsCounter').textContent = fps;
-            }
-            requestAnimationFrame(updateFPS);
-        }
-
-        // Cập nhật thống kê
-        function updateStats(visibleCount) {
-            document.getElementById('totalPoints').textContent = allData.length.toLocaleString();
-            document.getElementById('visiblePoints').textContent = visibleCount.toLocaleString();
-            document.getElementById('currentZoom').textContent = map.getZoom().toFixed(1);
-        }
 
         // Bật/tắt chế độ hiển thị không giới hạn
         function toggleUnlimitedDisplay() {
@@ -1977,9 +2298,6 @@
                     document.getElementById('loadingText').textContent = 'Hiển thị dữ liệu...';
                     document.getElementById('progressFill').style.width = '80%';
                     
-                    // Bắt đầu FPS counter
-                    updateFPS();
-                    
                     // Tạo filter controls động
                     createDynamicFilters();
                     
@@ -1994,9 +2312,6 @@
                     setTimeout(() => {
                         document.getElementById('loading').style.display = 'none';
                     }, 500);
-                    
-                    // Bắt đầu monitoring performance
-                    updateFPS();
                 });
                 
             } catch (error) {
@@ -2015,6 +2330,7 @@
         document.getElementById('enableAnimation').addEventListener('change', toggleAnimation);
         document.getElementById('showLabels').addEventListener('change', filterData);
         document.getElementById('showPopups').addEventListener('change', togglePopups);
+        document.getElementById('showZoomControls').addEventListener('change', toggleZoomControls);
 
         // Không cần thay đổi style vì chỉ dùng OSM
 
@@ -2038,8 +2354,45 @@
         // Khởi tạo ứng dụng
         init();
 
+        // Initialize mobile bottom sheet support
+        setTimeout(() => {
+            initDragSupport();
+            initDesktopFAB();
+            updateActiveFiltersCount();
+            
+            // Load saved state for zoom controls
+            const showZoomControls = localStorage.getItem('showZoomControls') === 'true';
+            
+            if (showZoomControls) {
+                document.getElementById('showZoomControls').checked = true;
+                toggleZoomControls();
+            }
+            
+            // Initialize unlimited button state
+            const unlimitedBtn = document.getElementById('unlimitedBtn');
+            if (unlimitedBtn && unlimitedDisplay) {
+                unlimitedBtn.classList.add('unlimited-active');
+                const btnText = unlimitedBtn.querySelector('.btn-text');
+                if (btnText) btnText.textContent = 'ON';
+            }
+            
+            // Add event listeners to update badge when filters change
+            const filterCheckboxes = document.querySelectorAll('.filter-checkbox input[type="checkbox"]:not(#showZoomControls)');
+            filterCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateActiveFiltersCount);
+            });
+        }, 1000);
+
         // ===== CONTROL PANEL TOGGLE FEATURE =====
         function toggleControlPanel() {
+            const isMobile = window.innerWidth <= 768;
+            
+            // On mobile, use bottom sheet toggle instead
+            if (isMobile) {
+                toggleMobilePanel();
+                return;
+            }
+            
             const panel = document.getElementById('controlPanel');
             const content = document.getElementById('controlPanelContent');
             const icon = document.getElementById('toggleIcon');
@@ -2057,18 +2410,132 @@
             localStorage.setItem('controlPanelCollapsed', content.classList.contains('collapsed'));
         }
 
-        // Auto-collapse on mobile devices
-        function initControlPanelState() {
-            const isMobile = window.innerWidth <= 768;
-            const savedState = localStorage.getItem('controlPanelCollapsed');
+        // Mobile Bottom Sheet Functions
+        function toggleMobilePanel() {
+            const panel = document.getElementById('controlPanel');
+            const backdrop = document.getElementById('controlPanelBackdrop');
+            const toggleBtn = document.getElementById('mobileToggleBtn');
             
-            // Nếu là mobile và chưa có saved state, mặc định collapse
-            if (isMobile && savedState === null) {
-                toggleControlPanel();
-            } else if (savedState === 'true') {
-                // Nếu đã lưu state là collapsed, thì collapse
-                toggleControlPanel();
+            const isOpen = panel.classList.contains('mobile-open');
+            
+            if (isOpen) {
+                closeMobilePanel();
+            } else {
+                openMobilePanel();
             }
+        }
+
+        function openMobilePanel() {
+            const panel = document.getElementById('controlPanel');
+            const backdrop = document.getElementById('controlPanelBackdrop');
+            const floatingButtons = document.getElementById('floatingButtons');
+            
+            panel.classList.add('mobile-open');
+            backdrop.style.display = 'block';
+            setTimeout(() => backdrop.classList.add('active'), 10);
+            floatingButtons.classList.add('hidden');
+            
+            // Prevent body scroll when panel is open
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobilePanel() {
+            const panel = document.getElementById('controlPanel');
+            const backdrop = document.getElementById('controlPanelBackdrop');
+            const floatingButtons = document.getElementById('floatingButtons');
+            
+            panel.classList.remove('mobile-open');
+            backdrop.classList.remove('active');
+            setTimeout(() => backdrop.style.display = 'none', 300);
+            floatingButtons.classList.remove('hidden');
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+
+        // Toggle Zoom Controls
+        function toggleZoomControls() {
+            const zoomControls = document.getElementById('zoomControls');
+            const checkbox = document.getElementById('showZoomControls');
+            
+            if (checkbox.checked) {
+                zoomControls.classList.add('visible');
+                localStorage.setItem('showZoomControls', 'true');
+            } else {
+                zoomControls.classList.remove('visible');
+                localStorage.setItem('showZoomControls', 'false');
+            }
+        }
+
+
+        // Show desktop warehouse FAB
+        function initDesktopFAB() {
+            const isMobile = window.innerWidth <= 768;
+            const desktopFAB = document.getElementById('warehouseFabDesktop');
+            
+            if (!isMobile && desktopFAB) {
+                desktopFAB.style.display = 'flex';
+            }
+        }
+
+        // Touch Swipe Support for Bottom Sheet
+        let touchStartY = 0;
+        let touchEndY = 0;
+        let isDragging = false;
+
+        function initDragSupport() {
+            const dragHandle = document.getElementById('dragHandle');
+            const panel = document.getElementById('controlPanel');
+            const panelHeader = document.getElementById('controlPanel').querySelector('.control-panel-header');
+            
+            if (!dragHandle) return;
+            
+            // Add touch events to drag handle and header
+            [dragHandle, panelHeader].forEach(element => {
+                element.addEventListener('touchstart', (e) => {
+                    touchStartY = e.touches[0].clientY;
+                    isDragging = true;
+                }, { passive: true });
+
+                element.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    
+                    const touchY = e.touches[0].clientY;
+                    const deltaY = touchY - touchStartY;
+                    
+                    // Only allow dragging down
+                    if (deltaY > 0) {
+                        panel.style.transform = `translateY(${deltaY}px)`;
+                    }
+                }, { passive: true });
+
+                element.addEventListener('touchend', (e) => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    
+                    touchEndY = e.changedTouches[0].clientY;
+                    const deltaY = touchEndY - touchStartY;
+                    
+                    // If dragged down more than 100px, close the panel
+                    if (deltaY > 100) {
+                        closeMobilePanel();
+                    }
+                    
+                    // Reset transform
+                    panel.style.transform = '';
+                }, { passive: true });
+            });
+        }
+
+        // Update active filters badge (removed - no longer needed)
+        function updateActiveFiltersCount() {
+            // Badge removed from UI
+        }
+
+        // Auto-collapse control panel on init
+        function initControlPanelState() {
+            // Mặc định luôn đóng bảng điều khiển khi mới vào trang
+            toggleControlPanel();
         }
 
         // Gọi khi page load xong
@@ -2288,15 +2755,20 @@
         async function runOptimization() {
             const loadingDiv = document.getElementById('warehouseLoading');
             const contentArea = document.getElementById('warehouseContentArea');
-            const resultsDiv = document.getElementById('warehouseResults');
             const loadingText = document.getElementById('loadingText');
             const loadingProgressBar = document.getElementById('loadingProgressBar');
             const loadingStats = document.getElementById('loadingStats');
             
+            // Reset trạng thái hiển thị địa chỉ
+            showAddresses = false;
+            const btnIcon = document.getElementById('convertBtnIcon');
+            const btnText = document.getElementById('convertBtnText');
+            if (btnIcon) btnIcon.textContent = '📍';
+            if (btnText) btnText.textContent = 'Chuyển sang địa chỉ';
+            
             // Hiển thị loading, ẩn content
             loadingDiv.classList.add('active');
             contentArea.style.display = 'none';
-            resultsDiv.innerHTML = '';
 
             // Simulate progress steps
             let progress = 0;
@@ -2396,92 +2868,15 @@
 
         // Hiển thị kết quả
         function displayResults(results) {
-            const resultsDiv = document.getElementById('warehouseResults');
-
             if (!results || !results.position) {
-                resultsDiv.innerHTML = '<div>Không có kết quả</div>';
                 return;
             }
-
-            // Tạo HTML cho kết quả
-            let html = '';
-
-            // Hiển thị từng cluster
-            results.position.forEach((cluster, index) => {
-                const report = results.report.clusters[index];
-                const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
-                const color = colors[index % colors.length];
-
-                html += `
-                    <div class="cluster-card" style="border-left-color: ${color};">
-                        <div class="cluster-header">
-                            <div class="cluster-title">📍 Kho #${cluster.id_parent + 1}</div>
-                            <div class="cluster-badge">${cluster.id_children.length} điểm</div>
-                        </div>
-                        <div style="margin: 10px 0; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 6px;">
-                            <strong>Vị trí tối ưu:</strong><br>
-                            Lat: ${cluster.pos_parent[0].toFixed(6)}, Lng: ${cluster.pos_parent[1].toFixed(6)}
-                        </div>
-                        <div class="cluster-stats">
-                            <div class="stat-box">
-                                <div class="stat-box-label">Số điểm phục vụ</div>
-                                <div class="stat-box-value">${report.num_points}</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="stat-box-label">Phạm vi phủ</div>
-                                <div class="stat-box-value">${(report.coverage_percentage * 100).toFixed(1)}%</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="stat-box-label">Khoảng cách TB</div>
-                                <div class="stat-box-value">${report.avg_distance_km.toFixed(2)} km</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="stat-box-label">Khoảng cách max</div>
-                                <div class="stat-box-value">${report.max_distance_km.toFixed(2)} km</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            // Hiển thị tổng quan
-            const overall = results.report.overall;
-            html += `
-                <div class="overall-report">
-                    <h3>📊 Báo cáo tổng quan</h3>
-                    <div class="overall-stats">
-                        <div class="overall-stat-box">
-                            <div class="overall-stat-label">Tổng điểm</div>
-                            <div class="overall-stat-value">${overall.total_points}</div>
-                        </div>
-                        <div class="overall-stat-box">
-                            <div class="overall-stat-label">Số kho</div>
-                            <div class="overall-stat-value">${overall.total_clusters}</div>
-                        </div>
-                        <div class="overall-stat-box">
-                            <div class="overall-stat-label">TB điểm/kho</div>
-                            <div class="overall-stat-value">${overall.avg_cluster_size.toFixed(1)}</div>
-                        </div>
-                        <div class="overall-stat-box">
-                            <div class="overall-stat-label">KC TB chung</div>
-                            <div class="overall-stat-value">${overall.overall_avg_distance_km.toFixed(2)} km</div>
-                        </div>
-                        <div class="overall-stat-box">
-                            <div class="overall-stat-label">KC max</div>
-                            <div class="overall-stat-value">${overall.overall_max_distance_km.toFixed(2)} km</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            resultsDiv.innerHTML = html;
 
             // Hiển thị kết quả trên mini map
             displayResultsOnMiniMap(results);
 
-            // Tự động tạo biểu đồ và bảng (sẽ hiển thị khi chuyển tab)
-            // generateChart(results);
-            // generateTable(results);
+            // Tạo bảng danh sách kho
+            generateSimpleTable(results);
         }
 
         // Hiển thị kết quả trên mini map
@@ -2650,6 +3045,240 @@
             });
         }
 
+        // Biến lưu trạng thái hiển thị địa chỉ
+        let showAddresses = false;
+        let warehouseAddresses = {}; // Cache địa chỉ để không phải gọi API nhiều lần
+
+        // Tạo bảng danh sách kho đơn giản
+        function generateSimpleTable(results, useAddresses = false) {
+            const tableContainer = document.getElementById('warehouseSimpleTable');
+            const totalCount = document.getElementById('totalWarehousesCount');
+            
+            if (!results || !results.position) {
+                tableContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Không có dữ liệu</div>';
+                if (totalCount) totalCount.textContent = '0';
+                return;
+            }
+
+            if (totalCount) {
+                totalCount.textContent = results.position.length;
+            }
+
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#ff6b6b', '#4ecdc4'];
+            
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>${useAddresses ? 'Địa chỉ' : 'Vị trí'}</th>
+                            <th class="text-right">Số CH</th>
+                            <th class="text-right">Độ phủ</th>
+                            <th class="text-right">TB</th>
+                            <th class="text-right">Max</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            results.position.forEach((cluster, index) => {
+                const report = results.report.clusters[index];
+                const color = colors[index % colors.length];
+                const warehouseId = `warehouse_${index}`;
+                
+                let locationText = `${cluster.pos_parent[0].toFixed(6)}, ${cluster.pos_parent[1].toFixed(6)}`;
+                if (useAddresses && warehouseAddresses[warehouseId]) {
+                    locationText = warehouseAddresses[warehouseId];
+                } else if (useAddresses) {
+                    locationText = '<span style="color: #999;">Đang tải...</span>';
+                }
+                
+                tableHTML += `
+                    <tr data-warehouse-id="${warehouseId}">
+                        <td>
+                            <span class="warehouse-id" style="color: ${color};">
+                                Kho #${cluster.id_parent + 1}
+                            </span>
+                        </td>
+                        <td class="location-cell">${locationText}</td>
+                        <td class="text-right">${cluster.id_children.length}</td>
+                        <td class="text-right">${(report.coverage_percentage * 100).toFixed(1)}%</td>
+                        <td class="text-right">${report.avg_distance_km.toFixed(2)}</td>
+                        <td class="text-right">${report.max_distance_km.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            tableContainer.innerHTML = tableHTML;
+        }
+
+        // Chuyển đổi giữa tọa độ và địa chỉ
+        async function toggleAddressConversion() {
+            if (!optimizationResults) return;
+
+            const btn = document.getElementById('convertAddressBtn');
+            const btnIcon = document.getElementById('convertBtnIcon');
+            const btnText = document.getElementById('convertBtnText');
+
+            showAddresses = !showAddresses;
+
+            if (showAddresses) {
+                // Chuyển sang hiển thị địa chỉ
+                btnIcon.textContent = '🗺️';
+                btnText.textContent = 'Chuyển sang tọa độ';
+                btn.classList.add('loading');
+
+                // Generate lại bảng với địa chỉ
+                generateSimpleTable(optimizationResults, true);
+
+                // Lấy địa chỉ cho các kho chưa có
+                await fetchAddressesForWarehouses(optimizationResults);
+                
+                btn.classList.remove('loading');
+            } else {
+                // Chuyển về hiển thị tọa độ
+                btnIcon.textContent = '📍';
+                btnText.textContent = 'Chuyển sang địa chỉ';
+                generateSimpleTable(optimizationResults, false);
+            }
+        }
+
+        // Lấy địa chỉ cho tất cả các kho (song song với batch size)
+        async function fetchAddressesForWarehouses(results) {
+            const BATCH_SIZE = 10; // Xử lý 10 request cùng lúc
+            const batches = [];
+            
+            // Tạo các batch
+            for (let i = 0; i < results.position.length; i += BATCH_SIZE) {
+                batches.push(results.position.slice(i, i + BATCH_SIZE).map((cluster, idx) => ({
+                    cluster,
+                    index: i + idx
+                })));
+            }
+            
+            // Xử lý từng batch tuần tự, nhưng trong mỗi batch thì song song
+            for (const batch of batches) {
+                const promises = batch.map(async ({ cluster, index }) => {
+                    const warehouseId = `warehouse_${index}`;
+                    
+                    // Nếu đã có trong cache thì bỏ qua
+                    if (warehouseAddresses[warehouseId]) {
+                        return;
+                    }
+
+                    const lat = cluster.pos_parent[0];
+                    const lng = cluster.pos_parent[1];
+                    
+                    try {
+                        const address = await reverseGeocode(lat, lng);
+                        warehouseAddresses[warehouseId] = address;
+                        
+                        // Update cell
+                        const row = document.querySelector(`tr[data-warehouse-id="${warehouseId}"]`);
+                        if (row) {
+                            const locationCell = row.querySelector('.location-cell');
+                            if (locationCell) {
+                                locationCell.innerHTML = address;
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Lỗi khi lấy địa chỉ cho kho ${index + 1}:`, error);
+                        warehouseAddresses[warehouseId] = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        
+                        const row = document.querySelector(`tr[data-warehouse-id="${warehouseId}"]`);
+                        if (row) {
+                            const locationCell = row.querySelector('.location-cell');
+                            if (locationCell) {
+                                locationCell.innerHTML = `<span style="color: #999;">${warehouseAddresses[warehouseId]}</span>`;
+                            }
+                        }
+                    }
+                });
+                
+                // Đợi batch hiện tại hoàn thành
+                await Promise.all(promises);
+                
+                // Delay ngắn giữa các batch (300ms)
+                if (batches.indexOf(batch) < batches.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            }
+        }
+
+        // Reverse Geocoding - Chuyển tọa độ thành địa chỉ
+        async function reverseGeocode(lat, lng) {
+            try {
+                // Thử API 1: BigDataCloud (free, hỗ trợ CORS tốt)
+                const response = await fetch(
+                    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=vi`
+                );
+                
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+                
+                const data = await response.json();
+                
+                if (data) {
+                    // Tạo địa chỉ ngắn gọn
+                    const parts = [];
+                    
+                    if (data.locality) parts.push(data.locality);
+                    if (data.localityInfo && data.localityInfo.administrative) {
+                        const admin = data.localityInfo.administrative;
+                        // Lấy quận/huyện và tỉnh/thành phố
+                        if (admin[4] && admin[4].name) parts.push(admin[4].name);
+                        if (admin[3] && admin[3].name) parts.push(admin[3].name);
+                    } else if (data.principalSubdivision) {
+                        parts.push(data.principalSubdivision);
+                    }
+                    
+                    if (parts.length > 0) {
+                        return parts.join(', ');
+                    }
+                    
+                    // Fallback: dùng countryName
+                    if (data.countryName) {
+                        return data.countryName;
+                    }
+                }
+                
+                return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            } catch (error) {
+                console.error('Reverse geocoding error:', error);
+                
+                // Fallback API 2: Geocode.xyz (nếu API 1 fail)
+                try {
+                    const response2 = await fetch(
+                        `https://geocode.xyz/${lat},${lng}?json=1`
+                    );
+                    
+                    if (response2.ok) {
+                        const data2 = await response2.json();
+                        if (data2 && data2.standard && data2.standard.city) {
+                            const parts = [];
+                            if (data2.standard.city) parts.push(data2.standard.city);
+                            if (data2.standard.prov) parts.push(data2.standard.prov);
+                            if (data2.standard.countryname) parts.push(data2.standard.countryname);
+                            
+                            if (parts.length > 0) {
+                                return parts.join(', ');
+                            }
+                        }
+                    }
+                } catch (error2) {
+                    console.error('Fallback geocoding error:', error2);
+                }
+                
+                return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            }
+        }
+
         // Event listener cho thay đổi số lượng kho
         document.getElementById('warehouseCount').addEventListener('change', () => {
             if (document.getElementById('warehouseModal').classList.contains('active')) {
@@ -2673,8 +3302,7 @@
             
             const tabContents = {
                 'map': 'tabMap',
-                'chart': 'tabChart',
-                'table': 'tabTable'
+                'data': 'tabData'
             };
 
             const targetContent = document.getElementById(tabContents[tabName]);
@@ -2685,16 +3313,6 @@
             // Resize map khi chuyển về tab map
             if (tabName === 'map' && miniMap) {
                 setTimeout(() => miniMap.resize(), 100);
-            }
-
-            // Generate chart nếu chuyển sang tab chart
-            if (tabName === 'chart' && optimizationResults) {
-                generateChart(optimizationResults);
-            }
-
-            // Generate table nếu chuyển sang tab table
-            if (tabName === 'table' && optimizationResults) {
-                generateTable(optimizationResults);
             }
         }
 

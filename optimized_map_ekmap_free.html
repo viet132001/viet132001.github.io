@@ -13,9 +13,9 @@
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     
-    <!-- Data Files - Chỉ load data_users.js -->
+    <!-- Data Files -->
     <script src="data/data_users.js"></script>
-    <!-- Khi có dữ liệu mới, sẽ thêm script tag và yêu cầu view lên -->
+    <script src="data/data_ditributor.js"></script>
     
     <style>
         body {
@@ -35,59 +35,80 @@
 
         .control-panel {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 15px;
+            left: 15px;
             z-index: 1000;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            min-width: 280px;
-            max-height: 80vh;
-            overflow-y: auto;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
+            backdrop-filter: blur(20px);
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 16px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            width: 240px;
+            max-height: calc(100vh - 30px);
+            overflow: visible;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .control-panel h3 {
-            margin: 0 0 15px 0;
-            color: #333;
-            font-size: 16px;
-            border-bottom: 2px solid #007bff;
+            margin: 0 0 10px 0;
+            color: #1a1a1a;
+            font-size: 14px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
             padding-bottom: 8px;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
         }
 
         .filter-group {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 6px;
+            padding: 8px;
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
         .filter-group label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #555;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         .filter-checkbox {
             display: flex;
             align-items: center;
-            margin-bottom: 8px;
-            padding: 5px;
+            margin-bottom: 4px;
+            padding: 6px;
             border-radius: 4px;
-            transition: background-color 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255,255,255,0.4);
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
         .filter-checkbox:hover {
-            background-color: #f8f9fa;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
         }
 
         .filter-checkbox input[type="checkbox"] {
             margin-right: 8px;
             transform: scale(1.1);
+            accent-color: #667eea;
         }
 
         .color-legend {
             display: flex;
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 0;
         }
 
         .color-dot {
@@ -95,8 +116,21 @@
             height: 12px;
             border-radius: 50%;
             margin-right: 8px;
-            border: 1px solid #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3);
+            position: relative;
+        }
+
+        .color-dot::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
         }
 
         .color-red { background-color: #ff4444; }
@@ -137,15 +171,45 @@
 
         .performance-info {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 6px;
+            bottom: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(30,30,30,0.9) 100%);
+            backdrop-filter: blur(20px);
+            color: #e2e8f0;
+            padding: 12px;
+            border-radius: 8px;
             font-size: 11px;
             z-index: 1000;
-            min-width: 150px;
+            min-width: 140px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        .stats-header {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            align-items: center;
+        }
+
+        .stat-label {
+            color: #a0aec0;
+            font-size: 10px;
+        }
+
+        .stat-value {
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 11px;
         }
 
         .loading {
@@ -178,34 +242,72 @@
 
         .zoom-controls {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 20px;
+            right: 20px;
             z-index: 1000;
-            background: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 16px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .zoom-btn {
-            display: block;
-            width: 40px;
-            height: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
             border: none;
-            background: white;
+            background: rgba(255,255,255,0.6);
             cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            transition: background-color 0.2s;
+            font-size: 12px;
+            font-weight: 600;
+            color: #2d3748;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 4px;
+        }
+
+        .zoom-btn:last-child {
+            border-bottom: none;
         }
 
         .zoom-btn:hover {
-            background: #f8f9fa;
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.05);
+            color: #667eea;
         }
 
         .zoom-btn:active {
-            background: #e9ecef;
+            transform: scale(0.95);
+        }
+
+        .zoom-btn.unlimited-active {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 2px solid #22c55e;
+        }
+
+        .zoom-btn.unlimited-active:hover {
+            background: rgba(34, 197, 94, 0.3);
+            transform: scale(1.1);
+        }
+
+        .btn-icon {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        .btn-text {
+            font-size: 9px;
+            font-weight: 500;
+            line-height: 1;
+            text-align: center;
         }
 
         .legend {
@@ -308,78 +410,59 @@
     </div>
 
     <div class="control-panel">
-        <h3>🗺️ Bộ lọc điểm bán - EKMap VN</h3>
+        <h3>Map Intelligence</h3>
         
-        <div class="filter-group">
-            <label>🔍 Tìm kiếm:</label>
-            <input type="text" class="search-box" id="searchInput" placeholder="Nhập tên cửa hàng...">
-        </div>
 
         <div class="filter-group">
-            <label>🏪 Điểm bán của công ty:</label>
+            <label>📍 Dữ liệu bản đồ</label>
             <div class="filter-checkbox">
                 <input type="checkbox" id="filterDaiThuan" checked>
                 <div class="color-legend">
                     <div class="color-dot color-orange"></div>
-                    <span>Điểm bán của Đại Thuận (sync_dms = "Y")</span>
+                    <span>Đại Thuận</span>
                 </div>
             </div>
             <div class="filter-checkbox">
                 <input type="checkbox" id="filterWall" checked>
                 <div class="color-legend">
                     <div class="color-dot color-red"></div>
-                    <span>Điểm bán của Wall (sync_dms = null)</span>
+                    <span>Wall</span>
+                </div>
+            </div>
+            <div class="filter-checkbox">
+                <input type="checkbox" id="filterNhaPhanPhoi" checked>
+                <div class="color-legend">
+                    <div class="color-dot color-green"></div>
+                    <span>Nhà phân phối</span>
                 </div>
             </div>
         </div>
 
 
         <div class="filter-group">
-            <label>📊 Hiệu suất:</label>
+            <label>⚙️ Tùy chọn</label>
             <div class="filter-checkbox">
                 <input type="checkbox" id="enableClustering" checked>
-                <span>Bật clustering</span>
+                <span>Clustering</span>
             </div>
             <div class="filter-checkbox">
                 <input type="checkbox" id="enableViewportCulling" checked>
-                <span>Lọc theo vùng nhìn</span>
+                <span>Lọc vùng nhìn</span>
             </div>
             <div class="filter-checkbox">
                 <input type="checkbox" id="enableAnimation" checked>
-                <span>Hiệu ứng mượt mà</span>
+                <span>Animation</span>
+            </div>
+            <div class="filter-checkbox">
+                <input type="checkbox" id="showLabels">
+                <span>Nhãn</span>
+            </div>
+            <div class="filter-checkbox">
+                <input type="checkbox" id="showPopups">
+                <span>Popup</span>
             </div>
         </div>
 
-        <div class="filter-group">
-            <label>🎨 Hiển thị:</label>
-            <div class="filter-checkbox">
-                <input type="checkbox" id="showLabels" checked>
-                <span>Hiển thị nhãn</span>
-            </div>
-            <div class="filter-checkbox">
-                <input type="checkbox" id="showPopups" checked>
-                <span>Hiển thị popup</span>
-            </div>
-        </div>
-
-        <div class="stats">
-            <div class="stat-row">
-                <span>Tổng điểm:</span>
-                <span id="totalPoints">0</span>
-            </div>
-            <div class="stat-row">
-                <span>Đang hiển thị:</span>
-                <span id="visiblePoints">0</span>
-            </div>
-            <div class="stat-row">
-                <span>FPS:</span>
-                <span id="fps">0</span>
-            </div>
-            <div class="stat-row">
-                <span>Clusters:</span>
-                <span id="clusterCount">0</span>
-            </div>
-        </div>
     </div>
 
     <div class="map-style-selector">
@@ -389,31 +472,47 @@
     </div>
 
     <div class="zoom-controls">
-        <button class="zoom-btn" onclick="zoomToAll()" title="Xem tất cả">🏠</button>
-        <button class="zoom-btn" onclick="zoomToHCM()" title="TP.HCM">📍</button>
-        <button class="zoom-btn" onclick="zoomToHanoi()" title="Hà Nội">🏛️</button>
-        <button class="zoom-btn" onclick="zoomToDanang()" title="Đà Nẵng">🌊</button>
+        <button class="zoom-btn" onclick="zoomToAll()">
+            <span class="btn-icon">🏠</span>
+            <span class="btn-text">Tất cả</span>
+        </button>
+        <button class="zoom-btn" onclick="zoomToHCM()">
+            <span class="btn-icon">📍</span>
+            <span class="btn-text">TP.HCM</span>
+        </button>
+        <button class="zoom-btn" onclick="zoomToHanoi()">
+            <span class="btn-icon">🏛️</span>
+            <span class="btn-text">Hà Nội</span>
+        </button>
+        <button class="zoom-btn" onclick="zoomToDanang()">
+            <span class="btn-icon">🌊</span>
+            <span class="btn-text">Đà Nẵng</span>
+        </button>
+        <button class="zoom-btn" onclick="toggleUnlimitedDisplay()" id="unlimitedBtn">
+            <span class="btn-icon">🚀</span>
+            <span class="btn-text">Unlimited</span>
+        </button>
     </div>
 
-    <div class="legend">
-        <h4>Chú thích</h4>
-        <div class="legend-section">
-            <h5 style="margin: 10px 0 5px 0; color: #333; font-size: 12px;">Điểm bán của công ty:</h5>
-        <div class="legend-item">
-                <div class="legend-dot color-orange"></div>
-                <span>Điểm bán của Đại Thuận (sync_dms = "Y")</span>
-        </div>
-        <div class="legend-item">
-                <div class="legend-dot color-red"></div>
-                <span>Điểm bán của Wall (sync_dms = null)</span>
-        </div>
-        </div>
-    </div>
 
     <div class="performance-info" id="performanceInfo">
-        <div>Zoom: <span id="currentZoom">0</span></div>
-        <div>Viewport: <span id="viewportInfo">0,0</span></div>
-        <div>Memory: <span id="memoryUsage">0 MB</span></div>
+        <div class="stats-header">📊 Performance Stats</div>
+        <div class="stat-item">
+            <span class="stat-label">Tổng:</span>
+            <span class="stat-value" id="totalPoints">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Hiển thị:</span>
+            <span class="stat-value" id="visiblePoints">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">FPS:</span>
+            <span class="stat-value" id="fpsCounter">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Zoom:</span>
+            <span class="stat-value" id="currentZoom">0</span>
+        </div>
     </div>
 
     <script>
@@ -433,6 +532,14 @@
         let currentLayerId = 'store-points-layer';
         let dataSources = {}; // Lưu trữ các nguồn dữ liệu khác nhau
         let dataTypes = {}; // Lưu trữ thông tin về các loại dữ liệu
+        
+        // FPS Counter
+        let fps = 0;
+        let frameCount = 0;
+        let lastTime = performance.now();
+        
+        // Unlimited display mode
+        let unlimitedDisplay = false;
 
         // Hàm xóa tất cả layer và source an toàn
         function clearMapLayers() {
@@ -486,7 +593,17 @@
                 });
             }
             
-            // Bỏ phần auto-detect dữ liệu khác - chỉ giữ lại điểm bán của công ty
+            // Đăng ký data_ditributor.js
+            if (typeof dataDistributors !== 'undefined' && Array.isArray(dataDistributors)) {
+                registerDataSource('dataDistributors', { data: dataDistributors }, {
+                    type: 'nha_phan_phoi',
+                    name: 'Nhà phân phối',
+                    icon: '🏢',
+                    colors: {
+                        'nha_phan_phoi': '#4CAF50'  // Màu xanh lá cho nhà phân phối (khớp với CSS)
+                    }
+                });
+            }
             
             // Tải tất cả dữ liệu
             let allData = [];
@@ -610,6 +727,29 @@
                     };
                 }
                 
+                // Xử lý dữ liệu nhà phân phối
+                if (config.type === 'nha_phan_phoi') {
+                    type = 'nha_phan_phoi';
+                    color = config.colors.nha_phan_phoi;
+                    
+                    return {
+                        id: item.id,
+                        name: item.name || `Nhà phân phối ${item.id}`,
+                        type: type,
+                        dataType: config.type,
+                        color: color,
+                        lat: parseFloat(item.lat),
+                        lng: parseFloat(item.long),
+                        address: item.address || 'Chưa có địa chỉ',
+                        phone: item.code || 'Chưa có mã',
+                        code: item.code,
+                        party_name: item.party_name,
+                        sync_dms: item.sync_dms,
+                        region: 'Việt Nam',
+                        district: 'Chưa xác định'
+                    };
+                }
+                
                 // Xử lý dữ liệu kho nhà PP
                 if (config.type === 'kho_nha_pp') {
                     type = 'kho_nha_pp';
@@ -697,53 +837,46 @@
         // Lọc dữ liệu
         function filterData() {
             console.log('Bắt đầu lọc dữ liệu...');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const showDaiThuan = document.getElementById('filterDaiThuan').checked;
             const showWall = document.getElementById('filterWall').checked;
+            const showNhaPhanPhoi = document.getElementById('filterNhaPhanPhoi').checked;
             const enableViewportCulling = document.getElementById('enableViewportCulling').checked;
 
             let filtered = allData;
 
-            // Lọc theo loại điểm bán (Đại Thuận và Wall)
-            if (!showDaiThuan || !showWall) {
+            // Lọc theo loại điểm bán (Đại Thuận và Wall) và nhà phân phối
+            if (!showDaiThuan || !showWall || !showNhaPhanPhoi) {
                 filtered = filtered.filter(item => {
                     if (item.dataType === 'diem_ban') {
                         if (item.type === 'dai_thuan' && !showDaiThuan) return false;
                         if (item.type === 'wall' && !showWall) return false;
                     }
+                    if (item.dataType === 'nha_phan_phoi' && !showNhaPhanPhoi) return false;
                     return true;
                 });
             }
 
             // Bỏ phần lọc dữ liệu khác - chỉ giữ lại điểm bán của công ty
 
-            // Lọc theo từ khóa tìm kiếm
-            if (searchTerm) {
-                const term = searchTerm.toLowerCase();
-                filtered = filtered.filter(item => 
-                    item.name.toLowerCase().includes(term) ||
-                    item.address.toLowerCase().includes(term) ||
-                    (item.code && item.code.toLowerCase().includes(term))
-                );
-            }
-
-            // Lọc theo viewport
-            if (enableViewportCulling) {
+            // Lọc theo viewport (bỏ qua khi zoom >= 10 hoặc unlimited mode)
+            if (enableViewportCulling && map.getZoom() < 10 && !unlimitedDisplay) {
                 const bounds = map.getBounds();
                 filtered = filtered.filter(item => 
-                    item.lat >= bounds.getSouth() &&
-                    item.lat <= bounds.getNorth() &&
-                    item.lng >= bounds.getWest() &&
+                    item.lat >= bounds.getSouth() && 
+                    item.lat <= bounds.getNorth() && 
+                    item.lng >= bounds.getWest() && 
                     item.lng <= bounds.getEast()
                 );
             }
 
-            // Giới hạn số lượng dựa trên zoom level
-            const zoom = map.getZoom();
-            if (zoom < 8) {
-                filtered = filtered.slice(0, 1000);
-            } else if (zoom < 12) {
-                filtered = filtered.slice(0, 5000);
+            // Giới hạn số lượng dựa trên zoom level (bỏ qua khi unlimited mode)
+            if (!unlimitedDisplay) {
+                const zoom = map.getZoom();
+                if (zoom < 8) {
+                    filtered = filtered.slice(0, 1000);
+                } else if (zoom < 12) {
+                    filtered = filtered.slice(0, 5000);
+                }
             }
 
             console.log(`Đã lọc được ${filtered.length} điểm từ ${allData.length} điểm`);
@@ -789,6 +922,7 @@
                             'case',
                             ['==', ['get', 'type'], 'wall'], '#ff4444',
                             ['==', ['get', 'type'], 'dai_thuan'], '#ff8800',
+                            ['==', ['get', 'type'], 'nha_phan_phoi'], '#4CAF50',
                             '#ff4444'
                         ],
                         'circle-radius': [
@@ -922,7 +1056,6 @@
                             <p><strong>Loại:</strong> ${getTypeName(properties.type)}</p>
                             <p><strong>Mã:</strong> ${properties.code || 'N/A'}</p>
                             <p><strong>Địa chỉ:</strong> ${properties.address}</p>
-                            ${properties.sync_dms !== undefined ? `<p><strong>Sync DMS:</strong> ${properties.sync_dms || 'null'}</p>` : ''}
                             ${properties.capacity ? `<p><strong>Sức chứa:</strong> ${properties.capacity.toLocaleString()} tấn</p>` : ''}
                             ${properties.status ? `<p><strong>Trạng thái:</strong> ${properties.status}</p>` : ''}
                             ${properties.manager ? `<p><strong>Quản lý:</strong> ${properties.manager}</p>` : ''}
@@ -948,21 +1081,48 @@
             const names = {
                 wall: 'Điểm bán Wall',
                 dai_thuan: 'Điểm bán Đại Thuận',
-                kho_nha_pp: 'Kho Nhà PP'
+                kho_nha_pp: 'Kho Nhà PP',
+                nha_phan_phoi: 'Nhà phân phối'
             };
             return names[type] || type;
+        }
+
+        // FPS Counter
+        function updateFPS() {
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime >= lastTime + 1000) {
+                fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                frameCount = 0;
+                lastTime = currentTime;
+                document.getElementById('fpsCounter').textContent = fps;
+            }
+            requestAnimationFrame(updateFPS);
         }
 
         // Cập nhật thống kê
         function updateStats(visibleCount) {
             document.getElementById('totalPoints').textContent = allData.length.toLocaleString();
             document.getElementById('visiblePoints').textContent = visibleCount.toLocaleString();
+            document.getElementById('currentZoom').textContent = map.getZoom().toFixed(1);
+        }
+
+        // Bật/tắt chế độ hiển thị không giới hạn
+        function toggleUnlimitedDisplay() {
+            unlimitedDisplay = !unlimitedDisplay;
+            const btn = document.getElementById('unlimitedBtn');
+            const btnText = btn.querySelector('.btn-text');
             
-            const clusterCount = map.querySourceFeatures(currentSourceId, {
-                sourceLayer: currentSourceId,
-                filter: ['has', 'point_count']
-            }).length;
-            document.getElementById('clusterCount').textContent = clusterCount.toLocaleString();
+            if (unlimitedDisplay) {
+                btn.classList.add('unlimited-active');
+                btnText.textContent = 'ON';
+            } else {
+                btn.classList.remove('unlimited-active');
+                btnText.textContent = 'Unlimited';
+            }
+            
+            // Lọc lại dữ liệu với chế độ mới
+            filterData();
         }
 
         // Bật/tắt hiệu ứng animation
@@ -1005,7 +1165,7 @@
                             <div><strong>Loại:</strong><br/>${getTypeName(properties.type)}</div>
                             <div><strong>Mã:</strong><br/>${properties.code || 'N/A'}</div>
                             <div><strong>Địa chỉ:</strong><br/>${properties.address}</div>
-                            ${properties.sync_dms !== undefined ? `<div><strong>Sync DMS:</strong><br/>${properties.sync_dms || 'null'}</div>` : ''}
+                            ${properties.party_name ? `<div><strong>Tên đối tác:</strong><br/>${properties.party_name}</div>` : ''}
                             ${properties.capacity ? `<div><strong>Sức chứa:</strong><br/>${properties.capacity.toLocaleString()} tấn</div>` : ''}
                             ${properties.status ? `<div><strong>Trạng thái:</strong><br/>${properties.status}</div>` : ''}
                             ${properties.manager ? `<div><strong>Quản lý:</strong><br/>${properties.manager}</div>` : ''}
@@ -1019,47 +1179,8 @@
         }
 
         // Performance monitoring
-        let lastTime = performance.now();
-        let frameCount = 0;
 
-        function updatePerformance() {
-            const now = performance.now();
-            frameCount++;
-            
-            if (now - lastTime >= 1000) {
-                const fps = Math.round((frameCount * 1000) / (now - lastTime));
-                const fpsElement = document.getElementById('fps');
-                if (fpsElement) fpsElement.textContent = fps;
-                
-                frameCount = 0;
-                lastTime = now;
-            }
-            
-            // Cập nhật thông tin viewport
-            if (map && map.getZoom && map.getCenter) {
-                try {
-                    const zoom = map.getZoom();
-                    const center = map.getCenter();
-                    const zoomElement = document.getElementById('currentZoom');
-                    const viewportElement = document.getElementById('viewportInfo');
-                    
-                    if (zoomElement) zoomElement.textContent = zoom.toFixed(1);
-                    if (viewportElement) viewportElement.textContent = 
-                        `${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}`;
-                } catch (e) {
-                    console.warn('Lỗi cập nhật viewport info:', e);
-                }
-            }
-            
-            // Cập nhật memory usage (ước tính)
-            if (performance.memory) {
-                const memoryMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
-                const memoryElement = document.getElementById('memoryUsage');
-                if (memoryElement) memoryElement.textContent = `${memoryMB} MB`;
-            }
-            
-            requestAnimationFrame(updatePerformance);
-        }
+        // Function updatePerformance đã được thay thế bằng updateFPS
 
         // Zoom controls với hiệu ứng mượt mà
         function zoomToAll() {
@@ -1130,6 +1251,9 @@
                     document.getElementById('loadingText').textContent = 'Hiển thị dữ liệu...';
                     document.getElementById('progressFill').style.width = '80%';
                     
+                    // Bắt đầu FPS counter
+                    updateFPS();
+                    
                     // Tạo filter controls động
                     createDynamicFilters();
                     
@@ -1146,7 +1270,7 @@
                     }, 500);
                     
                     // Bắt đầu monitoring performance
-                    updatePerformance();
+                    updateFPS();
                 });
                 
             } catch (error) {
@@ -1156,9 +1280,9 @@
         }
 
         // Event listeners
-        document.getElementById('searchInput').addEventListener('input', debounce(filterData, 300));
         document.getElementById('filterDaiThuan').addEventListener('change', filterData);
         document.getElementById('filterWall').addEventListener('change', filterData);
+        document.getElementById('filterNhaPhanPhoi').addEventListener('change', filterData);
         document.getElementById('enableClustering').addEventListener('change', filterData);
         document.getElementById('enableViewportCulling').addEventListener('change', filterData);
         document.getElementById('enableAnimation').addEventListener('change', toggleAnimation);

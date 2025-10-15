@@ -106,8 +106,9 @@ var dataDistributors = [
             "name" : "NPP HOANG HIEN",
             "party_name" : null,
             "address" : "Số 37+38 lô 9 mở rộng, P. Đằng Hải, Q. Hải An, Tp. Hải Phòng",
-            "lat" : "19.61492",
-            "long" : "103.65193"
+            "lat" : "20.844014",
+            "long" : "106.714690",
+
         },
         {
             "id" : 27426,

@@ -230,16 +230,16 @@ var dataDistributors = [
             "lat" : "10.292731", 
             "long" : "104.001384"
         },
-        {
-            "id" : 51344,
-            "sync_dms" : null,
-            "code" : "AFH",
-            "name" : "NPP FOODHOUSE",
-            "party_name" : null,
-            "address" : "phú quốc",
-            "lat" : "10.135171",
-            "long" : "103.953086"
-        },
+        // {
+        //     "id" : 51344,
+        //     "sync_dms" : null,
+        //     "code" : "AFH",
+        //     "name" : "NPP FOODHOUSE",
+        //     "party_name" : null,
+        //     "address" : "phú quốc",
+        //     "lat" : "10.135171",
+        //     "long" : "103.953086"
+        // },
         // {
         //     "id" : 118382,
         //     "sync_dms" : null,

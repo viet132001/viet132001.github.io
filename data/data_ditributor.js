@@ -196,8 +196,8 @@ var dataDistributors = [
             "name" : "Công Ty TNHH Sản Xuất TM Tân Tiến Cai Lậy",
             "party_name" : null,
             "address" : "Khu phố Mỹ Lợi, phường Nhị Mỹ, tx Cai Lậy, tỉnh Tiền Giang, Việt Nam",
-            "lat" : "21.732568",
-            "long" : "105.396672"
+            "lat" : "10.411110539872823",
+            "long" : "106.13786440693065"
         },
         {
             "id" : 37564,

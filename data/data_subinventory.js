@@ -616,8 +616,8 @@ var dataSubinventories = [
             "name" : "Kho Cảng 1 Hà Nội",
             "party_name" : null,
             "address" : "Số 3 Lê Thánh Tông, Ngô Quyền, Hải Phòng",
-            "lat" : "20.679734",
-            "long" : "106.933172"
+            "lat" : "20.86686625673314",
+            "long" : "106.69639376730491"
         },
         {
             "id" : 63,

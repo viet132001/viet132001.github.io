@@ -1076,11 +1076,18 @@
         /* Chart Container */
         .warehouse-chart-container {
             width: 100%;
-            height: 500px;
+            height: 450px;
             background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        @media (max-width: 768px) {
+            .warehouse-chart-container {
+                height: 350px;
+                padding: 10px;
+            }
         }
 
         /* Table Container */
@@ -1542,13 +1549,23 @@
                         🗺️ Bản đồ
                     </button>
                     <button class="warehouse-tab" onclick="switchWarehouseTab('data')">
-                        📋 Dữ liệu tìm được
+                        📋 Dữ liệu
+                    </button>
+                    <button class="warehouse-tab" onclick="switchWarehouseTab('chart')">
+                        📊 Biểu đồ
                     </button>
                 </div>
 
                 <!-- Tab Content: Map -->
                 <div class="warehouse-tab-content active" id="tabMap">
                     <div class="warehouse-mini-map" id="warehouseMiniMap"></div>
+                </div>
+
+                <!-- Tab Content: Chart -->
+                <div class="warehouse-tab-content" id="tabChart">
+                    <div class="warehouse-chart-container">
+                        <canvas id="warehouseChart"></canvas>
+                    </div>
                 </div>
 
                 <!-- Tab Content: Data Table -->
@@ -3072,7 +3089,7 @@
                         <tr>
                             <th>ID</th>
                             <th>${useAddresses ? 'Địa chỉ' : 'Vị trí'}</th>
-                            <th class="text-right">Số CH</th>
+                            <th class="text-right">CH</th>
                             <th class="text-right">Độ phủ</th>
                             <th class="text-right">TB</th>
                             <th class="text-right">Max</th>
@@ -3097,14 +3114,14 @@
                     <tr data-warehouse-id="${warehouseId}">
                         <td>
                             <span class="warehouse-id" style="color: ${color};">
-                                Kho #${cluster.id_parent + 1}
+                                #${cluster.id_parent + 1}
                             </span>
                         </td>
                         <td class="location-cell">${locationText}</td>
                         <td class="text-right">${cluster.id_children.length}</td>
                         <td class="text-right">${(report.coverage_percentage * 100).toFixed(1)}%</td>
-                        <td class="text-right">${report.avg_distance_km.toFixed(2)}</td>
-                        <td class="text-right">${report.max_distance_km.toFixed(2)}</td>
+                        <td class="text-right">${report.avg_distance_km.toFixed(2)} km</td>
+                        <td class="text-right">${report.max_distance_km.toFixed(2)} km</td>
                     </tr>
                 `;
             });
@@ -3302,6 +3319,7 @@
             
             const tabContents = {
                 'map': 'tabMap',
+                'chart': 'tabChart',
                 'data': 'tabData'
             };
 
@@ -3314,11 +3332,18 @@
             if (tabName === 'map' && miniMap) {
                 setTimeout(() => miniMap.resize(), 100);
             }
+
+            // Generate chart khi chuyển sang tab chart
+            if (tabName === 'chart' && optimizationResults) {
+                generateChart(optimizationResults);
+            }
         }
 
-        // Tạo biểu đồ
+        // Tạo biểu đồ đơn giản
         function generateChart(results) {
             const canvas = document.getElementById('warehouseChart');
+            if (!canvas) return;
+            
             const ctx = canvas.getContext('2d');
 
             // Destroy existing chart
@@ -3326,76 +3351,66 @@
                 warehouseChart.destroy();
             }
 
-            const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#ff6b6b', '#4ecdc4'];
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#ff6b6b', '#4ecdc4', '#a8edea', '#fed6e3'];
             
-            // Prepare data
-            const labels = results.position.map((cluster, index) => `Kho #${cluster.id_parent + 1}`);
+            // Prepare data - Chỉ hiển thị số điểm phục vụ
+            const labels = results.position.map((cluster, index) => `Kho ${cluster.id_parent + 1}`);
             const numPointsData = results.report.clusters.map(cluster => cluster.num_points);
-            const avgDistanceData = results.report.clusters.map(cluster => cluster.avg_distance_km);
-            const maxDistanceData = results.report.clusters.map(cluster => cluster.max_distance_km);
-            const coverageData = results.report.clusters.map(cluster => (cluster.coverage_percentage * 100).toFixed(1));
+            const backgroundColors = results.position.map((_, index) => colors[index % colors.length] + 'DD');
+            const borderColors = results.position.map((_, index) => colors[index % colors.length]);
 
             warehouseChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [
-                        {
-                            label: 'Số điểm phục vụ',
-                            data: numPointsData,
-                            backgroundColor: colors.map(c => c + 'CC'),
-                            borderColor: colors,
-                            borderWidth: 2,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'KC trung bình (km)',
-                            data: avgDistanceData,
-                            type: 'line',
-                            borderColor: '#ff6b6b',
-                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            yAxisID: 'y1'
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Số điểm bán phục vụ',
+                        data: numPointsData,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Phân tích hiệu quả các kho',
+                            text: 'Phân bổ điểm bán theo kho',
                             font: {
-                                size: 18,
+                                size: 16,
                                 weight: 'bold'
                             },
-                            color: '#333'
-                        },
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: {
-                                font: {
-                                    size: 12
-                                },
-                                padding: 15
+                            color: '#333',
+                            padding: {
+                                top: 10,
+                                bottom: 20
                             }
                         },
+                        legend: {
+                            display: false
+                        },
                         tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 13,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
                             callbacks: {
-                                afterLabel: function(context) {
+                                label: function(context) {
                                     const index = context.dataIndex;
                                     const cluster = results.report.clusters[index];
                                     return [
-                                        `Phạm vi: ${(cluster.coverage_percentage * 100).toFixed(1)}%`,
-                                        `KC max: ${cluster.max_distance_km.toFixed(2)} km`
+                                        `Số điểm: ${cluster.num_points}`,
+                                        `Độ phủ: ${(cluster.coverage_percentage * 100).toFixed(1)}%`,
+                                        `KC TB: ${cluster.avg_distance_km.toFixed(2)} km`,
+                                        `KC Max: ${cluster.max_distance_km.toFixed(2)} km`
                                     ];
                                 }
                             }
@@ -3403,35 +3418,35 @@
                     },
                     scales: {
                         y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
+                            beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Số điểm phục vụ',
+                                text: 'Số lượng điểm bán',
                                 font: {
                                     size: 12,
                                     weight: 'bold'
-                                }
-                            },
-                            ticks: {
-                                stepSize: 1
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: 'Khoảng cách (km)',
-                                font: {
-                                    size: 12,
-                                    weight: 'bold'
-                                }
+                                },
+                                color: '#666'
                             },
                             grid: {
-                                drawOnChartArea: false,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                stepSize: 1,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11,
+                                    weight: '600'
+                                }
                             }
                         }
                     }

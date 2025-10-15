@@ -1,14 +1,14 @@
 var dataDistributors = [
-        {
-            "id" : 12,
-            "sync_dms" : null,
-            "code" : "DTP",
-            "name" : "NPP Đại Thuận",
-            "party_name" : null,
-            "address" : "61 nguyễn trường tộ",
-            "lat" : "10.765125",
-            "long" : "106.7071892"
-        },
+        // {
+        //     "id" : 12,
+        //     "sync_dms" : null,
+        //     "code" : "DTP",
+        //     "name" : "NPP Đại Thuận",
+        //     "party_name" : null,
+        //     "address" : "61 nguyễn trường tộ",
+        //     "lat" : "10.765125",
+        //     "long" : "106.7071892"
+        // },
         {
             "id" : 27416,
             "sync_dms" : null,
@@ -29,16 +29,16 @@ var dataDistributors = [
             "lat" : "20.974914",
             "long" : "105.652823"
         },
-        {
-            "id" : 27418,
-            "sync_dms" : null,
-            "code" : "LDD",
-            "name" : "NPP LAM DAI DUNG",
-            "party_name" : null,
-            "address" : "2\/34 KP Bình Thuận I, P Thuận Giao Thành phố Thuận An, tỉnh Bình Dương",
-            "lat" : "10.945050",
-            "long" : "106.712055"
-        },
+        // {
+        //     "id" : 27418,
+        //     "sync_dms" : null,
+        //     "code" : "LDD",
+        //     "name" : "NPP LAM DAI DUNG",
+        //     "party_name" : null,
+        //     "address" : "2\/34 KP Bình Thuận I, P Thuận Giao Thành phố Thuận An, tỉnh Bình Dương",
+        //     "lat" : "10.945050",
+        //     "long" : "106.712055"
+        // },
         {
             "id" : 27419,
             "sync_dms" : null,

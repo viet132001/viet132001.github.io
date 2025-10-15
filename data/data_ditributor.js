@@ -16,8 +16,8 @@ var dataDistributors = [
             "name" : "NPP AN THẢO NHIÊN",
             "party_name" : null,
             "address" : "Số 2, Lô E, đường D6, Khu Tái Định Cư Nam Phạm Hữu Lầu, P. Phú Mỹ, Q.7, TP. HCM",
-            "lat" : "21.016677",
-            "long" : "106.204372"
+            "lat" : "10.704366082619496", 
+            "long" : "106.72656215327059"
         },
         {
             "id" : 27417,
@@ -96,8 +96,8 @@ var dataDistributors = [
             "name" : "NPP DAO PHUONG LINH",
             "party_name" : null,
             "address" : "341\/3 đường Thanh Bình, ấp Dốc Mơ 2, xã Gia Tân 1, huyện Thống Nhất, tỉnh Đồng Nai",
-            "lat" : "21.070402",
-            "long" : "105.987359"
+            "lat" : "10.954765", 
+            "long" : "106.877194"
         },
         {
             "id" : 27425,
@@ -227,8 +227,8 @@ var dataDistributors = [
             "name" : "NPP FOOD HOUSE",
             "party_name" : null,
             "address" : "Thửa đất số 4, tờ bản đồ số 38, Tổ 1 ấp Gành Gió, Xã Cửa Dương, Thành Phố Phú Quốc, Tỉnh Kiên Giang, Việt Nam",
-            "lat" : "21.02665",
-            "long" : "105.847622"
+            "lat" : "10.292731", 
+            "long" : "104.001384"
         },
         {
             "id" : 51344,
@@ -277,8 +277,8 @@ var dataDistributors = [
             "name" : "NPP THIÊN HƯƠNG",
             "party_name" : null,
             "address" : "23 Trần Đại Nghĩa, Khu quy hoạch Xóm Hành, phường An Cựu, Thành phố Huế",
-            "lat" : "20.996978",
-            "long" : "105.845967"
+            "lat" : "16.434979", 
+            "long" : "107.590790"
         }
     ];
     

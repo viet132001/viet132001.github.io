@@ -511,11 +511,31 @@
             border-right: 6px solid #764ba2;
             border-radius: 50%;
             animation: aiSpin 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+            position: relative;
+        }
+
+        .ai-spinner::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border: 4px solid transparent;
+            border-top: 4px solid #f093fb;
+            border-radius: 50%;
+            animation: aiSpinReverse 1s linear infinite;
         }
 
         @keyframes aiSpin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        @keyframes aiSpinReverse {
+            0% { transform: translate(-50%, -50%) rotate(360deg); }
+            100% { transform: translate(-50%, -50%) rotate(0deg); }
         }
 
         .ai-text {
@@ -538,12 +558,38 @@
             text-align: center;
         }
 
-        .warehouse-results {
-            display: none;
+        .loading-progress {
+            width: 300px;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 20px;
+            overflow: hidden;
         }
 
-        .warehouse-results.active {
-            display: block;
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+            background-size: 200% 100%;
+            animation: loadingGradient 2s ease-in-out infinite;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes loadingGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .loading-stats {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #999;
+            font-family: monospace;
+        }
+
+        .warehouse-results {
+            margin-top: 20px;
         }
 
         .cluster-card {
@@ -847,6 +893,70 @@
             height: 20px;
             border-radius: 4px;
         }
+
+        /* Table Filters and Controls */
+        .table-controls {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 12px 12px 0 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .export-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 233, 123, 0.4);
+        }
+
+        .export-btn:active {
+            transform: translateY(0);
+        }
+
+        .sort-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
@@ -997,57 +1107,64 @@
                 </div>
                 <div class="warehouse-setting-row">
                     <span class="warehouse-setting-label">Dữ liệu nguồn:</span>
-                    <span style="font-size: 12px; color: #667eea; font-weight: 600;">Điểm bán (Users)</span>
+                    <span style="font-size: 12px; color: #667eea; font-weight: 600;" id="dataSourceInfo">Đang tải...</span>
                 </div>
                 <button class="optimize-btn" onclick="runOptimization()" style="margin-top: 15px;">
                     🔄 Tính toán lại
                 </button>
             </div>
 
-            <!-- Tabs Navigation -->
-            <div class="warehouse-tabs">
-                <button class="warehouse-tab active" onclick="switchWarehouseTab('map')">
-                    🗺️ Bản đồ
-                </button>
-                <button class="warehouse-tab" onclick="switchWarehouseTab('chart')">
-                    📊 Biểu đồ
-                </button>
-                <button class="warehouse-tab" onclick="switchWarehouseTab('table')">
-                    📋 Danh sách
-                </button>
-            </div>
-
-            <!-- Tab Content: Map -->
-            <div class="warehouse-tab-content active" id="tabMap">
-                <div class="warehouse-mini-map" id="warehouseMiniMap"></div>
-            </div>
-
-            <!-- Tab Content: Chart -->
-            <div class="warehouse-tab-content" id="tabChart">
-                <div class="warehouse-chart-container">
-                    <canvas id="warehouseChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Tab Content: Table -->
-            <div class="warehouse-tab-content" id="tabTable">
-                <div class="warehouse-table-container" id="warehouseTableContainer">
-                    <!-- Table will be generated here -->
-                </div>
-            </div>
-
-            <!-- Loading State -->
+            <!-- Loading State - HIỂN THỊ TRÊN CÙNG KHI ĐANG LOAD -->
             <div class="warehouse-loading" id="warehouseLoading">
                 <div class="ai-spinner"></div>
-                <div class="ai-text">🤖 AI đang phân tích dữ liệu...</div>
+                <div class="ai-text" id="loadingText">🤖 Đang phân tích dữ liệu...</div>
                 <div class="ai-subtext">
                     Đang sử dụng thuật toán K-Means++ để tìm vị trí kho tối ưu<br>
                     Xin vui lòng chờ trong giây lát...
                 </div>
+                <div class="loading-progress">
+                    <div class="loading-progress-bar" id="loadingProgressBar" style="width: 0%"></div>
+                </div>
+                <div class="loading-stats" id="loadingStats"></div>
             </div>
 
-            <!-- Results -->
-            <div class="warehouse-results" id="warehouseResults"></div>
+            <!-- Content Area - CHỈ HIỂN THỊ KHI CÓ KẾT QUẢ -->
+            <div id="warehouseContentArea" style="display: none;">
+                <!-- Tabs Navigation -->
+                <div class="warehouse-tabs">
+                    <button class="warehouse-tab active" onclick="switchWarehouseTab('map')">
+                        🗺️ Bản đồ
+                    </button>
+                    <button class="warehouse-tab" onclick="switchWarehouseTab('chart')">
+                        📊 Biểu đồ
+                    </button>
+                    <button class="warehouse-tab" onclick="switchWarehouseTab('table')">
+                        📋 Danh sách
+                    </button>
+                </div>
+
+                <!-- Tab Content: Map -->
+                <div class="warehouse-tab-content active" id="tabMap">
+                    <div class="warehouse-mini-map" id="warehouseMiniMap"></div>
+                </div>
+
+                <!-- Tab Content: Chart -->
+                <div class="warehouse-tab-content" id="tabChart">
+                    <div class="warehouse-chart-container">
+                        <canvas id="warehouseChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Table -->
+                <div class="warehouse-tab-content" id="tabTable">
+                    <div class="warehouse-table-container" id="warehouseTableContainer">
+                        <!-- Table will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Results Summary - HIỂN THỊ DƯỚI TABS -->
+                <div class="warehouse-results" id="warehouseResults"></div>
+            </div>
         </div>
     </div>
 
@@ -1873,6 +1990,12 @@
             const modal = document.getElementById('warehouseModal');
             modal.classList.add('active');
             
+            // Cập nhật thông tin nguồn dữ liệu
+            if (dataUsers && dataUsers.data) {
+                const totalPoints = dataUsers.data.length;
+                document.getElementById('dataSourceInfo').textContent = `Điểm bán (${totalPoints.toLocaleString()} điểm)`;
+            }
+            
             // Khởi tạo mini map sau khi modal mở
             setTimeout(() => {
                 initMiniMap();
@@ -1923,7 +2046,14 @@
         function displayUserPointsOnMiniMap(positions) {
             if (!miniMap || !miniMap.getSource) return;
 
-            const features = positions.map(pos => {
+            // Để tối ưu hiệu năng hiển thị, giới hạn số điểm hiển thị trên mini map (preview)
+            // Nhưng API vẫn nhận toàn bộ dữ liệu
+            const maxDisplayPoints = 2000;
+            const displayPositions = positions.length > maxDisplayPoints 
+                ? positions.filter((_, index) => index % Math.ceil(positions.length / maxDisplayPoints) === 0)
+                : positions;
+
+            const features = displayPositions.map(pos => {
                 const lat = parseFloat(pos[0]);
                 const lng = parseFloat(pos[1]);
                 
@@ -1950,20 +2080,60 @@
                 features: features
             };
 
-            console.log(`Hiển thị ${features.length} điểm hợp lệ trên mini map`);
+            console.log(`Hiển thị ${features.length} điểm (từ ${positions.length} điểm) trên mini map`);
 
             if (miniMap.getSource('user-points')) {
                 miniMap.getSource('user-points').setData(geojson);
             } else {
                 miniMap.addSource('user-points', {
                     type: 'geojson',
-                    data: geojson
+                    data: geojson,
+                    cluster: true,
+                    clusterMaxZoom: 14,
+                    clusterRadius: 50
                 });
 
+                // Layer cho clusters
+                miniMap.addLayer({
+                    id: 'user-clusters',
+                    type: 'circle',
+                    source: 'user-points',
+                    filter: ['has', 'point_count'],
+                    paint: {
+                        'circle-color': '#ff8800',
+                        'circle-radius': [
+                            'step',
+                            ['get', 'point_count'],
+                            15,
+                            100, 20,
+                            500, 25
+                        ],
+                        'circle-opacity': 0.7,
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#ffffff'
+                    }
+                });
+
+                miniMap.addLayer({
+                    id: 'user-cluster-count',
+                    type: 'symbol',
+                    source: 'user-points',
+                    filter: ['has', 'point_count'],
+                    layout: {
+                        'text-field': '{point_count_abbreviated}',
+                        'text-size': 12
+                    },
+                    paint: {
+                        'text-color': '#ffffff'
+                    }
+                });
+
+                // Layer cho điểm đơn
                 miniMap.addLayer({
                     id: 'user-points-layer',
                     type: 'circle',
                     source: 'user-points',
+                    filter: ['!', ['has', 'point_count']],
                     paint: {
                         'circle-radius': 4,
                         'circle-color': '#ff8800',
@@ -1985,13 +2155,12 @@
 
             // Lọc và định dạng dữ liệu
             const positions = [];
-            const maxPoints = 500; // Giới hạn số điểm để tránh quá tải
-
-            // Lấy ngẫu nhiên các điểm hoặc lấy tất cả nếu ít hơn maxPoints
             const data = dataUsers.data;
-            const step = Math.max(1, Math.floor(data.length / maxPoints));
 
-            for (let i = 0; i < data.length; i += step) {
+            console.log(`Bắt đầu xử lý ${data.length} điểm từ data_users.js...`);
+
+            // Lấy TẤT CẢ các điểm từ file data_users.js
+            for (let i = 0; i < data.length; i++) {
                 const item = data[i];
                 if (item.lat && item.long) {
                     const lat = parseFloat(item.lat);
@@ -2008,12 +2177,12 @@
                         ]);
                     }
                 }
-                if (positions.length >= maxPoints) break;
             }
 
-            const n = parseInt(document.getElementById('warehouseCount').value) || 2;
+            const n = parseInt(document.getElementById('warehouseCount').value) || 100;
 
-            console.log(`Đã chuẩn bị ${positions.length} điểm hợp lệ để gửi API`);
+            console.log(`✅ Đã chuẩn bị ${positions.length} điểm hợp lệ từ tổng số ${data.length} điểm`);
+            console.log(`📊 Sẽ tạo ${n} kho để phân bổ ${positions.length} điểm`);
 
             return {
                 pos: positions,
@@ -2024,15 +2193,30 @@
         // Chạy tối ưu hóa
         async function runOptimization() {
             const loadingDiv = document.getElementById('warehouseLoading');
+            const contentArea = document.getElementById('warehouseContentArea');
             const resultsDiv = document.getElementById('warehouseResults');
+            const loadingText = document.getElementById('loadingText');
+            const loadingProgressBar = document.getElementById('loadingProgressBar');
+            const loadingStats = document.getElementById('loadingStats');
             
-            // Hiển thị loading
+            // Hiển thị loading, ẩn content
             loadingDiv.classList.add('active');
-            resultsDiv.classList.remove('active');
+            contentArea.style.display = 'none';
             resultsDiv.innerHTML = '';
 
+            // Simulate progress steps
+            let progress = 0;
+            const updateProgress = (percent, text, stats) => {
+                loadingProgressBar.style.width = percent + '%';
+                loadingText.textContent = text;
+                loadingStats.textContent = stats || '';
+            };
+
             try {
-                // Chuẩn bị dữ liệu
+                // Step 1: Chuẩn bị dữ liệu
+                updateProgress(10, '📦 Đang chuẩn bị dữ liệu...', 'Đọc file data_users.js');
+                await new Promise(resolve => setTimeout(resolve, 300));
+
                 const apiData = prepareDataForAPI();
                 
                 if (!apiData || apiData.pos.length === 0) {
@@ -2043,12 +2227,18 @@
                     throw new Error(`Không đủ điểm dữ liệu (có ${apiData.pos.length}, cần tối thiểu ${apiData.n} điểm)`);
                 }
 
+                updateProgress(30, '✅ Đã chuẩn bị dữ liệu', `${apiData.pos.length.toLocaleString()} điểm → ${apiData.n} kho`);
+                await new Promise(resolve => setTimeout(resolve, 200));
+
                 console.log('Gửi dữ liệu đến API:', {
                     totalPoints: apiData.pos.length,
                     clusters: apiData.n
                 });
 
-                // Gọi API
+                // Step 2: Gọi API
+                updateProgress(50, '🚀 Đang gửi đến AI Server...', 'detect-daithuan.newweb.vn');
+                
+                const startTime = Date.now();
                 const response = await fetch('https://detect-daithuan.newweb.vn/v1/ai/txt/k-mean-plus-plus', {
                     method: 'POST',
                     headers: {
@@ -2061,26 +2251,42 @@
                     throw new Error(`API error: ${response.status} ${response.statusText}`);
                 }
 
+                updateProgress(70, '🤖 AI đang tính toán K-Means++...', 'Thuật toán clustering đang chạy');
+
                 const results = await response.json();
+                const endTime = Date.now();
+                const duration = ((endTime - startTime) / 1000).toFixed(2);
+
                 console.log('Kết quả từ API:', results);
 
                 // Lưu kết quả
                 optimizationResults = results;
 
-                // Ẩn loading
+                // Step 3: Xử lý kết quả
+                updateProgress(90, '📊 Đang xử lý kết quả...', `Hoàn thành trong ${duration}s`);
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                updateProgress(100, '✅ Hoàn tất!', `${results.position.length} kho đã được tối ưu`);
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Ẩn loading, hiển thị content area
                 loadingDiv.classList.remove('active');
+                contentArea.style.display = 'block';
 
                 // Hiển thị kết quả
                 displayResults(results);
 
+                // Scroll to top of content area
+                contentArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
             } catch (error) {
                 console.error('Lỗi khi gọi API:', error);
                 loadingDiv.classList.remove('active');
+                contentArea.style.display = 'block';
                 
                 // Hiển thị lỗi
-                resultsDiv.classList.add('active');
                 resultsDiv.innerHTML = `
-                    <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 20px; color: #856404;">
+                    <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 20px; color: #856404; margin: 20px 0;">
                         <h3 style="margin: 0 0 10px 0;">⚠️ Không thể kết nối đến API</h3>
                         <p style="margin: 0;">Lỗi: ${error.message}</p>
                         <p style="margin: 10px 0 0 0; font-size: 12px;">
@@ -2097,7 +2303,6 @@
         // Hiển thị kết quả
         function displayResults(results) {
             const resultsDiv = document.getElementById('warehouseResults');
-            resultsDiv.classList.add('active');
 
             if (!results || !results.position) {
                 resultsDiv.innerHTML = '<div>Không có kết quả</div>';
@@ -2190,18 +2395,20 @@
             if (!miniMap || !miniMap.getSource) return;
 
             // Xóa các layer cũ nếu có
-            if (miniMap.getLayer('warehouse-points-layer')) {
-                miniMap.removeLayer('warehouse-points-layer');
-            }
-            if (miniMap.getLayer('warehouse-lines-layer')) {
-                miniMap.removeLayer('warehouse-lines-layer');
-            }
-            if (miniMap.getSource('warehouse-points')) {
-                miniMap.removeSource('warehouse-points');
-            }
-            if (miniMap.getSource('warehouse-lines')) {
-                miniMap.removeSource('warehouse-lines');
-            }
+            const layersToRemove = ['warehouse-points-layer', 'warehouse-lines-layer'];
+            const sourcesToRemove = ['warehouse-points', 'warehouse-lines'];
+            
+            layersToRemove.forEach(layerId => {
+                if (miniMap.getLayer(layerId)) {
+                    miniMap.removeLayer(layerId);
+                }
+            });
+            
+            sourcesToRemove.forEach(sourceId => {
+                if (miniMap.getSource(sourceId)) {
+                    miniMap.removeSource(sourceId);
+                }
+            });
 
             const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
 
@@ -2521,11 +2728,82 @@
         }
 
         // Tạo bảng dữ liệu
-        function generateTable(results) {
+        function generateTable(results, filterWarehouse = 'all', sortBy = 'default') {
             const container = document.getElementById('warehouseTableContainer');
             const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
 
-            let tableHTML = `
+            // Tạo controls
+            let controlsHTML = `
+                <div class="table-controls">
+                    <div class="control-group">
+                        <span class="sort-label">🔍 Lọc kho:</span>
+                        <select class="filter-select" id="filterWarehouse" onchange="filterAndSortTable()">
+                            <option value="all" ${filterWarehouse === 'all' ? 'selected' : ''}>Tất cả kho</option>
+            `;
+
+            results.position.forEach((cluster, index) => {
+                controlsHTML += `<option value="${cluster.id_parent}" ${filterWarehouse == cluster.id_parent ? 'selected' : ''}>Kho #${cluster.id_parent + 1}</option>`;
+            });
+
+            controlsHTML += `
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <span class="sort-label">📊 Sắp xếp:</span>
+                        <select class="filter-select" id="sortBy" onchange="filterAndSortTable()">
+                            <option value="default" ${sortBy === 'default' ? 'selected' : ''}>Mặc định</option>
+                            <option value="num_points_desc" ${sortBy === 'num_points_desc' ? 'selected' : ''}>Số điểm (Nhiều → Ít)</option>
+                            <option value="num_points_asc" ${sortBy === 'num_points_asc' ? 'selected' : ''}>Số điểm (Ít → Nhiều)</option>
+                            <option value="avg_distance_asc" ${sortBy === 'avg_distance_asc' ? 'selected' : ''}>KC TB (Gần → Xa)</option>
+                            <option value="avg_distance_desc" ${sortBy === 'avg_distance_desc' ? 'selected' : ''}>KC TB (Xa → Gần)</option>
+                            <option value="max_distance_asc" ${sortBy === 'max_distance_asc' ? 'selected' : ''}>KC Max (Gần → Xa)</option>
+                            <option value="max_distance_desc" ${sortBy === 'max_distance_desc' ? 'selected' : ''}>KC Max (Xa → Gần)</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;"></div>
+                    <button class="export-btn" onclick="exportAllWarehouses()">
+                        📥 Xuất tất cả (.CSV)
+                    </button>
+                    <button class="export-btn" onclick="exportSelectedWarehouse()">
+                        📄 Xuất kho đã lọc
+                    </button>
+                </div>
+            `;
+
+            // Filter data
+            let filteredData = results.position.map((cluster, index) => ({
+                cluster: cluster,
+                report: results.report.clusters[index],
+                index: index
+            }));
+
+            if (filterWarehouse !== 'all') {
+                filteredData = filteredData.filter(item => item.cluster.id_parent == filterWarehouse);
+            }
+
+            // Sort data
+            if (sortBy !== 'default') {
+                filteredData.sort((a, b) => {
+                    switch(sortBy) {
+                        case 'num_points_desc':
+                            return b.report.num_points - a.report.num_points;
+                        case 'num_points_asc':
+                            return a.report.num_points - b.report.num_points;
+                        case 'avg_distance_asc':
+                            return a.report.avg_distance_km - b.report.avg_distance_km;
+                        case 'avg_distance_desc':
+                            return b.report.avg_distance_km - a.report.avg_distance_km;
+                        case 'max_distance_asc':
+                            return a.report.max_distance_km - b.report.max_distance_km;
+                        case 'max_distance_desc':
+                            return b.report.max_distance_km - a.report.max_distance_km;
+                        default:
+                            return 0;
+                    }
+                });
+            }
+
+            let tableHTML = controlsHTML + `
                 <table class="warehouse-table">
                     <thead>
                         <tr>
@@ -2537,13 +2815,16 @@
                             <th style="text-align: right;">KC Min (km)</th>
                             <th style="text-align: right;">KC Max (km)</th>
                             <th style="text-align: right;">Độ lệch chuẩn</th>
+                            <th style="text-align: center;">Xuất</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
-            results.position.forEach((cluster, index) => {
-                const report = results.report.clusters[index];
+            filteredData.forEach(item => {
+                const cluster = item.cluster;
+                const report = item.report;
+                const index = item.index;
                 const color = colors[index % colors.length];
 
                 tableHTML += `
@@ -2562,6 +2843,11 @@
                         <td class="number-cell">${report.min_distance_km.toFixed(2)}</td>
                         <td class="number-cell">${report.max_distance_km.toFixed(2)}</td>
                         <td class="number-cell">${report.std_distance_km.toFixed(2)}</td>
+                        <td style="text-align: center;">
+                            <button class="export-btn" onclick="exportWarehouse(${cluster.id_parent})" style="padding: 4px 8px; font-size: 11px;">
+                                📥 CSV
+                            </button>
+                        </td>
                     </tr>
                 `;
 
@@ -2627,6 +2913,111 @@
             `;
 
             container.innerHTML = tableHTML;
+        }
+
+        // Filter và sort table
+        function filterAndSortTable() {
+            if (!optimizationResults) return;
+            
+            const filterWarehouse = document.getElementById('filterWarehouse').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            generateTable(optimizationResults, filterWarehouse, sortBy);
+        }
+
+        // Export một kho cụ thể
+        function exportWarehouse(warehouseId) {
+            if (!optimizationResults) return;
+            
+            const cluster = optimizationResults.position.find(c => c.id_parent === warehouseId);
+            const report = optimizationResults.report.clusters.find(r => r.cluster_id === warehouseId);
+            
+            if (!cluster || !report) return;
+            
+            // Tạo CSV content
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Kho #" + (warehouseId + 1) + "\n\n";
+            csvContent += "Thong tin kho\n";
+            csvContent += "Vi tri (Lat),Vi tri (Lng),So diem,Pham vi (%),KC TB (km),KC Min (km),KC Max (km),Do lech chuan\n";
+            csvContent += `${cluster.pos_parent[0]},${cluster.pos_parent[1]},${report.num_points},${(report.coverage_percentage * 100).toFixed(1)},${report.avg_distance_km.toFixed(2)},${report.min_distance_km.toFixed(2)},${report.max_distance_km.toFixed(2)},${report.std_distance_km.toFixed(2)}\n\n`;
+            
+            csvContent += "Danh sach diem ban duoc phuc vu\n";
+            csvContent += "ID,Lat,Lng\n";
+            
+            cluster.id_children.forEach((childId, index) => {
+                const childPos = cluster.pos_children[index];
+                if (childPos) {
+                    csvContent += `${childId},${childPos[0]},${childPos[1]}\n`;
+                }
+            });
+            
+            // Download file
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `kho_${warehouseId + 1}_${new Date().getTime()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Export kho đã lọc
+        function exportSelectedWarehouse() {
+            const filterWarehouse = document.getElementById('filterWarehouse').value;
+            
+            if (filterWarehouse === 'all') {
+                exportAllWarehouses();
+            } else {
+                exportWarehouse(parseInt(filterWarehouse));
+            }
+        }
+
+        // Export tất cả kho
+        function exportAllWarehouses() {
+            if (!optimizationResults) return;
+            
+            // Tạo CSV content
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Bao cao toi uu vi tri kho\n\n";
+            
+            // Overall summary
+            const overall = optimizationResults.report.overall;
+            csvContent += "Tong quan\n";
+            csvContent += "Tong diem,So kho,TB diem/kho,KC TB chung,KC Max\n";
+            csvContent += `${overall.total_points},${overall.total_clusters},${overall.avg_cluster_size.toFixed(1)},${overall.overall_avg_distance_km.toFixed(2)},${overall.overall_max_distance_km.toFixed(2)}\n\n`;
+            
+            // Chi tiết từng kho
+            csvContent += "Chi tiet tung kho\n";
+            csvContent += "Kho,Lat,Lng,So diem,Pham vi (%),KC TB (km),KC Min (km),KC Max (km),Do lech chuan\n";
+            
+            optimizationResults.position.forEach((cluster, index) => {
+                const report = optimizationResults.report.clusters[index];
+                csvContent += `Kho #${cluster.id_parent + 1},${cluster.pos_parent[0]},${cluster.pos_parent[1]},${report.num_points},${(report.coverage_percentage * 100).toFixed(1)},${report.avg_distance_km.toFixed(2)},${report.min_distance_km.toFixed(2)},${report.max_distance_km.toFixed(2)},${report.std_distance_km.toFixed(2)}\n`;
+            });
+            
+            csvContent += "\n\nChi tiet diem ban cua tung kho\n\n";
+            
+            // Chi tiết điểm bán của từng kho
+            optimizationResults.position.forEach((cluster, index) => {
+                csvContent += `\nKho #${cluster.id_parent + 1}\n`;
+                csvContent += "ID,Lat,Lng\n";
+                
+                cluster.id_children.forEach((childId, childIndex) => {
+                    const childPos = cluster.pos_children[childIndex];
+                    if (childPos) {
+                        csvContent += `${childId},${childPos[0]},${childPos[1]}\n`;
+                    }
+                });
+            });
+            
+            // Download file
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `toi_uu_kho_tat_ca_${new Date().getTime()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
     </script>

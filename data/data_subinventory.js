@@ -246,8 +246,8 @@ var dataSubinventories = [
             "name" : "Kho Logic 755 Phạm Thế Hiển",
             "party_name" : null,
             "address" : "Kho Logic 755. Số 755 Phạm Thế Hiển, Phường 4, Quận 8, Thành phố Hồ Chí Minh",
-            "lat" : "10.040436",
-            "long" : "106.847041"
+            "lat" : "10.741348052821131",
+            "long" : "106.67306722667574"
         },
         {
             "id" : 26,
@@ -266,8 +266,8 @@ var dataSubinventories = [
             "name" : "Kho Logic ABC",
             "party_name" : null,
             "address" : "Kho Logic ABC. Số 16 Xuân Diệu, Phường 4, Quận Tân Bình, Thành phố Hồ Chí Minh",
-            "lat" : "10.005294",
-            "long" : "106.839649"
+            "lat" : "10.796116639791412",
+            "long" : "106.65534746715039"
         },
         {
             "id" : 28,
@@ -356,8 +356,8 @@ var dataSubinventories = [
             "name" : "Kho Logic Vũng Tàu",
             "party_name" : null,
             "address" : "Kho Logic Vũng Tàu. Số 2/18 Phạm Ngọc Thạch, Phường 9, Thành phố Vũng Tàu",
-            "lat" : "10.035034",
-            "long" : "106.751064"
+            "lat" : "10.367692150769145",
+            "long" : "107.08650565365515"
         },
         {
             "id" : 37,
@@ -556,8 +556,8 @@ var dataSubinventories = [
             "name" : "Kho Cảng 1 Đà Nẵng",
             "party_name" : null,
             "address" : "01 Yết Kiêu, Phường Thọ Quang, Sơn Trà, Đà Nẵng",
-            "lat" : "16.314717",
-            "long" : "108.601177"
+            "lat" : "16.12224187923224",
+            "long" : "108.21979458693882", 
         },
         {
             "id" : 57,
@@ -576,8 +576,8 @@ var dataSubinventories = [
             "name" : "Kho VinaTrans Đà Nẵng",
             "party_name" : null,
             "address" : "184 Đường Trần Phú, P. Phước Ninh, Quận Hải Châu, TP. Đà Nẵng, Việt Nam",
-            "lat" : "16.815973",
-            "long" : "108.708611"
+            "lat" : "16.065508261667265",
+            "long" : "108.22347188256074"
         },
         {
             "id" : 59,
@@ -586,8 +586,8 @@ var dataSubinventories = [
             "name" : "Kho Logic VinaTrans Đà Nẵng",
             "party_name" : null,
             "address" : "Kho Logic VinaTrans Đà Nẵng, số 184 Đường Trần Phú, P. Phước Ninh, Quận Hải Châu, TP. Đà Nẵng, Việt Nam",
-            "lat" : "16.842934",
-            "long" : "108.654203"
+            "lat" : "16.06536392398008",
+            "long" : "108.22337532303497"
         },
         {
             "id" : 60,

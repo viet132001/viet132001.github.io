@@ -180,16 +180,16 @@ var dataDistributors = [
             "lat" : "11.3053772",
             "long" : "106.1350755"
         },
-        {
-            "id" : 37562,
-            "sync_dms" : null,
-            "code" : "TPKM",
-            "name" : "CÔNG TY TNHH TM DV THỰC PHẨM KIM MÃ",
-            "party_name" : null,
-            "address" : "33 Phan Đăng Lưu, P Đông Ba, TP Huế, Thừa Thiên Huế",
-            "lat" : "16.368851",
-            "long" : "107.614167"
-        },
+        // {
+        //     "id" : 37562,
+        //     "sync_dms" : null,
+        //     "code" : "TPKM",
+        //     "name" : "CÔNG TY TNHH TM DV THỰC PHẨM KIM MÃ",
+        //     "party_name" : null,
+        //     "address" : "33 Phan Đăng Lưu, P Đông Ba, TP Huế, Thừa Thiên Huế",
+        //     "lat" : "16.368851",
+        //     "long" : "107.614167"
+        // },
         {
             "id" : 37563,
             "sync_dms" : null,

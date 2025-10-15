@@ -160,16 +160,16 @@ var dataDistributors = [
             "lat" : "10.941134",
             "long" : "108.075781"
         },
-        {
-            "id" : 37554,
-            "sync_dms" : null,
-            "code" : "3BTNH",
-            "name" : "NPP 3B THOẠI NGỌC HẦU",
-            "party_name" : null,
-            "address" : "3B Thoại Ngọc Hầu, phường Hòa Thạnh, Q. Tân Phú, Tp. HCM",
-            "lat" : "10.7849646",
-            "long" : "106.6405405"
-        },
+        // {
+        //     "id" : 37554,
+        //     "sync_dms" : null,
+        //     "code" : "3BTNH",
+        //     "name" : "NPP 3B THOẠI NGỌC HẦU",
+        //     "party_name" : null,
+        //     "address" : "3B Thoại Ngọc Hầu, phường Hòa Thạnh, Q. Tân Phú, Tp. HCM",
+        //     "lat" : "10.7849646",
+        //     "long" : "106.6405405"
+        // },
         {
             "id" : 37557,
             "sync_dms" : null,

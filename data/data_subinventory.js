@@ -406,8 +406,8 @@ var dataSubinventories = [
             "name" : "Kho Phú Quốc",
             "party_name" : null,
             "address" : "Thửa số 110, tờ bản đồ số 16, ấp Khu Tượng, Xã Cửa Dương, Huyện Phú Quốc, Tỉnh Kiên Giang",
-            "lat" : "10.782891",
-            "long" : "103.680301"
+            "lat" : "10.281037328985407", 
+            "long" : "103.97364657414813"
         },
         {
             "id" : 42,

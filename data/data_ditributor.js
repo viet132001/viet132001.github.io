@@ -240,16 +240,16 @@ var dataDistributors = [
             "lat" : "10.135171",
             "long" : "103.953086"
         },
-        {
-            "id" : 118382,
-            "sync_dms" : null,
-            "code" : "NPP_TEST",
-            "name" : "NPP TEST",
-            "party_name" : null,
-            "address" : "61 nguyễn trường tộ, phường 13, quận 4",
-            "lat" : "10.765058",
-            "long" : "106.7051351"
-        },
+        // {
+        //     "id" : 118382,
+        //     "sync_dms" : null,
+        //     "code" : "NPP_TEST",
+        //     "name" : "NPP TEST",
+        //     "party_name" : null,
+        //     "address" : "61 nguyễn trường tộ, phường 13, quận 4",
+        //     "lat" : "10.765058",
+        //     "long" : "106.7051351"
+        // },
         {
             "id" : 119137,
             "sync_dms" : null,

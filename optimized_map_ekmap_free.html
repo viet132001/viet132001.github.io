@@ -15,6 +15,7 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     
     <!-- Data Files -->
     <script src="data/data_users.js"></script>
@@ -1515,7 +1516,7 @@
             <div class="warehouse-settings">
                 <div class="warehouse-setting-row">
                     <span class="warehouse-setting-label">Số lượng kho dự kiến:</span>
-                    <input type="number" id="warehouseCount" class="warehouse-setting-input" value="80" min="1" max="200">
+                    <input type="number" id="warehouseCount" class="warehouse-setting-input" value="12" min="1" max="200">
                 </div>
                 <div class="warehouse-setting-row">
                     <span class="warehouse-setting-label">Dữ liệu nguồn:</span>
@@ -3370,15 +3371,41 @@
                         borderColor: borderColors,
                         borderWidth: 2,
                         borderRadius: 6,
+                        type: 'bar'
+                    }, {
+                        label: 'Khoảng cách TB (km)',
+                        data: results.report.clusters.map(cluster => cluster.avg_distance_km),
+                        type: 'line',
+                        borderColor: '#00bcd4',
+                        backgroundColor: 'rgba(0, 188, 212, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        yAxisID: 'y1'
+                    }, {
+                        label: 'Khoảng cách Max (km)',
+                        data: results.report.clusters.map(cluster => cluster.max_distance_km),
+                        type: 'line',
+                        borderColor: '#f44336',
+                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        yAxisID: 'y1'
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        ChartDataLabels: ChartDataLabels,
                         title: {
                             display: true,
-                            text: 'Phân bổ điểm bán theo kho',
+                            text: 'Phân bổ điểm bán theo kho (Kèm thông tin khoảng cách)',
                             font: {
                                 size: 16,
                                 weight: 'bold'
@@ -3390,7 +3417,16 @@
                             }
                         },
                         legend: {
-                            display: false
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -3414,6 +3450,28 @@
                                     ];
                                 }
                             }
+                        },
+                        datalabels: {
+                            display: function(context) {
+                                return context.datasetIndex === 0; // Chỉ hiển thị trên dataset đầu tiên (bar chart)
+                            },
+                            color: '#333',
+                            font: {
+                                size: 10,
+                                weight: 'bold'
+                            },
+                            formatter: function(value, context) {
+                                const index = context.dataIndex;
+                                const cluster = results.report.clusters[index];
+                                return [
+                                    `${value} điểm`,
+                                    `TB: ${cluster.avg_distance_km.toFixed(1)}km`,
+                                    `Max: ${cluster.max_distance_km.toFixed(1)}km`
+                                ];
+                            },
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 4
                         }
                     },
                     scales: {
@@ -3446,6 +3504,28 @@
                                 font: {
                                     size: 11,
                                     weight: '600'
+                                }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Khoảng cách (km)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                color: '#666'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
                                 }
                             }
                         }

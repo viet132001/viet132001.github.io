@@ -538,7 +538,7 @@
             }
 
             $.ajax({
-                url: `https://api-daithuan.newweb.vn/v1/client/get-visit-history?saleman_code=${saleman_code}&from=${date}&to=${date}`,
+                url: `https://api-dms.daithuan.vn/v1/client/get-visit-history?saleman_code=${saleman_code}&from=${date}&to=${date}`,
                 type: 'GET',
                 dataType: 'json',
                 headers: {
@@ -865,7 +865,7 @@
 
 
             $.ajax({
-                url: `https://api-daithuan.newweb.vn/v0/user-device-histories?user_code=${saleman_code}&from=${date} 00:00:00&to=${date} 23:59:59`,
+                url: `https://api-dms.daithuan.vn/v0/user-device-histories?user_code=${saleman_code}&from=${date} 00:00:00&to=${date} 23:59:59`,
                 type: 'GET',
                 dataType: 'json',
                 headers: {

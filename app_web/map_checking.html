@@ -368,6 +368,52 @@
         .legend-panel::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #024da3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: white;
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .loading-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
     </style>
 </head>
 
@@ -485,6 +531,14 @@
             <span class="close" onclick="closePopup()">&times;</span>
             <h3>Không tìm thấy lộ trình</h3>
             <p>Vui lòng chọn ngày khác.</p>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Đang tải dữ liệu...</div>
         </div>
     </div>
 
@@ -1030,6 +1084,12 @@
                         dataSaleCode.push(element['code']);
                     });
 
+                    // Hiển thị loading
+                    const loadingOverlay = document.getElementById('loading-overlay');
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('active');
+                    }
+
                     $.ajax({
                         url: `https://api-daithuan-prod.newweb.vn/v1/client/get-plan-now-by-saleman?limit=999`,
                         type: 'POST',
@@ -1042,6 +1102,10 @@
                             'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b'
                         },
                         success: function (data) {
+                            // Ẩn loading
+                            if (loadingOverlay) {
+                                loadingOverlay.classList.remove('active');
+                            }
                             // Lọc bỏ các điểm có shop_long hoặc shop_lat null
                             const validData = data.data.filter(element => 
                                 element['shop_long'] != null && 
@@ -1093,6 +1157,11 @@
                             });
                         },
                         error: function (error) {
+                            // Ẩn loading khi có lỗi
+                            const loadingOverlay = document.getElementById('loading-overlay');
+                            if (loadingOverlay) {
+                                loadingOverlay.classList.remove('active');
+                            }
                             console.error(error);
                         }
                     });

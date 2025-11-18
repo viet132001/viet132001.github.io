@@ -414,6 +414,169 @@
             flex-direction: column;
             align-items: center;
         }
+
+        /* Image Modal */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-modal.active {
+            display: flex;
+        }
+
+        .image-modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            text-align: center;
+        }
+
+        .image-modal-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .image-modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .image-modal-close:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .image-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            font-size: 30px;
+            padding: 15px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .image-nav:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .image-nav.prev {
+            left: 20px;
+        }
+
+        .image-nav.next {
+            right: 20px;
+        }
+
+        .view-image-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .view-image-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Image Grid Layout */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .image-grid img {
+            width: 100%;
+            height: auto;
+            max-width: 150px;
+            max-height: 150px;
+            object-fit: cover;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: transform 0.2s ease;
+        }
+
+        .image-grid img:hover {
+            transform: scale(1.05);
+        }
+        /* Animation cho dataSale marker */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.1);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 4px 16px rgba(255,165,0,0.6), 0 0 0 3px rgba(255,165,0,0.3);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.1);
+            }
+        }
+
+        .dataSale-marker .marker-circle {
+            position: relative;
+        }
+
+        .dataSale-marker .marker-circle::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--ripple-color, rgba(66, 133, 244, 0.5));
+            animation: ripple 2s ease-out infinite;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 
@@ -542,7 +705,73 @@
         </div>
     </div>
 
+    <!-- Image Modal -->
+    <div id="image-modal" class="image-modal">
+        <div class="image-modal-content">
+            <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
+            <button class="image-nav prev" onclick="changeImage(-1)">&#8249;</button>
+            <button class="image-nav next" onclick="changeImage(1)">&#8250;</button>
+            <img id="modal-image" src="" alt="Hình ảnh">
+        </div>
+    </div>
+
     <script>
+        // Image Modal Functions
+        let currentImages = [];
+        let currentImageIndex = 0;
+        let imageUrlsMap = new Map(); // Lưu trữ imageUrls theo ID
+
+        function openImageModal(imageId, index = 0) {
+            const images = imageUrlsMap.get(imageId);
+            if (!images || images.length === 0) return;
+            
+            currentImages = images;
+            currentImageIndex = index;
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-image');
+            const prevBtn = document.querySelector('.image-nav.prev');
+            const nextBtn = document.querySelector('.image-nav.next');
+            
+            modalImg.src = images[currentImageIndex];
+            modal.classList.add('active');
+            
+            // Ẩn nút điều hướng nếu chỉ có 1 hình
+            if (images.length <= 1) {
+                if (prevBtn) prevBtn.style.display = 'none';
+                if (nextBtn) nextBtn.style.display = 'none';
+            } else {
+                if (prevBtn) prevBtn.style.display = 'block';
+                if (nextBtn) nextBtn.style.display = 'block';
+            }
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('image-modal');
+            modal.classList.remove('active');
+        }
+
+        function changeImage(direction) {
+            if (currentImages.length === 0) return;
+            currentImageIndex += direction;
+            if (currentImageIndex < 0) {
+                currentImageIndex = currentImages.length - 1;
+            } else if (currentImageIndex >= currentImages.length) {
+                currentImageIndex = 0;
+            }
+            document.getElementById('modal-image').src = currentImages[currentImageIndex];
+        }
+
+        // Đóng modal khi click vào background
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('image-modal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeImageModal();
+                    }
+                });
+            }
+        });
         // Tab Switching
         function switchTab(tab, event) {
             // Update buttons
@@ -742,7 +971,7 @@
             const mapMap = new maplibregl.Map({
                 container: 'map-map',
                 center: [long, lat],
-                zoom: 10
+                zoom: 12
             });
             window.mapMapInstance = mapMap;
 
@@ -755,8 +984,10 @@
             });
 
             let dataSale = [];
+            let dataSaleMarkers = []; // Mảng lưu các marker của dataSale
             let first = true;
             let popupMap = null;
+            let clickedPopupMap = null; // Lưu popup đang được hiển thị bởi click
             const routeLayerIdMap = 'route-map';
 
             // Hàm tạo icon hình tròn với shadow và logo bên trong (giống Google Maps)
@@ -985,6 +1216,7 @@
                             getDataPlan();
                         }
 
+                        // Xóa các layer cũ nếu có (từ code cũ dùng symbol layer)
                         dataSale.forEach((element) => {
                             const sourceId = `${element['code']}`;
                             const existingSource = mapMap.getSource(sourceId);
@@ -996,77 +1228,10 @@
                                 }
                                 mapMap.removeSource(sourceId);
                             }
-
-                            const stt = element['is_online'] == 1 ? 'Đang online' : element['time_diff'];
-                            mapMap.addSource(`${sourceId}`, {
-                                'type': 'geojson',
-                                'data': {
-                                    'type': 'FeatureCollection',
-                                    'features': [{
-                                        'type': 'Feature',
-                                        'properties': {
-                                            'title': 'vtmapgl',
-                                            'icon': 'theatre',
-                                            'description': '<strong>' + element['name'] + '</strong>' +
-                                                '</br>' + ' Thiết bị : ' + '<strong>' + element['device_name'] + '</strong>' +
-                                                '</br>' + ' Doanh số tháng: ' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
-                                                '</br>' + ' Doanh số ngày: ' + '<strong>' + element['total_sale_day_formatted'] + '</strong>' +
-                                                '</br>' + ' Tổng số đơn : ' + '<strong>' + element['order_count'] + '</strong>' +
-                                                '</br>' + ' Đơn hàng hôm nay : ' + '<strong>' + element['order_count_day'] + '</strong>' +
-                                                '</br>' + ' Viếng thăm hôm nay : ' + '<strong>' + element['total_visit_day'] + '</strong>' +
-                                                '</br>' + ' Trạng thái : ' + '<strong>' + stt + '</strong>'
-                                        },
-                                        'geometry': {
-                                            'type': 'Point',
-                                            'coordinates': [element['long'], element['lat']],
-                                        },
-                                    }]
-                                }
-                            });
-
-                            if (mapMap.getSource(sourceId)) {
-                                mapMap.addLayer({
-                                    'id': `${sourceId}`,
-                                    'type': 'symbol',
-                                    'source': `${sourceId}`,
-                                    'layout': {
-                                        'icon-image': element['is_online'] == 1 ? `avatarO` : `avatarOF`,
-                                        'icon-size': element['type'] == 'store' ? 0.3 : 1.0,
-                                        'icon-optional': true,
-                                        'icon-allow-overlap': true,
-                                        'text-allow-overlap': true,
-                                        'text-field': `  ${element['is_online'] == 1 ? element['name'] : element['name'] + ' ' + element['time_diff']}`,
-                                        'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 2],
-                                        'text-anchor': 'top',
-                                        'text-size': 12,
-                                        'text-max-width': 10,
-                                        'text-line-height': 1.2,
-                                    },
-                                    'paint': {
-                                        'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
-                                        'text-halo-color': '#fff',
-                                        'text-halo-width': 2,
-                                    },
-                                });
-
-                                mapMap.on('click', `${sourceId}`, (e) => {
-                                    const coordinates = e.features[0].geometry.coordinates.slice();
-                                    const description = e.features[0].properties.description;
-
-                                    while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                                        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-                                    }
-                                    if (popupMap) {
-                                        popupMap.remove();
-                                    }
-
-                                    popupMap = new maplibregl.Popup()
-                                        .setLngLat(coordinates)
-                                        .setHTML(description)
-                                        .addTo(mapMap);
-                                });
-                            }
                         });
+
+                        // Vẽ lại dataSale markers
+                        redrawDataSaleMarkers();
                     },
                     error: function (error) {
                         console.error(error);
@@ -1140,7 +1305,7 @@
                                 mapMap.flyTo({
                                     center: [sortedData[0]['shop_long'], sortedData[0]['shop_lat']],
                                     speed: 1,
-                                    zoom: 14,
+                                    zoom: 12,
                                     easing(t) {
                                         if (t == 1) {
                                             mapMap.setPitch(30);
@@ -1285,6 +1450,94 @@
                 });
             }
 
+            // Hàm vẽ lại dataSale markers để đảm bảo nằm trên cùng
+            function redrawDataSaleMarkers() {
+                // Xóa các marker cũ
+                dataSaleMarkers.forEach(marker => {
+                    marker.remove();
+                });
+                dataSaleMarkers = [];
+
+                // Vẽ lại các marker
+                dataSale.forEach((element) => {
+                    if (!element['long'] || !element['lat']) return;
+
+                    const stt = element['is_online'] == 1 ? 'Đang online' : element['time_diff'];
+                    
+                    // Xác định màu nền cho dataSale: xanh biển Google Maps nếu online, xám nếu offline
+                    let fillColor = element['is_online'] == 1 ? '#4285F4' : '#C6C8C9E9';
+                    // Màu ripple: xanh biển nếu online, xám nếu offline
+                    let rippleColor = element['is_online'] == 1 ? 'rgba(66, 133, 244, 0.5)' : 'rgba(198, 200, 201, 0.5)';
+                    
+                    // Tạo marker element
+                    const markerElement = document.createElement('div');
+                    markerElement.className = 'dataSale-marker';
+                    markerElement.style.cursor = 'pointer';
+                    
+                    // Không có logo, chỉ có vòng tròn với màu
+                    markerElement.innerHTML = `
+                       <div style="display: flex; flex-direction: column; align-items: center;">
+                       <div class="marker-circle" style="background-color: ${fillColor}; --ripple-color: ${rippleColor}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.1);">
+                       </div>
+                       <span style="font-size: 12px; color: #333; margin-top: 4px; text-align: center; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${element['name']}</span>
+                       </div>
+                   `;
+                   
+                    // Parse tọa độ: maplibregl dùng [lng, lat]
+                    const lng = parseFloat(element['long']);
+                    const lat = parseFloat(element['lat']);
+                    
+                    // Kiểm tra tọa độ hợp lệ
+                    if (isNaN(lng) || isNaN(lat) || lng === 0 || lat === 0) {
+                        console.warn('Invalid coordinates for dataSale:', element);
+                        return;
+                    }
+                    
+                    const marker = new maplibregl.Marker(markerElement)
+                        .setLngLat([lng, lat])
+                        .addTo(mapMap);
+                    
+                    dataSaleMarkers.push(marker);
+                    
+                    // Tạo popup content
+                    const description = '<strong>' + element['name'] + '</strong>' +
+                        '</br>' + ' Thiết bị : ' + '<strong>' + element['device_name'] + '</strong>' +
+                        '</br>' + ' Doanh số tháng: ' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
+                        '</br>' + ' Doanh số ngày: ' + '<strong>' + element['total_sale_day_formatted'] + '</strong>' +
+                        '</br>' + ' Tổng số đơn : ' + '<strong>' + element['order_count'] + '</strong>' +
+                        '</br>' + ' Đơn hàng hôm nay : ' + '<strong>' + element['order_count_day'] + '</strong>' +
+                        '</br>' + ' Viếng thăm hôm nay : ' + '<strong>' + element['total_visit_day'] + '</strong>' +
+                        '</br>' + ' Trạng thái : ' + '<strong>' + stt + '</strong>';
+                    
+                    const popup = new maplibregl.Popup({ offset: 30 })
+                        .setLngLat([lng, lat])
+                        .setHTML(description);
+                    
+                    marker.getElement().addEventListener('mouseenter', () => {
+                        if (clickedPopupMap !== popup) {
+                            popup.addTo(mapMap);
+                        }
+                    });
+                    
+                    marker.getElement().addEventListener('mouseleave', () => {
+                        if (clickedPopupMap !== popup) {
+                            popup.remove();
+                        }
+                    });
+                    
+                    marker.getElement().addEventListener('click', () => {
+                        if (popupMap) {
+                            popupMap.remove();
+                        }
+                        if (clickedPopupMap) {
+                            clickedPopupMap.remove();
+                        }
+                        clickedPopupMap = popup;
+                        popup.addTo(mapMap);
+                    });
+                });
+            }
+
             // Hàm thêm shop layers
             function addShopLayers(sortedData, checkoutOrderMap) {
                 // Lưu các marker để có thể xóa sau
@@ -1318,15 +1571,17 @@
                         // Tạo marker với số thứ tự, nếu đã checkout
                         
                         const markerElement = document.createElement('div');
-                        const orderNumberDisplay = (element['status'] === 'CHECKOUT' && orderNumber) 
-                            ? `<span style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px; text-align: center;">${orderNumber}</span>` 
+                        markerElement.style.cursor = 'pointer';
+                        // Nội dung trong vòng tròn: logo nếu NEW, số thứ tự nếu CHECKOUT
+                        const circleContent = element['status'] === 'NEW' 
+                            ? `<img src="../img/logo.png" style="width: 22px; height: 22px;">`
+                            : (element['status'] === 'CHECKOUT' && orderNumber)
+                            ? `<span style="font-size: 14px; font-weight: bold; color: #333;">${orderNumber}</span>`
                             : '';
                         markerElement.innerHTML = `
                            <div style="display: flex; flex-direction: column; align-items: center;">
-                           ${orderNumberDisplay}
-                           <div style="background-color: ${fillColor}; padding: 5px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                           <img src="../img/logo.png"
-                           style="width: 22px; height: 22px;">
+                           <div style="background-color: ${fillColor}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.1);">
+                           ${circleContent}
                            </div>
                            <span style="font-size: 12px; color: #333; margin-top: 4px; text-align: center; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${element['shop_name']}</span>
                            </div>
@@ -1340,25 +1595,88 @@
                         
                         // Thêm popup cho marker
                         let imgs = '';
+                        let imageUrls = [];
                         if (element['images']) {
+                            // Tạo danh sách URLs trước
                             element['images'].forEach((e) => {
                                 const url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
-                                imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `;
+                                imageUrls.push(url);
                             });
+                            // Lưu vào map với ID duy nhất
+                            const imageId = `img_${element['id']}_${Date.now()}_${Math.random()}`;
+                            imageUrlsMap.set(imageId, imageUrls);
+                            // Tạo HTML với grid layout
+                            imgs = '<div class="image-grid">';
+                            element['images'].forEach((e, imgIndex) => {
+                                const url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
+                                imgs += `<img src="${url}" onclick="openImageModal('${imageId}', ${imgIndex})" title="Click để xem full"/>`;
+                            });
+                            imgs += '</div>';
                         }
+                        
+                        // Format thời gian nếu có checkin_date và checkout_date
+                        let time = '';
+                        if (element['checkin_date'] && element['checkout_date']) {
+                            time = formatTimeRange(element['checkin_date'], element['checkout_date']);
+                        } else if (element['checkin_date']) {
+                            time = element['checkin_date'];
+                        }
+                        
+                        // Thông tin đơn hàng
+                        const hOrders = element['orders'] != null ? 'Có đơn hàng' : 'Không';
+                        
+                        // Thông tin tuyến
+                        const pType = element['plan_type'] == 1 ? 'Trong tuyến' : 'Ngoại tuyến';
+                        
+                        // Địa chỉ cửa hàng
+                        const shopAddress = element['shop_address'] || '';
+                        
+                        // Xây dựng nội dung popup
+                        let popupContent = `<p> ${element['shop_code']}-${element['shop_name']} </p>`;
+                        
+                        if (shopAddress) {
+                            popupContent += `<div style='color : grey'>${shopAddress}</div>`;
+                        }
+                        
+                        if (time) {
+                            popupContent += ' Thời gian : ' + time + '<Br/>';
+                        }
+                        
+                        popupContent += ' Đặt hàng : ' + hOrders + '<Br/>';
+                        popupContent += ' Tuyến : ' + pType + '<Br/>';
+                        popupContent += imgs + '<Br/>';
                         
                         const popup = new maplibregl.Popup({ offset: 30 })
                             .setLngLat([element['shop_long'], element['shop_lat']])
-                            .setHTML(`<p> ${element['shop_code']}-${element['shop_name']} </p>` +
-                                '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>' +
-                                '<Br/>' + imgs + '<Br/>'
-                            );
+                            .setHTML(popupContent);
                         
                         marker.getElement().addEventListener('mouseenter', () => {
-                            popup.setLngLat(marker.getLngLat()).addTo(mapMap);
+                            // Chỉ hiển thị popup khi hover nếu chưa có popup nào được click
+                            if (clickedPopupMap !== popup) {
+                                popup.setLngLat(marker.getLngLat()).addTo(mapMap);
+                            }
                         });
                         marker.getElement().addEventListener('mouseleave', () => {
-                            popup.remove();
+                            // Chỉ xóa popup khi mouseleave nếu nó không phải là popup được click
+                            if (clickedPopupMap !== popup) {
+                                popup.remove();
+                            }
+                        });
+                        marker.getElement().addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            // Nếu click vào popup đang hiển thị, đóng nó
+                            if (clickedPopupMap === popup) {
+                                popup.remove();
+                                clickedPopupMap = null;
+                            } else {
+                                // Đóng popup cũ nếu có
+                                if (clickedPopupMap) {
+                                    clickedPopupMap.remove();
+                                }
+                                // Hiển thị popup mới và đánh dấu là popup được click
+                                popup.setLngLat(marker.getLngLat()).addTo(mapMap);
+                                clickedPopupMap = popup;
+                            }
                         });
                         
                         // Không thêm layer cho điểm CHECKOUT nữa vì đã dùng marker
@@ -1366,12 +1684,56 @@
                     }
 
                     let imgs = '';
+                    let imageUrls = [];
                     if (element['images']) {
+                        // Tạo danh sách URLs trước
                         element['images'].forEach((e) => {
                             const url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
-                            imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `;
+                            imageUrls.push(url);
                         });
+                        // Lưu vào map với ID duy nhất
+                        const imageId = `img_${element['id']}_${Date.now()}_${Math.random()}`;
+                        imageUrlsMap.set(imageId, imageUrls);
+                        // Tạo HTML với grid layout
+                        imgs = '<div class="image-grid">';
+                        element['images'].forEach((e, imgIndex) => {
+                            const url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
+                            imgs += `<img src="${url}" onclick="openImageModal('${imageId}', ${imgIndex})" title="Click để xem full"/>`;
+                        });
+                        imgs += '</div>';
                     }
+                    
+                    // Format thời gian nếu có checkin_date và checkout_date
+                    let time = '';
+                    if (element['checkin_date'] && element['checkout_date']) {
+                        time = formatTimeRange(element['checkin_date'], element['checkout_date']);
+                    } else if (element['checkin_date']) {
+                        time = element['checkin_date'];
+                    }
+                    
+                    // Thông tin đơn hàng
+                    const hOrders = element['orders'] != null ? 'Có đơn hàng' : 'Không';
+                    
+                    // Thông tin tuyến
+                    const pType = element['plan_type'] == 1 ? 'Trong tuyến' : 'Ngoại tuyến';
+                    
+                    // Địa chỉ cửa hàng
+                    const shopAddress = element['shop_address'] || '';
+                    
+                    // Xây dựng nội dung popup
+                    let popupDescription = `<p> ${element['shop_code']}-${element['shop_name']} </p>`;
+                    
+                    if (shopAddress) {
+                        popupDescription += `<div style='color : grey'>${shopAddress}</div>`;
+                    }
+                    
+                    if (time) {
+                        popupDescription += ' Thời gian : ' + time + '<Br/>';
+                    }
+                    
+                    popupDescription += ' Đặt hàng : ' + hOrders + '<Br/>';
+                    popupDescription += ' Tuyến : ' + pType + '<Br/>';
+                    popupDescription += imgs + '<Br/>';
 
                     if (existingSource) {
                         mapMap.getSource(sourceId).setData({
@@ -1381,7 +1743,7 @@
                                 'properties': {
                                     'title': 'vtmapgl',
                                     'icon': 'theatre',
-                                    'description': '<strong>' + element['shop_name'] + '</strong>' + '<Br/>' + imgs + '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
+                                    'description': popupDescription
                                 },
                                 'geometry': {
                                     'type': 'Point',
@@ -1399,7 +1761,7 @@
                                     'properties': {
                                         'title': 'vtmapgl',
                                         'icon': 'theatre',
-                                        'description': '<strong>' + element['shop_name'] + '</strong>' + '<Br/>' + imgs + '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
+                                        'description': popupDescription
                                     },
                                     'geometry': {
                                         'type': 'Point',
@@ -1485,6 +1847,25 @@
                         }
                     }
                 }
+                
+                // Vẽ lại dataSale markers sau khi shop layers được thêm để đảm bảo nằm trên cùng
+                setTimeout(() => {
+                    redrawDataSaleMarkers();
+                }, 300);
+                
+                // Đóng popup khi click vào map (không phải marker)
+                mapMap.on('click', function(e) {
+                    // Đợi một chút để đảm bảo event click của marker đã xử lý xong
+                    setTimeout(() => {
+                        // Kiểm tra xem có click vào marker không bằng cách kiểm tra features
+                        const features = mapMap.queryRenderedFeatures(e.point);
+                        // Nếu không có features hoặc không phải là marker, đóng popup
+                        if (clickedPopupMap && (!features || features.length === 0)) {
+                            clickedPopupMap.remove();
+                            clickedPopupMap = null;
+                        }
+                    }, 50);
+                });
             }
 
             if (parent_code) {
@@ -1495,7 +1876,7 @@
             const mapRoute = new maplibregl.Map({
                 container: 'map-route',
                 center: [108.343212, 15.136311],
-                zoom: 6
+                zoom: 12
             });
             window.mapRouteInstance = mapRoute;
 
@@ -1743,8 +2124,6 @@
                                     return t;
                                 }
                             });
-                        } else {
-                            document.getElementById("popup").style.display = "block";
                         }
 
                         data.data.forEach((newElement, index) => {
@@ -1763,11 +2142,23 @@
                                 .addTo(mapRoute);
 
                             let imgs = '';
+                            let imageUrls = [];
                             if (data.data[index]['images']) {
+                                // Tạo danh sách URLs trước
                                 data.data[index]['images'].forEach((e) => {
                                     const url = `https://media-dms.daithuan.vn/file/${e['id']}`;
-                                    imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `;
+                                    imageUrls.push(url);
                                 });
+                                // Lưu vào map với ID duy nhất
+                                const imageId = `img_route_${index}_${Date.now()}_${Math.random()}`;
+                                imageUrlsMap.set(imageId, imageUrls);
+                                // Tạo HTML với grid layout
+                                imgs = '<div class="image-grid">';
+                                data.data[index]['images'].forEach((e, imgIndex) => {
+                                    const url = `https://media-dms.daithuan.vn/file/${e['id']}`;
+                                    imgs += `<img src="${url}" onclick="openImageModal('${imageId}', ${imgIndex})" title="Click để xem full"/>`;
+                                });
+                                imgs += '</div>';
                             }
                             const time = formatTimeRange(data.data[index]['checkin_date'], data.data[index]['checkout_date']);
                             const hOrders = data.data[index].orders != null ? 'Có đơn hàng' : 'Không';
@@ -1787,6 +2178,9 @@
                             });
                             marker.getElement().addEventListener('mouseleave', () => {
                                 popup.remove();
+                            });
+                            marker.getElement().addEventListener('click', () => {
+                                popup.setLngLat(marker.getLngLat()).addTo(mapRoute);
                             });
                             popup.remove();
                             markers.push(marker);

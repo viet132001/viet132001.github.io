@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Kiểm tra bản đồ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script src="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.js"></script>
+    <link href="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Tab System */
+        .tab-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-buttons {
+            display: flex;
+            background: #f5f5f5;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #024da3;
+            border-bottom-color: #024da3;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Map Container */
+        #map-map,
+        #map-route {
+            position: absolute;
+            top: 50px;
+            bottom: 0;
+            width: 100%;
+            background: #ddd;
+        }
+
+        /* Controls */
+        .map-controls {
+            position: absolute;
+            top: 60px;
+            left: 10px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-button:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .control-button:active {
+            transform: translateY(0);
+        }
+
+        /* Info Panels */
+        .info-panel {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            padding: 15px;
+            background: white;
+            font-size: 12px;
+            width: 350px;
+            min-width: 280px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .legend-panel {
+            position: absolute;
+            top: 60px;
+            left: 180px;
+            padding: 15px;
+            background: white;
+            font-size: 12px;
+            width: 230px;
+            min-height: 20px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Icons */
+        .icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            vertical-align: middle;
+            border-radius: 50%;
+        }
+
+        .icon.blue {
+            background-color: #FC200CFF;
+        }
+
+        .icon.green {
+            background-color: #48C557FF;
+        }
+
+        .icon.location {
+            background-color: orange;
+        }
+
+        /* Legend Icon Styles */
+        .legend-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            border: 2px solid white;
+            flex-shrink: 0;
+        }
+
+        .legend-icon-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        /* Popup */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+        }
+
+        .popup-content {
+            background-color: #fff;
+            width: 90%;
+            max-width: 300px;
+            margin: 200px auto;
+            padding: 25px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            animation: popupFadeIn 0.3s ease;
+        }
+
+        @keyframes popupFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .close {
+            color: #888;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Moving Icon */
+        #moving-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            display: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .tab-button {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            .map-controls {
+                top: 55px;
+                left: 5px;
+                gap: 8px;
+            }
+
+            .control-button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .info-panel {
+                top: 55px;
+                right: 5px;
+                width: calc(100% - 10px);
+                max-width: 300px;
+                max-height: calc(100vh - 150px);
+                font-size: 11px;
+            }
+
+            .legend-panel {
+                top: 55px;
+                left: 5px;
+                width: calc(100% - 10px);
+                max-width: 200px;
+                max-height: calc(100vh - 150px);
+                font-size: 11px;
+            }
+
+            #map-map,
+            #map-route {
+                top: 45px;
+            }
+
+            .tab-container {
+                position: fixed;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .info-panel,
+            .legend-panel {
+                position: fixed;
+                bottom: 0;
+                top: auto;
+                max-height: 40vh;
+                width: 100%;
+                right: 0;
+                left: 0;
+                border-radius: 10px 10px 0 0;
+            }
+
+            .map-controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .control-button {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .info-panel::-webkit-scrollbar,
+        .legend-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .info-panel::-webkit-scrollbar-track,
+        .legend-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .info-panel::-webkit-scrollbar-thumb,
+        .legend-panel::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .info-panel::-webkit-scrollbar-thumb:hover,
+        .legend-panel::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Tab System -->
+    <div class="tab-container">
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="switchTab('map', event)">Bản đồ</button>
+            <button class="tab-button" onclick="switchTab('route', event)">Lộ trình</button>
+        </div>
+    </div>
+
+    <!-- Tab Content: Bản đồ (Map Location) -->
+    <div id="tab-map" class="tab-content active">
+        <div id="map-map">
+            <div class="map-controls">
+                <div onclick="document.getElementById('date-select-map').showPicker ? document.getElementById('date-select-map').showPicker() : document.getElementById('date-select-map').click()" style="position: relative; display: inline-block; cursor: pointer; padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: white; min-width: 150px;">
+                    <input type="date" id="date-select-map" style="width: 100%; border: none; outline: none; cursor: pointer; background: transparent; pointer-events: none; position: relative; z-index: 1;">
+                </div>
+            </div>
+        </div>
+        <div id="note-map" class="legend-panel" style="display: none;">
+            <table>
+                <tbody>
+                    <tr>
+                        <td style="display: flex; align-items: center;">
+                            <div style="display: flex; flex-direction: column; align-items: center; min-width: 50px;">
+                                <div style="background-color: #C6C8C9E9; padding: 5px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                                    <img src="../img/logo.png" style="width: 22px; height: 22px;">
+                                </div>
+                            </div>
+                            <span style="margin-left: 12px;">Chưa viếng thăm</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="display: flex; align-items: center;">
+                            <div style="display: flex; flex-direction: column; align-items: center; min-width: 50px;">
+                                <!-- <span style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px;">1</span> -->
+                                <div style="background-color: #6CF96EFF; padding: 5px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                                    <img src="../img/logo.png" style="width: 22px; height: 22px;">
+                                </div>
+                            </div>
+                            <span style="margin-left: 12px;">Đã checkout</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="display: flex; align-items: center;">
+                            <div style="display: flex; flex-direction: column; align-items: center; min-width: 50px;">
+                                <div style="background-color: #4EC1FFFF; padding: 5px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                                    <img src="../img/logo.png" style="width: 22px; height: 22px;">
+                                </div>
+                            </div>
+                            <span style="margin-left: 12px;">Có đơn hàng</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab Content: Lộ trình (Route Map) -->
+    <div id="tab-route" class="tab-content">
+        <div id="map-route">
+            <div class="map-controls">
+                <div onclick="document.getElementById('date-select-route').showPicker ? document.getElementById('date-select-route').showPicker() : document.getElementById('date-select-route').click()" style="position: relative; display: inline-block; cursor: pointer; padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: white; min-width: 150px; margin-right: 10px;">
+                    <input type="date" id="date-select-route" style="width: 100%; border: none; outline: none; cursor: pointer; background: transparent; pointer-events: none; position: relative; z-index: 1;">
+                </div>
+                <button class="control-button" onclick="toggleRouteInfo()" id="toggle-route-info-btn" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer; color: #000;">Ẩn danh sách</button>
+
+            </div>
+            <div id="moving-icon-route">
+                <img src="https://media-dms.daithuan.vn/file/fPUBghG4N/w200-h200" alt="Moving icon"
+                    style="width: 32px; height: 32px;">
+            </div>
+        </div>
+        <div id="note-route" class="legend-panel" style="display: none;">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>
+                            &nbsp; <span class="icon blue"></span> Đường đi tối ưu
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            &nbsp; <span class="icon green"></span> Đường đi thực tế
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="display: flex; align-items: center;">
+                            &nbsp;
+                            <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="10" cy="10" r="10" fill="yellow" />
+                                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="12"
+                                    fill="black">1</text>
+                            </svg>
+                            <span style="margin-left: 8px;">Vị trí điểm bán đã check-in</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="info-route" class="info-panel">
+            <table>
+                <tr>
+                    <th>Danh sách</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Popup -->
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <span class="close" onclick="closePopup()">&times;</span>
+            <h3>Không tìm thấy lộ trình</h3>
+            <p>Vui lòng chọn ngày khác.</p>
+        </div>
+    </div>
+
+    <script>
+        // Tab Switching
+        function switchTab(tab, event) {
+            // Update buttons
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-button').forEach((btn, index) => {
+                    if ((tab === 'map' && index === 0) || (tab === 'route' && index === 1)) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'map') {
+                document.getElementById('tab-map').classList.add('active');
+                setTimeout(() => {
+                    if (window.mapMapInstance) {
+                        window.mapMapInstance.resize();
+                    }
+                }, 100);
+            } else {
+                document.getElementById('tab-route').classList.add('active');
+                setTimeout(() => {
+                    if (window.mapRouteInstance) {
+                        window.mapRouteInstance.resize();
+                    }
+                }, 100);
+            }
+        }
+
+        // Toggle functions
+        function toggleTable() {
+            const note = document.getElementById("note-map");
+            note.classList.toggle("hidden");
+        }
+
+        function toggleTableRoute() {
+            const note = document.getElementById("note-route");
+            const info = document.getElementById("info-route");
+            note.classList.toggle("hidden");
+            info.classList.toggle("hidden");
+        }
+        
+        // Toggle danh sách lộ trình
+        function toggleRouteInfo() {
+            const info = document.getElementById("info-route");
+            const btn = document.getElementById("toggle-route-info-btn");
+            
+            if (info) {
+                const isHidden = info.classList.contains("hidden");
+                info.classList.toggle("hidden");
+                
+                if (btn) {
+                    btn.textContent = isHidden ? "Ẩn danh sách" : "Hiện danh sách";
+                }
+            }
+        }
+        
+        // Kiểm tra mobile device
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (window.innerWidth <= 768);
+        }
+
+        function closePopup() {
+            document.getElementById("popup").style.display = "none";
+        }
+
+        // Format time range
+        function formatTimeRange(start, end) {
+            if (start == null || end == null) {
+                return 'Chưa có dữ liệu';
+            }
+            
+            function parseDate(dateStr) {
+                const parts = dateStr.split(' ');
+                const [day, month, year] = parts[0].split('-').map(Number);
+                const [hours, minutes] = parts[1].split(':').map(Number);
+                return new Date(year, month - 1, day, hours, minutes);
+            }
+
+            const startDate = parseDate(start);
+            const endDate = parseDate(end);
+            const startHours = String(startDate.getHours()).padStart(2, '0');
+            const startMinutes = String(startDate.getMinutes()).padStart(2, '0');
+            const endHours = String(endDate.getHours()).padStart(2, '0');
+            const endMinutes = String(endDate.getMinutes()).padStart(2, '0');
+            const diffMs = endDate - startDate;
+            const diffMinutes = Math.floor(diffMs / 60000);
+            const hours = Math.floor(diffMinutes / 60);
+            const minutes = diffMinutes % 60;
+            const dateStr = start.split(' ')[0];
+            return `${startHours}:${startMinutes} - ${endHours}:${endMinutes} (${dateStr}) (${hours}:${String(minutes).padStart(2, '0')} phút)`;
+        }
+
+        // Calculate distance
+        function calculateDistance(coord1, coord2) {
+            const lat1 = coord1[1];
+            const lon1 = coord1[0];
+            const lat2 = coord2[1];
+            const lon2 = coord2[0];
+            const earthRadius = 6371;
+            const dLat = toRadians(lat2 - lat1);
+            const dLon = toRadians(lon2 - lon1);
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return earthRadius * c;
+        }
+
+        function toRadians(degrees) {
+            return degrees * (Math.PI / 180);
+        }
+
+        // Get URL parameters
+        const url = new URL(window.location.toString());
+        const saleman_code = url.searchParams.get('saleman_code');
+        const date = url.searchParams.get('date');
+        const parent_code = url.searchParams.get('parent_code');
+        const viewMap = url.searchParams.get('viewMap');
+        
+        // Hàm xử lý khi thay đổi ngày
+        function handleDateChange(selectedDate, isRoute = false) {
+            const url = new URL(window.location.toString());
+            url.searchParams.set('date', selectedDate);
+            
+            // Nếu là tab route, giữ saleman_code
+            if (isRoute && saleman_code) {
+                url.searchParams.set('saleman_code', saleman_code);
+            }
+            
+            // Reload trang với ngày mới
+            window.location.href = url.toString();
+        }
+        
+        // Thiết lập giá trị date và lắng nghe sự kiện thay đổi ngày
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInputMap = document.getElementById('date-select-map');
+            const dateInputRoute = document.getElementById('date-select-route');
+            
+            // Thiết lập giá trị date từ URL
+            if (date) {
+                if (dateInputMap) dateInputMap.value = date;
+                if (dateInputRoute) dateInputRoute.value = date;
+            }
+            
+            // Lắng nghe sự kiện thay đổi ngày cho tab bản đồ
+            if (dateInputMap) {
+                dateInputMap.addEventListener('change', function(e) {
+                    handleDateChange(e.target.value, false);
+                });
+            }
+            
+            // Lắng nghe sự kiện thay đổi ngày cho tab lộ trình
+            if (dateInputRoute) {
+                dateInputRoute.addEventListener('change', function(e) {
+                    handleDateChange(e.target.value, true);
+                });
+            }
+            
+            // Ẩn danh sách mặc định trên mobile
+            if (isMobileDevice()) {
+                const infoRoute = document.getElementById('info-route');
+                const toggleBtn = document.getElementById('toggle-route-info-btn');
+                if (infoRoute) {
+                    infoRoute.classList.add('hidden');
+                }
+                if (toggleBtn) {
+                    toggleBtn.textContent = 'Hiện danh sách';
+                }
+            }
+        });
+        
+        let lat = 10.760948;
+        let long = 106.705611;
+        try {
+            const urlLat = url.searchParams.get('lat');
+            const urlLong = url.searchParams.get('long');
+            if (urlLat && urlLat !== 'null' && urlLat !== 'undefined') {
+                lat = parseFloat(urlLat);
+            }
+            if (urlLong && urlLong !== 'null' && urlLong !== 'undefined') {
+                long = parseFloat(urlLong);
+            }
+        } catch (e) {
+            console.log('Using default coordinates');
+        }
+
+        // Initialize Map for Tab 1 (Bản đồ - Map Location)
+        $(document).ready(function () {
+            // Map 1: Map Location
+            const mapMap = new maplibregl.Map({
+                container: 'map-map',
+                center: [long, lat],
+                zoom: 10
+            });
+            window.mapMapInstance = mapMap;
+
+            const basemapMap = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
+            basemapMap.addTo(mapMap);
+
+            const routingServiceMap = new ekmapplf.service.Routing({
+                apiKey: 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR',
+                profile: 'foot'
+            });
+
+            let dataSale = [];
+            let first = true;
+            let popupMap = null;
+            const routeLayerIdMap = 'route-map';
+
+            // Hàm tạo icon hình tròn với shadow và logo bên trong (giống Google Maps)
+            function createCircleIcon(color, size = 24, isOnline = false) {
+                const canvas = document.createElement('canvas');
+                canvas.width = size + 8;
+                canvas.height = size + 8;
+                const ctx = canvas.getContext('2d');
+                
+                const centerX = (size + 8) / 2;
+                const centerY = (size + 8) / 2;
+                const radius = size / 2;
+                
+                // Vẽ shadow
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 2, radius + 2, 0, 2 * Math.PI);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+                ctx.fill();
+                
+                // Vẽ circle chính
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = color;
+                ctx.fill();
+                
+                // Vẽ border trắng
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                
+                // Vẽ logo/icon bên trong
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                
+                // Vẽ biểu tượng người (silhouette) - giống các trạng thái khác
+                // Vẽ đầu (hình tròn)
+                ctx.beginPath();
+                ctx.arc(centerX, centerY - size * 0.15, size * 0.2, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Vẽ thân (hình bán nguyệt)
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + size * 0.1, size * 0.25, 0, Math.PI, true);
+                ctx.fill();
+                
+                if (!isOnline) {
+                    // Icon offline: thêm đường gạch chéo (offline indicator)
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX - size * 0.3, centerY - size * 0.3);
+                    ctx.lineTo(centerX + size * 0.3, centerY + size * 0.3);
+                    ctx.stroke();
+                }
+                
+                return canvas;
+            }
+
+            // Hàm tạo icon shop với màu và biểu tượng
+            function createShopIcon(color, symbol = '', size = 32) {
+                const canvas = document.createElement('canvas');
+                canvas.width = size + 8;
+                canvas.height = size + 8;
+                const ctx = canvas.getContext('2d');
+                
+                const centerX = (size + 8) / 2;
+                const centerY = (size + 8) / 2;
+                const radius = size / 2;
+                
+                // Vẽ shadow
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 2, radius + 2, 0, 2 * Math.PI);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+                ctx.fill();
+                
+                // Vẽ circle chính
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = color;
+                ctx.fill();
+                
+                // Vẽ border trắng
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                
+                // Vẽ biểu tượng bên trong
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.font = 'bold ' + (size * 0.4) + 'px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                if (symbol === 'check') {
+                    // Dấu tích (✓) - giống chú thích
+                    ctx.font = 'bold ' + (size * 0.5) + 'px Arial';
+                    ctx.fillText('✓', centerX, centerY + size * 0.05);
+                } else if (symbol === 'order') {
+                    // Dấu tích + chấm trắng phía trên - giống chú thích
+                    ctx.font = 'bold ' + (size * 0.5) + 'px Arial';
+                    ctx.fillText('✓', centerX, centerY + size * 0.05);
+                    // Vẽ chấm trắng nhỏ phía trên bên phải
+                    ctx.beginPath();
+                    ctx.arc(centerX + size * 0.2, centerY - size * 0.2, size * 0.12, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'white';
+                    ctx.fill();
+                } else if (symbol === 'new') {
+                    // Dấu chấm than (!) - giống chú thích
+                    ctx.font = 'bold ' + (size * 0.5) + 'px Arial';
+                    ctx.fillText('!', centerX, centerY + size * 0.05);
+                } else {
+                    // Icon mặc định - vẽ biểu tượng shop (hình vuông với mái nhà)
+                    // Vẽ mái nhà
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY - size * 0.2);
+                    ctx.lineTo(centerX - size * 0.2, centerY);
+                    ctx.lineTo(centerX + size * 0.2, centerY);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Vẽ thân nhà
+                    ctx.fillRect(centerX - size * 0.15, centerY, size * 0.3, size * 0.2);
+                }
+                
+                return canvas;
+            }
+
+            mapMap.on('load', () => {
+                // Helper function để convert canvas sang Image
+                function canvasToImage(canvas, callback) {
+                    const img = new Image();
+                    img.onload = () => callback(img);
+                    img.src = canvas.toDataURL();
+                }
+                
+                // Tạo icon hình tròn cho online (xanh biển) với logo người
+                const onlineIconCanvas = createCircleIcon('#2196F3', 24, true);
+                if (!mapMap.hasImage(`avatarO`)) {
+                    canvasToImage(onlineIconCanvas, (img) => {
+                        mapMap.addImage(`avatarO`, img);
+                    });
+                }
+                
+                // Tạo icon hình tròn cho offline (xám) với logo người và dấu gạch chéo
+                const offlineIconCanvas = createCircleIcon('#9E9E9E', 24, false);
+                if (!mapMap.hasImage(`avatarOF`)) {
+                    canvasToImage(offlineIconCanvas, (img) => {
+                        mapMap.addImage(`avatarOF`, img);
+                    });
+                }
+                // Tạo icon mặc định (logo)
+                const logoIconCanvas = createShopIcon('#757575', '', 28);
+                if (!mapMap.hasImage(`logo`)) {
+                    canvasToImage(logoIconCanvas, (img) => {
+                        mapMap.addImage(`logo`, img);
+                    });
+                }
+                
+                // Tạo icon đã checkout (màu xanh lá)
+                const checkoutIconCanvas = createShopIcon('#96E14A', 'check', 28);
+                if (!mapMap.hasImage(`logoCheckOut`)) {
+                    canvasToImage(checkoutIconCanvas, (img) => {
+                        mapMap.addImage(`logoCheckOut`, img);
+                    });
+                }
+                
+                // Tạo icon mới/chưa viếng thăm (màu đỏ)
+                const newIconCanvas = createShopIcon('#DF5E36', 'new', 28);
+                if (!mapMap.hasImage(`logoNew`)) {
+                    canvasToImage(newIconCanvas, (img) => {
+                        mapMap.addImage(`logoNew`, img);
+                    });
+                }
+                
+                // Tạo icon đã checkout và có đơn hàng (màu xanh lá với biểu tượng đơn)
+                const checkoutOrderIconCanvas = createShopIcon('#96E14A', 'order', 28);
+                if (!mapMap.hasImage(`logocheCkoutOrder`)) {
+                    canvasToImage(checkoutOrderIconCanvas, (img) => {
+                        mapMap.addImage(`logocheCkoutOrder`, img);
+                    });
+                }
+            });
+
+            function btnGetData() {
+                if (!parent_code) return;
+
+                $.ajax({
+                    url: `https://api-daithuan-prod.newweb.vn/v1/report-hierarchical-trees?parent_code=${parent_code}&type=USER&is_search=1&limit=999`,
+                    type: 'GET',
+                    dataType: 'json',
+                    headers: {
+                        'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b'
+                    },
+                    success: function (data) {
+                        data.data.forEach(newElement => {
+                            let isExisting = false;
+                            for (let i = 0; i < dataSale.length; i++) {
+                                if (dataSale[i].id === newElement.id) {
+                                    dataSale[i] = newElement;
+                                    isExisting = true;
+                                    break;
+                                }
+                            }
+                            if (!isExisting && newElement['code'] ==parent_code ) {
+                                dataSale.push(newElement);
+                            }
+                        });
+
+                        if (first) {
+                            dataSale.forEach((e) => {
+                                if (e['code'] == parent_code && e['lat']) {
+                                    mapMap.flyTo({
+                                        center: [e['long'], e['lat']],
+                                        speed: 1,
+                                        zoom: 12,
+                                        easing(t) {
+                                            if (t == 1) {
+                                                mapMap.setPitch(30);
+                                            }
+                                            return t;
+                                        }
+                                    });
+                                }
+                            });
+                            getDataPlan();
+                        }
+
+                        dataSale.forEach((element) => {
+                            const sourceId = `${element['code']}`;
+                            const existingSource = mapMap.getSource(sourceId);
+                            const existingLayer = mapMap.getLayer(sourceId);
+
+                            if (existingSource) {
+                                if (existingLayer) {
+                                    mapMap.removeLayer(sourceId);
+                                }
+                                mapMap.removeSource(sourceId);
+                            }
+
+                            const stt = element['is_online'] == 1 ? 'Đang online' : element['time_diff'];
+                            mapMap.addSource(`${sourceId}`, {
+                                'type': 'geojson',
+                                'data': {
+                                    'type': 'FeatureCollection',
+                                    'features': [{
+                                        'type': 'Feature',
+                                        'properties': {
+                                            'title': 'vtmapgl',
+                                            'icon': 'theatre',
+                                            'description': '<strong>' + element['name'] + '</strong>' +
+                                                '</br>' + ' Thiết bị : ' + '<strong>' + element['device_name'] + '</strong>' +
+                                                '</br>' + ' Doanh số tháng: ' + '<strong>' + element['total_sale_formatted'] + '</strong>' +
+                                                '</br>' + ' Doanh số ngày: ' + '<strong>' + element['total_sale_day_formatted'] + '</strong>' +
+                                                '</br>' + ' Tổng số đơn : ' + '<strong>' + element['order_count'] + '</strong>' +
+                                                '</br>' + ' Đơn hàng hôm nay : ' + '<strong>' + element['order_count_day'] + '</strong>' +
+                                                '</br>' + ' Viếng thăm hôm nay : ' + '<strong>' + element['total_visit_day'] + '</strong>' +
+                                                '</br>' + ' Trạng thái : ' + '<strong>' + stt + '</strong>'
+                                        },
+                                        'geometry': {
+                                            'type': 'Point',
+                                            'coordinates': [element['long'], element['lat']],
+                                        },
+                                    }]
+                                }
+                            });
+
+                            if (mapMap.getSource(sourceId)) {
+                                mapMap.addLayer({
+                                    'id': `${sourceId}`,
+                                    'type': 'symbol',
+                                    'source': `${sourceId}`,
+                                    'layout': {
+                                        'icon-image': element['is_online'] == 1 ? `avatarO` : `avatarOF`,
+                                        'icon-size': element['type'] == 'store' ? 0.3 : 1.0,
+                                        'icon-optional': true,
+                                        'icon-allow-overlap': true,
+                                        'text-allow-overlap': true,
+                                        'text-field': `  ${element['is_online'] == 1 ? element['name'] : element['name'] + ' ' + element['time_diff']}`,
+                                        'text-offset': element['type'] == 'store' ? [0, 2.25] : [0, 2],
+                                        'text-anchor': 'top',
+                                        'text-size': 12,
+                                        'text-max-width': 10,
+                                        'text-line-height': 1.2,
+                                    },
+                                    'paint': {
+                                        'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
+                                        'text-halo-color': '#fff',
+                                        'text-halo-width': 2,
+                                    },
+                                });
+
+                                mapMap.on('click', `${sourceId}`, (e) => {
+                                    const coordinates = e.features[0].geometry.coordinates.slice();
+                                    const description = e.features[0].properties.description;
+
+                                    while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                                        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                                    }
+                                    if (popupMap) {
+                                        popupMap.remove();
+                                    }
+
+                                    popupMap = new maplibregl.Popup()
+                                        .setLngLat(coordinates)
+                                        .setHTML(description)
+                                        .addTo(mapMap);
+                                });
+                            }
+                        });
+                    },
+                    error: function (error) {
+                        console.error(error);
+                    }
+                });
+
+                setTimeout(btnGetData, 30000);
+            }
+
+            function getDataPlan() {
+                first = false;
+                if (dataSale.length > 0) {
+                    const dataSaleCode = [];
+                    dataSale.forEach(element => {
+                        dataSaleCode.push(element['code']);
+                    });
+
+                    $.ajax({
+                        url: `https://api-daithuan-prod.newweb.vn/v1/client/get-plan-now-by-saleman?limit=999`,
+                        type: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            'arr_saleman_code': [parent_code],
+                        }),
+                        headers: {
+                            'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b'
+                        },
+                        success: function (data) {
+                            // Lọc bỏ các điểm có shop_long hoặc shop_lat null
+                            const validData = data.data.filter(element => 
+                                element['shop_long'] != null && 
+                                element['shop_lat'] != null &&
+                                element['shop_long'] !== '' &&
+                                element['shop_lat'] !== ''
+                            );
+
+                            if (validData.length === 0) {
+                                return;
+                            }
+
+                            // Sắp xếp theo thuật toán nearest neighbor
+                            const sortedData = sortByNearestNeighbor(validData);
+
+                            // Sort các điểm CHECKOUT theo thời gian checkout và gán số thứ tự
+                            const checkoutData = sortedData
+                                .filter(e => e.status === 'CHECKOUT' && e.checkout_date)
+                                .sort((a, b) => {
+                                    const dateA = new Date(a.checkout_date);
+                                    const dateB = new Date(b.checkout_date);
+                                    return dateA - dateB;
+                                });
+
+                            // Tạo map để lưu số thứ tự cho các điểm CHECKOUT
+                            const checkoutOrderMap = {};
+                            checkoutData.forEach((item, index) => {
+                                checkoutOrderMap[item.shop_code] = index + 1;
+                            });
+
+                            if (viewMap && sortedData.length > 0) {
+                                mapMap.flyTo({
+                                    center: [sortedData[0]['shop_long'], sortedData[0]['shop_lat']],
+                                    speed: 1,
+                                    zoom: 14,
+                                    easing(t) {
+                                        if (t == 1) {
+                                            mapMap.setPitch(30);
+                                        }
+                                        return t;
+                                    }
+                                });
+                            }
+
+                            // Vẽ routing và thêm shop layers
+                            drawRouteMap(sortedData, () => {
+                                // Thêm shop layers sau khi routing đã được vẽ (để nằm trên routing)
+                                addShopLayers(sortedData, checkoutOrderMap);
+                            });
+                        },
+                        error: function (error) {
+                            console.error(error);
+                        }
+                    });
+                }
+            }
+
+            // Hàm sắp xếp theo thuật toán nearest neighbor
+            function sortByNearestNeighbor(data) {
+                if (data.length === 0) return [];
+
+                // Tìm điểm có id nhỏ nhất làm điểm bắt đầu
+                const startPoint = data.reduce((min, point) => 
+                    (point.id < min.id) ? point : min
+                );
+
+                const sorted = [startPoint];
+                const remaining = data.filter(p => p.id !== startPoint.id);
+
+                let currentPoint = startPoint;
+
+                while (remaining.length > 0) {
+                    let nearestIndex = 0;
+                    let nearestDistance = calculateDistance(
+                        [currentPoint.shop_long, currentPoint.shop_lat],
+                        [remaining[0].shop_long, remaining[0].shop_lat]
+                    );
+
+                    // Tìm điểm gần nhất
+                    for (let i = 1; i < remaining.length; i++) {
+                        const distance = calculateDistance(
+                            [currentPoint.shop_long, currentPoint.shop_lat],
+                            [remaining[i].shop_long, remaining[i].shop_lat]
+                        );
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance;
+                            nearestIndex = i;
+                        }
+                    }
+
+                    currentPoint = remaining[nearestIndex];
+                    sorted.push(currentPoint);
+                    remaining.splice(nearestIndex, 1);
+                }
+
+                return sorted;
+            }
+
+            // Hàm vẽ routing
+            function drawRouteMap(sortedData, callback) {
+                if (sortedData.length < 2) {
+                    if (callback) callback();
+                    return;
+                }
+
+                const coordinates = sortedData.map(point => 
+                    `${point.shop_long},${point.shop_lat}`
+                ).join(';');
+
+                routingServiceMap.setCoordinates(coordinates);
+
+                // Xóa layer cũ nếu có
+                if (mapMap.getLayer(routeLayerIdMap)) {
+                    mapMap.removeLayer(routeLayerIdMap);
+                }
+                if (mapMap.getSource(routeLayerIdMap)) {
+                    mapMap.removeSource(routeLayerIdMap);
+                }
+
+                const paramRoute = {
+                    overview: 'full',
+                    alternatives: false,
+                    steps: false,
+                    geometries: 'geojson'
+                };
+
+                routingServiceMap.getRoute(paramRoute, function (error, routeData) {
+                    if (error) {
+                        console.error('Routing error:', error);
+                        if (callback) callback();
+                        return;
+                    }
+                    if (!routeData.routes || routeData.routes.length === 0 || !routeData.routes[0].geometry) {
+                        console.error('No route data available');
+                        if (callback) callback();
+                        return;
+                    }
+
+                    const featureData = {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: routeData.routes[0].geometry.coordinates
+                        }
+                    };
+
+                    mapMap.addSource(routeLayerIdMap, {
+                        type: 'geojson',
+                        data: featureData
+                    });
+
+                    mapMap.addLayer({
+                        id: routeLayerIdMap,
+                        type: 'line',
+                        source: routeLayerIdMap,
+                        paint: {
+                            'line-color': '#FC200CFF',
+                            'line-width': 4
+                        }
+                    });
+
+                    // Đảm bảo routing layer nằm dưới tất cả shop layers
+                    // Bằng cách di chuyển nó xuống dưới cùng (trước các layer khác)
+                    // Gọi callback sau khi routing đã được vẽ
+                    if (callback) {
+                        // Đợi một chút để đảm bảo layer đã được thêm vào map
+                        setTimeout(() => {
+                            callback();
+                        }, 100);
+                    }
+                });
+            }
+
+            // Hàm thêm shop layers
+            function addShopLayers(sortedData, checkoutOrderMap) {
+                // Lưu các marker để có thể xóa sau
+                const checkoutMarkers = [];
+                
+                sortedData.forEach((element, index) => {
+                    const sourceId = `${element['id']}`;
+                    const existingSource = mapMap.getSource(sourceId);
+                    const existingLayer = mapMap.getLayer(sourceId);
+                    
+                    // Nếu là điểm CHECKOUT, thêm marker với số thứ tự
+                    const orderNumber = checkoutOrderMap[element['shop_code']];
+                    if (true) {
+                        // Xóa layer cũ nếu có (để thay bằng marker)
+                        if (existingLayer) {
+                            mapMap.removeLayer(sourceId);
+                        }
+                        if (existingSource) {
+                            mapMap.removeSource(sourceId);
+                        }
+                        
+                        // Xác định màu nền: xanh biển nếu có đơn hàng, xanh lá nếu không
+                        let fillColor = '#C6C8C9E9';
+                        if(element['status'] === 'CHECKOUT') {
+                            fillColor = '#6CF96EFF';
+                            
+                        }
+                        if(element['orders'] != null) {
+                            fillColor = '#4EC1FFFF';
+                        }
+                        // Tạo marker với số thứ tự, nếu đã checkout
+                        
+                        const markerElement = document.createElement('div');
+                        const orderNumberDisplay = (element['status'] === 'CHECKOUT' && orderNumber) 
+                            ? `<span style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px; text-align: center;">${orderNumber}</span>` 
+                            : '';
+                        markerElement.innerHTML = `
+                           <div style="display: flex; flex-direction: column; align-items: center;">
+                           ${orderNumberDisplay}
+                           <div style="background-color: ${fillColor}; padding: 5px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                           <img src="../img/logo.png"
+                           style="width: 22px; height: 22px;">
+                           </div>
+                           <span style="font-size: 12px; color: #333; margin-top: 4px; text-align: center; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${element['shop_name']}</span>
+                           </div>
+                       `;
+                       
+                        const marker = new maplibregl.Marker(markerElement)
+                            .setLngLat([element['shop_long'], element['shop_lat']])
+                            .addTo(mapMap);
+                        
+                        checkoutMarkers.push(marker);
+                        
+                        // Thêm popup cho marker
+                        let imgs = '';
+                        if (element['images']) {
+                            element['images'].forEach((e) => {
+                                const url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
+                                imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `;
+                            });
+                        }
+                        
+                        const popup = new maplibregl.Popup({ offset: 30 })
+                            .setLngLat([element['shop_long'], element['shop_lat']])
+                            .setHTML(`<p> ${element['shop_code']}-${element['shop_name']} </p>` +
+                                '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>' +
+                                '<Br/>' + imgs + '<Br/>'
+                            );
+                        
+                        marker.getElement().addEventListener('mouseenter', () => {
+                            popup.setLngLat(marker.getLngLat()).addTo(mapMap);
+                        });
+                        marker.getElement().addEventListener('mouseleave', () => {
+                            popup.remove();
+                        });
+                        
+                        // Không thêm layer cho điểm CHECKOUT nữa vì đã dùng marker
+                        return;
+                    }
+
+                    let imgs = '';
+                    if (element['images']) {
+                        element['images'].forEach((e) => {
+                            const url = `https://media-daithuan.newweb.vn/file/${e['id']}`;
+                            imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `;
+                        });
+                    }
+
+                    if (existingSource) {
+                        mapMap.getSource(sourceId).setData({
+                            'type': 'FeatureCollection',
+                            'features': [{
+                                'type': 'Feature',
+                                'properties': {
+                                    'title': 'vtmapgl',
+                                    'icon': 'theatre',
+                                    'description': '<strong>' + element['shop_name'] + '</strong>' + '<Br/>' + imgs + '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
+                                },
+                                'geometry': {
+                                    'type': 'Point',
+                                    'coordinates': [element['shop_long'], element['shop_lat']],
+                                },
+                            }]
+                        });
+                    } else {
+                        mapMap.addSource(`${sourceId}`, {
+                            'type': 'geojson',
+                            'data': {
+                                'type': 'FeatureCollection',
+                                'features': [{
+                                    'type': 'Feature',
+                                    'properties': {
+                                        'title': 'vtmapgl',
+                                        'icon': 'theatre',
+                                        'description': '<strong>' + element['shop_name'] + '</strong>' + '<Br/>' + imgs + '<Br/>' + ' Trạng thái :' + '<strong>' + element['status'] + '</strong>'
+                                    },
+                                    'geometry': {
+                                        'type': 'Point',
+                                        'coordinates': [element['shop_long'], element['shop_lat']],
+                                    },
+                                }]
+                            }
+                        });
+                    }
+
+                    if (!existingLayer) {
+                        if (mapMap.getSource(sourceId)) {
+                            // Kiểm tra xem có phải điểm CHECKOUT không
+                            const orderNumber = checkoutOrderMap[element['shop_code']];
+                            const displayText = orderNumber 
+                                ? `${orderNumber}. ${element['shop_name']}`
+                                : element['shop_name'];
+
+                            mapMap.addLayer({
+                                'id': `${sourceId}`,
+                                'type': 'symbol',
+                                'source': `${sourceId}`,
+                                'layout': {
+                                    'icon-image': `${(element['status'] != 'NEW' && element['orders'] != null) ? 'logocheCkoutOrder' : element['status'] == 'NEW' ? 'logoNew' : element['status'] == 'CHECKOUT' ? 'logoCheckOut' : element['status'] == 'CHECKIN' ? 'logoNew' : 'logoNew'}`,
+                                    'icon-size': 0.4,
+                                    'icon-optional': true,
+                                    'icon-allow-overlap': true,
+                                    'text-allow-overlap': true,
+                                    'text-field': displayText,
+                                    'text-offset': [0, 2],
+                                    'text-anchor': 'top',
+                                    'text-size': 5,
+                                    'text-max-width': 10,
+                                    'text-line-height': 1.2,
+                                },
+                                'paint': {
+                                    'text-color': `${element['status'] == 'NEW' ? '#DF5E36' : element['status'] == 'CHECKIN' ? '#23EDED' : element['status'] == 'CHECKOUT' ? '#96E14A' : '#FA0B0B'}`,
+                                    'text-halo-color': '#fff',
+                                    'text-halo-width': 2,
+                                },
+                            });
+                            
+                        }
+                    } else {
+                        // Cập nhật text nếu layer đã tồn tại
+                        const orderNumber = checkoutOrderMap[element['shop_code']];
+                        const displayText = orderNumber 
+                            ? `${orderNumber}. ${element['shop_name']}`
+                            : element['shop_name'];
+                        
+                        if (mapMap.getLayer(sourceId)) {
+                            mapMap.setLayoutProperty(sourceId, 'text-field', displayText);
+                        }
+                    }
+
+                    mapMap.on('click', `${sourceId}`, (e) => {
+                        const coordinates = e.features[0].geometry.coordinates.slice();
+                        const description = e.features[0].properties.description;
+
+                        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                        }
+                        if (popupMap) {
+                            popupMap.remove();
+                        }
+
+                        popupMap = new maplibregl.Popup()
+                            .setLngLat(coordinates)
+                            .setHTML(description)
+                            .addTo(mapMap);
+                    });
+                });
+                
+                // Sau khi thêm tất cả shop layers, di chuyển routing layer xuống dưới tất cả shop layers
+                if (mapMap.getLayer(routeLayerIdMap) && sortedData.length > 0) {
+                    const firstShopLayerId = `${sortedData[0]['shop_code']}`;
+                    if (mapMap.getLayer(firstShopLayerId)) {
+                        try {
+                            // Di chuyển routing layer xuống dưới shop layer đầu tiên
+                            mapMap.moveLayer(routeLayerIdMap, firstShopLayerId);
+                        } catch (e) {
+                            console.log('Could not move routing layer:', e);
+                        }
+                    }
+                }
+            }
+
+            if (parent_code) {
+                btnGetData();
+            }
+
+            // Map 2: Route Map
+            const mapRoute = new maplibregl.Map({
+                container: 'map-route',
+                center: [108.343212, 15.136311],
+                zoom: 6
+            });
+            window.mapRouteInstance = mapRoute;
+
+            const basemapRoute = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
+            basemapRoute.addTo(mapRoute);
+
+            const routingService = new ekmapplf.service.Routing({
+                apiKey: 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR',
+                profile: 'foot'
+            });
+
+            let points = [];
+            let points2 = [];
+            let markers = [];
+            const routeLayerId = 'route';
+            const routeLayerId2 = 'route2';
+            const movingIcon = document.getElementById('moving-icon-route');
+
+            function Run1() {
+                if (markers.length < 2) return;
+
+                const coordinates = points.map(point => `${point.lng},${point.lat}`).join(';');
+                routingService.setCoordinates(coordinates);
+
+                if (mapRoute.getLayer(routeLayerId)) {
+                    mapRoute.removeLayer(routeLayerId);
+                }
+                if (mapRoute.getSource(routeLayerId)) {
+                    mapRoute.removeSource(routeLayerId);
+                }
+
+                const paramRoute = {
+                    overview: 'full',
+                    alternatives: false,
+                    steps: false,
+                    geometries: 'geojson'
+                };
+
+                routingService.getRoute(paramRoute, function (error, data) {
+                    movingIcon.style.display = 'block';
+                    if (error) {
+                        console.error(error);
+                        return;
+                    }
+                    if (!data.routes || data.routes.length === 0 || !data.routes[0].geometry) {
+                        console.error('No route data available');
+                        return;
+                    }
+
+                    const featureData = {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: data.routes[0].geometry.coordinates
+                        }
+                    };
+
+                    mapRoute.addSource(routeLayerId, {
+                        type: 'geojson',
+                        data: featureData
+                    });
+
+                    mapRoute.addLayer({
+                        id: routeLayerId,
+                        type: 'line',
+                        source: routeLayerId,
+                        paint: {
+                            'line-color': '#FC200CFF',
+                            'line-width': 4
+                        }
+                    });
+
+                    const totalDistance = data.routes[0].geometry.coordinates.length - 1;
+                    let currentDistance = 0;
+
+                    function animate() {
+                        const delta = 1;
+                        currentDistance += delta;
+                        const progress = currentDistance / totalDistance;
+
+                        if (progress >= 1) {
+                            return;
+                        }
+
+                        const currentCoord = interpolateCoordinate(data.routes[0].geometry.coordinates, currentDistance);
+                        movingIcon.style.left = (currentCoord[0] - 16) + 'px';
+                        movingIcon.style.top = (currentCoord[1] - 16) + 'px';
+                    }
+
+                    animate();
+
+                    function interpolateCoordinate(coordinates, progress) {
+                        return [coordinates[progress][1], coordinates[progress][0]];
+                    }
+                });
+            }
+
+            function Run2() {
+                const coordinates = points2.map(point => `${point.lng},${point.lat}`).join(';');
+                routingService.setCoordinates(coordinates);
+
+                if (mapRoute.getLayer(routeLayerId2)) {
+                    mapRoute.removeLayer(routeLayerId2);
+                }
+                if (mapRoute.getSource(routeLayerId2)) {
+                    mapRoute.removeSource(routeLayerId2);
+                }
+
+                const paramRoute = {
+                    overview: 'full',
+                    alternatives: false,
+                    steps: false,
+                    geometries: 'geojson'
+                };
+
+                routingService.getRoute(paramRoute, function (error, data) {
+                    if (error) {
+                        console.error(error);
+                        return;
+                    }
+                    if (!data.routes || data.routes.length === 0 || !data.routes[0].geometry) {
+                        console.error('No route data available');
+                        return;
+                    }
+
+                    const featureData = {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: data.routes[0].geometry.coordinates
+                        }
+                    };
+
+                    mapRoute.addSource(routeLayerId2, {
+                        type: 'geojson',
+                        data: featureData
+                    });
+
+                    mapRoute.addLayer({
+                        id: routeLayerId2,
+                        type: 'line',
+                        source: routeLayerId2,
+                        paint: {
+                            'line-color': '#48C557FF',
+                            'line-width': 7
+                        }
+                    });
+                });
+            }
+
+            // Load visit history
+            if (saleman_code && date) {
+                $.ajax({
+                    url: `https://api-dms.daithuan.vn/v1/client/get-visit-history?saleman_code=${saleman_code}&from=${date}&to=${date}`,
+                    type: 'GET',
+                    dataType: 'json',
+                    headers: {
+                        'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b'
+                    },
+                    success: function (data) {
+                        const infoContainer = document.getElementById('info-route');
+                        const table = document.createElement('table');
+                        const thead = document.createElement('thead');
+                        const headerRow = document.createElement('tr');
+                        // const header = document.createElement('th');
+                        // header.textContent = 'Danh sách';
+                        // headerRow.appendChild(header);
+                        thead.appendChild(headerRow);
+                        table.appendChild(thead);
+                        const tbody = document.createElement('tbody');
+
+                        if (data.data && data.data.length > 0) {
+                            // First row
+                            const row0 = document.createElement('tr');
+                            const time0 = document.createElement('td');
+                            time0.textContent = data.data[0].checkin_date;
+                            const km0 = document.createElement('td');
+                            km0.textContent = "0.00 Km";
+                            row0.appendChild(time0);
+                            row0.appendChild(km0);
+                            tbody.appendChild(row0);
+
+                            const row01 = document.createElement('tr');
+                            const shopname = document.createElement('td');
+                            shopname.textContent = data.data[0].shop_name;
+                            shopname.colSpan = 2;
+                            shopname.style.fontWeight = 'bold';
+                            row01.appendChild(shopname);
+                            tbody.appendChild(row01);
+
+                            const row02 = document.createElement('tr');
+                            const checkin_address = document.createElement('td');
+                            checkin_address.textContent = data.data[0].checkin_address;
+                            checkin_address.colSpan = 2;
+                            checkin_address.setAttribute('style', 'border-bottom: 1px solid black;');
+                            row02.appendChild(checkin_address);
+                            tbody.appendChild(row02);
+
+                            for (let i = 0; i < data.data.length - 1; i++) {
+                                const coord1 = [data.data[i].checkin_long, data.data[i].checkin_lat];
+                                const coord2 = [data.data[i + 1].checkin_long, data.data[i + 1].checkin_lat];
+                                const distance = calculateDistance(coord1, coord2);
+
+                                const row1 = document.createElement('tr');
+                                const time = document.createElement('td');
+                                time.textContent = data.data[i + 1].checkin_date;
+                                const km = document.createElement('td');
+                                km.textContent = `${distance.toFixed(2)} Km`;
+                                row1.appendChild(time);
+                                row1.appendChild(km);
+                                tbody.appendChild(row1);
+
+                                const row01 = document.createElement('tr');
+                                const shopname = document.createElement('td');
+                                shopname.textContent = data.data[i + 1].shop_name;
+                                shopname.colSpan = 2;
+                                shopname.style.fontWeight = 'bold';
+                                row01.appendChild(shopname);
+                                tbody.appendChild(row01);
+
+                                const row2 = document.createElement('tr');
+                                const checkin_address = document.createElement('td');
+                                checkin_address.textContent = data.data[i + 1].checkin_address;
+                                checkin_address.colSpan = 2;
+                                checkin_address.setAttribute('style', 'border-bottom: 1px solid black;');
+                                row2.appendChild(checkin_address);
+                                tbody.appendChild(row2);
+                            }
+                        }
+
+                        table.appendChild(tbody);
+                        infoContainer.appendChild(table);
+
+                        if (data.data && data.data.length > 0) {
+                            mapRoute.flyTo({
+                                center: [data.data[0].checkin_long, data.data[0].checkin_lat],
+                                speed: 1,
+                                zoom: 12,
+                                easing(t) {
+                                    if (t == 1) {
+                                        mapRoute.setPitch(30);
+                                    }
+                                    return t;
+                                }
+                            });
+                        } else {
+                            document.getElementById("popup").style.display = "block";
+                        }
+
+                        data.data.forEach((newElement, index) => {
+                            const coordi = [newElement.checkin_long, newElement.checkin_lat];
+                            points.push({ lng: coordi[0], lat: coordi[1] });
+
+                            const markerElement = document.createElement('div');
+                            markerElement.innerHTML = `
+                                <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="10" cy="10" r="10" fill="yellow" />
+                                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="16" fill="black">${index + 1}</text>
+                                </svg>
+                            `;
+                            const marker = new maplibregl.Marker(markerElement)
+                                .setLngLat([coordi[0], coordi[1]])
+                                .addTo(mapRoute);
+
+                            let imgs = '';
+                            if (data.data[index]['images']) {
+                                data.data[index]['images'].forEach((e) => {
+                                    const url = `https://media-dms.daithuan.vn/file/${e['id']}`;
+                                    imgs += `<img src="${url}" style="width: 100px;height: 100px;"/> `;
+                                });
+                            }
+                            const time = formatTimeRange(data.data[index]['checkin_date'], data.data[index]['checkout_date']);
+                            const hOrders = data.data[index].orders != null ? 'Có đơn hàng' : 'Không';
+                            const pType = data.data[index].plan_type == 1 ? 'Trong tuyến' : 'Ngoại tuyến';
+                            const popup = new maplibregl.Popup({ offset: 30 })
+                                .setLngLat([coordi[0], coordi[1]])
+                                .setHTML(`<p> ${data.data[index].shop_code}-${data.data[index].shop_name} </p>` +
+                                    `<div style='color : grey'>${data.data[index].shop_address}</div>` +
+                                    ' Thời gian : ' + time +
+                                    '<Br/>' + ' Đặt hàng : ' + hOrders +
+                                    '<Br/>' + ' Tuyến : ' + pType +
+                                    '<Br/>' + imgs + '<Br/>'
+                                )
+                                .addTo(mapRoute);
+                            marker.getElement().addEventListener('mouseenter', () => {
+                                popup.setLngLat(marker.getLngLat()).addTo(mapRoute);
+                            });
+                            marker.getElement().addEventListener('mouseleave', () => {
+                                popup.remove();
+                            });
+                            popup.remove();
+                            markers.push(marker);
+                        });
+
+                        Run1();
+                    },
+                    error: function (error) {
+                        console.error(error);
+                    }
+                });
+
+                // Load device history
+                $.ajax({
+                    url: `https://api-dms.daithuan.vn/v0/user-device-histories?user_code=${saleman_code}&from=${date} 00:00:00&to=${date} 23:59:59`,
+                    type: 'GET',
+                    dataType: 'json',
+                    headers: {
+                        'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b'
+                    },
+                    success: function (data) {
+                        const filteredData = [];
+                        const timeLimit = 5 * 60 * 1000;
+
+                        data.forEach((item, index) => {
+                            if (index === 0) {
+                                filteredData.push(item);
+                            } else {
+                                const lastAdded = new Date(filteredData[filteredData.length - 1].created_at);
+                                const current = new Date(item.created_at);
+                                if (current - lastAdded > timeLimit) {
+                                    filteredData.push(item);
+                                }
+                            }
+                        });
+
+                        filteredData.forEach((newElement) => {
+                            points2.push({ lng: newElement.long, lat: newElement.lat });
+                        });
+
+                        Run2();
+                    },
+                    error: function (error) {
+                        console.error(error);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

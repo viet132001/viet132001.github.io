@@ -120,7 +120,7 @@
             padding: 15px;
             background: white;
             font-size: 12px;
-            width: 350px;
+
             min-width: 280px;
             max-height: calc(100vh - 120px);
             overflow-y: auto;
@@ -129,6 +129,147 @@
             z-index: 100;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Bottom Sheet Overlay */
+        .bottom-sheet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .bottom-sheet-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Bottom Sheet Styles */
+        #info-route {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            max-height: 80vh;
+            overflow: hidden;
+            transform: translateY(calc(100% - 60px));
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0 !important;
+            backdrop-filter: none !important;
+            border: none !important;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #info-route.expanded {
+            transform: translateY(0);
+        }
+
+        #info-route.collapsed {
+            transform: translateY(calc(100% - 60px));
+        }
+
+        .bottom-sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: #ccc;
+            border-radius: 2px;
+            margin: 12px auto;
+            cursor: grab;
+            transition: background 0.2s;
+        }
+
+        .bottom-sheet-handle:active {
+            cursor: grabbing;
+            background: #999;
+        }
+
+        .bottom-sheet-header {
+            padding: 0 20px 10px 20px;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .bottom-sheet-content {
+            padding: 15px 20px;
+            max-height: calc(80vh - 80px);
+            overflow-y: auto;
+        }
+
+        #info-route table {
+            width: 100%;
+            margin: 0;
+        }
+
+        #info-route th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        /* Floating Button for Mobile */
+        .floating-list-button {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            z-index: 998;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .floating-list-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .floating-list-button:active {
+            transform: scale(0.95);
+        }
+
+        .floating-list-button.active {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .floating-list-button.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .floating-list-button {
+                display: flex;
+            }
         }
 
         .legend-panel {
@@ -303,6 +444,21 @@
                 font-size: 11px;
             }
 
+            #info-route {
+                max-height: 85vh;
+                width: 100% !important;
+                left: 0 !important;
+                right: 0 !important;
+            }
+
+            #info-route.collapsed {
+                transform: translateY(calc(100% - 50px));
+            }
+
+            .bottom-sheet-content {
+                max-height: calc(85vh - 80px);
+            }
+
             .legend-panel {
                 top: 55px;
                 left: 5px;
@@ -322,8 +478,8 @@
             }
         }
 
-        @media (max-width: 480px) {
-            .info-panel,
+        @media (max-width: 100%) {
+            .info-panel:not(#info-route),
             .legend-panel {
                 position: fixed;
                 bottom: 0;
@@ -333,6 +489,21 @@
                 right: 0;
                 left: 0;
                 border-radius: 10px 10px 0 0;
+            }
+
+            #info-route {
+                max-height: 90vh;
+                width: 100% !important;
+                left: 0 !important;
+                right: 0 !important;
+            }
+
+            #info-route.collapsed {
+                transform: translateY(calc(100% - 50px));
+            }
+
+            .bottom-sheet-content {
+                max-height: calc(90vh - 80px);
             }
 
             .map-controls {
@@ -679,13 +850,27 @@
                 </tbody>
             </table>
         </div>
-        <div id="info-route" class="info-panel">
-            <table>
-                <tr>
-                    <th>Danh sách</th>
-                </tr>
-            </table>
+        <!-- Bottom Sheet Overlay -->
+        <div class="bottom-sheet-overlay" id="bottom-sheet-overlay" onclick="closeBottomSheet()"></div>
+        <div id="info-route" class="info-panel collapsed">
+            <div class="bottom-sheet-handle" id="bottom-sheet-handle"></div>
+            <div class="bottom-sheet-header">
+                <h3 style="margin: 0; padding: 10px 0; font-size: 16px; font-weight: 600; text-align: center;">Danh sách lộ trình</h3>
+            </div>
+            <div class="bottom-sheet-content">
+                <table>
+                    <tr>
+                        <th>Danh sách</th>
+                    </tr>
+                </table>
+            </div>
         </div>
+        <!-- Floating Button for Mobile -->
+        <button class="floating-list-button" id="floating-list-button" onclick="toggleRouteInfo()" title="Xem danh sách">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Popup -->
@@ -789,8 +974,22 @@
             // Update content
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
+            const infoRoute = document.getElementById('info-route');
+            const overlay = document.getElementById('bottom-sheet-overlay');
+            const floatingBtn = document.getElementById('floating-list-button');
+            
             if (tab === 'map') {
                 document.getElementById('tab-map').classList.add('active');
+                // Ẩn bottom sheet khi chuyển sang tab map
+                if (infoRoute) {
+                    infoRoute.style.display = 'none';
+                }
+                if (overlay) {
+                    overlay.classList.remove('active');
+                }
+                if (floatingBtn) {
+                    floatingBtn.style.display = 'none';
+                }
                 setTimeout(() => {
                     if (window.mapMapInstance) {
                         window.mapMapInstance.resize();
@@ -798,6 +997,13 @@
                 }, 100);
             } else {
                 document.getElementById('tab-route').classList.add('active');
+                // Hiện bottom sheet khi chuyển sang tab route
+                if (infoRoute) {
+                    infoRoute.style.display = 'block';
+                }
+                if (floatingBtn) {
+                    floatingBtn.style.display = 'flex';
+                }
                 setTimeout(() => {
                     if (window.mapRouteInstance) {
                         window.mapRouteInstance.resize();
@@ -819,17 +1025,174 @@
             info.classList.toggle("hidden");
         }
         
-        // Toggle danh sách lộ trình
+        // Toggle danh sách lộ trình (Bottom Sheet)
         function toggleRouteInfo() {
             const info = document.getElementById("info-route");
             const btn = document.getElementById("toggle-route-info-btn");
+            const overlay = document.getElementById("bottom-sheet-overlay");
+            const floatingBtn = document.getElementById("floating-list-button");
             
             if (info) {
-                const isHidden = info.classList.contains("hidden");
-                info.classList.toggle("hidden");
+                const isExpanded = info.classList.contains("expanded");
                 
+                if (isExpanded) {
+                    // Đóng bottom sheet
+                    info.classList.remove("expanded");
+                    info.classList.add("collapsed");
+                    if (overlay) {
+                        overlay.classList.remove("active");
+                    }
+                    if (btn) {
+                        btn.textContent = "Hiện danh sách";
+                    }
+                    if (floatingBtn) {
+                        floatingBtn.classList.remove("active");
+                    }
+                } else {
+                    // Mở bottom sheet
+                    info.classList.remove("collapsed");
+                    info.classList.add("expanded");
+                    if (overlay) {
+                        overlay.classList.add("active");
+                    }
+                    if (btn) {
+                        btn.textContent = "Ẩn danh sách";
+                    }
+                    if (floatingBtn) {
+                        floatingBtn.classList.add("active");
+                        floatingBtn.classList.add("hidden");
+                    }
+                }
+            }
+        }
+
+        // Đóng bottom sheet khi click vào overlay
+        function closeBottomSheet() {
+            const info = document.getElementById("info-route");
+            const overlay = document.getElementById("bottom-sheet-overlay");
+            const btn = document.getElementById("toggle-route-info-btn");
+            const floatingBtn = document.getElementById("floating-list-button");
+            
+            if (info && info.classList.contains("expanded")) {
+                info.classList.remove("expanded");
+                info.classList.add("collapsed");
+                if (overlay) {
+                    overlay.classList.remove("active");
+                }
                 if (btn) {
-                    btn.textContent = isHidden ? "Ẩn danh sách" : "Hiện danh sách";
+                    btn.textContent = "Hiện danh sách";
+                }
+                if (floatingBtn) {
+                    floatingBtn.classList.remove("active");
+                    floatingBtn.classList.remove("hidden");
+                }
+            }
+        }
+
+        // Bottom Sheet Drag Functionality
+        let bottomSheetStartY = 0;
+        let bottomSheetCurrentY = 0;
+        let isDragging = false;
+
+        function initBottomSheetDrag() {
+            const handle = document.getElementById('bottom-sheet-handle');
+            const bottomSheet = document.getElementById('info-route');
+            
+            if (!handle || !bottomSheet) return;
+
+            handle.addEventListener('touchstart', handleDragStart, { passive: true });
+            handle.addEventListener('mousedown', handleDragStart);
+            bottomSheet.addEventListener('touchstart', handleDragStart, { passive: true });
+            bottomSheet.addEventListener('mousedown', handleDragStart);
+
+            document.addEventListener('touchmove', handleDragMove, { passive: false });
+            document.addEventListener('mousemove', handleDragMove);
+            document.addEventListener('touchend', handleDragEnd);
+            document.addEventListener('mouseup', handleDragEnd);
+        }
+
+        function handleDragStart(e) {
+            const bottomSheet = document.getElementById('info-route');
+            if (!bottomSheet) return;
+            
+            isDragging = true;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            bottomSheetStartY = clientY;
+            bottomSheetCurrentY = bottomSheet.getBoundingClientRect().top;
+            bottomSheet.style.transition = 'none';
+        }
+
+        function handleDragMove(e) {
+            if (!isDragging) return;
+            
+            const bottomSheet = document.getElementById('info-route');
+            if (!bottomSheet) return;
+
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const deltaY = clientY - bottomSheetStartY;
+            const newTranslateY = bottomSheetCurrentY - window.innerHeight + deltaY;
+            const maxTranslateY = 0; // Fully expanded
+            const minTranslateY = window.innerHeight - 60; // Collapsed (60px visible)
+
+            // Giới hạn trong phạm vi cho phép
+            let finalTranslateY = newTranslateY;
+            if (newTranslateY < maxTranslateY) {
+                finalTranslateY = maxTranslateY;
+            } else if (newTranslateY > minTranslateY) {
+                finalTranslateY = minTranslateY;
+            }
+
+            bottomSheet.style.transform = `translateY(${finalTranslateY}px)`;
+            
+            e.preventDefault();
+        }
+
+        function handleDragEnd(e) {
+            if (!isDragging) return;
+            
+            const bottomSheet = document.getElementById('info-route');
+            if (!bottomSheet) return;
+
+            isDragging = false;
+            bottomSheet.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            const currentTranslateY = parseFloat(bottomSheet.style.transform.replace('translateY(', '').replace('px)', '')) || 0;
+            const threshold = (window.innerHeight - 60) / 2; // 50% của khoảng cách collapsed-expanded
+            
+            const overlay = document.getElementById('bottom-sheet-overlay');
+            const floatingBtn = document.getElementById('floating-list-button');
+            
+            if (currentTranslateY < threshold) {
+                // Gần với expanded hơn
+                bottomSheet.classList.remove('collapsed');
+                bottomSheet.classList.add('expanded');
+                bottomSheet.style.transform = '';
+                if (overlay) {
+                    overlay.classList.add('active');
+                }
+                const btn = document.getElementById('toggle-route-info-btn');
+                if (btn) {
+                    btn.textContent = "Ẩn danh sách";
+                }
+                if (floatingBtn) {
+                    floatingBtn.classList.add('active');
+                    floatingBtn.classList.add('hidden');
+                }
+            } else {
+                // Gần với collapsed hơn
+                bottomSheet.classList.remove('expanded');
+                bottomSheet.classList.add('collapsed');
+                bottomSheet.style.transform = '';
+                if (overlay) {
+                    overlay.classList.remove('active');
+                }
+                const btn = document.getElementById('toggle-route-info-btn');
+                if (btn) {
+                    btn.textContent = "Hiện danh sách";
+                }
+                if (floatingBtn) {
+                    floatingBtn.classList.remove('active');
+                    floatingBtn.classList.remove('hidden');
                 }
             }
         }
@@ -937,15 +1300,32 @@
                 });
             }
             
-            // Ẩn danh sách mặc định trên mobile
-            if (isMobileDevice()) {
-                const infoRoute = document.getElementById('info-route');
-                const toggleBtn = document.getElementById('toggle-route-info-btn');
-                if (infoRoute) {
-                    infoRoute.classList.add('hidden');
-                }
-                if (toggleBtn) {
-                    toggleBtn.textContent = 'Hiện danh sách';
+            // Khởi tạo bottom sheet drag functionality
+            initBottomSheetDrag();
+            
+            // Thiết lập trạng thái mặc định cho bottom sheet (collapsed)
+            const infoRoute = document.getElementById('info-route');
+            const toggleBtn = document.getElementById('toggle-route-info-btn');
+            const overlay = document.getElementById('bottom-sheet-overlay');
+            const floatingBtn = document.getElementById('floating-list-button');
+            
+            if (infoRoute) {
+                infoRoute.classList.add('collapsed');
+                infoRoute.classList.remove('expanded');
+            }
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+            if (toggleBtn) {
+                toggleBtn.textContent = 'Hiện danh sách';
+            }
+            // Ẩn floating button nếu không phải tab route
+            if (floatingBtn) {
+                const activeTab = document.querySelector('.tab-content.active');
+                if (activeTab && activeTab.id === 'tab-route') {
+                    floatingBtn.style.display = 'flex';
+                } else {
+                    floatingBtn.style.display = 'none';
                 }
             }
         });
@@ -1255,14 +1635,32 @@
                         loadingOverlay.classList.add('active');
                     }
 
+                    // Lấy ngày từ URL hoặc từ date input
+                    let selectedDate = date;
+                    if (!selectedDate) {
+                        const dateInputMap = document.getElementById('date-select-map');
+                        if (dateInputMap && dateInputMap.value) {
+                            selectedDate = dateInputMap.value;
+                        }
+                    }
+
+                    // Tạo request body với start_date và end_date
+                    const requestBody = {
+                        'arr_saleman_code': [parent_code],
+                    };
+
+                    // Thêm start_date và end_date nếu có ngày được chọn
+                    if (selectedDate) {
+                        requestBody.start_date = selectedDate + ' 00:00:00';
+                        requestBody.end_date = selectedDate + ' 23:59:59';
+                    }
+
                     $.ajax({
                         url: `https://api-daithuan-prod.newweb.vn/v1/client/get-plan-now-by-saleman?limit=999`,
                         type: 'POST',
                         dataType: 'json',
                         contentType: 'application/json',
-                        data: JSON.stringify({
-                            'arr_saleman_code': [parent_code],
-                        }),
+                        data: JSON.stringify(requestBody),
                         headers: {
                             'Authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b'
                         },
@@ -1626,7 +2024,7 @@
                         const hOrders = element['orders'] != null ? 'Có đơn hàng' : 'Không';
                         
                         // Thông tin tuyến
-                        const pType = element['plan_type'] == 1 ? 'Trong tuyến' : 'Ngoại tuyến';
+                        const pType = element['plan_type'] == 0 ? 'Trong tuyến' : 'Ngoại tuyến';
                         
                         // Địa chỉ cửa hàng
                         const shopAddress = element['shop_address'] || '';
@@ -1715,7 +2113,7 @@
                     const hOrders = element['orders'] != null ? 'Có đơn hàng' : 'Không';
                     
                     // Thông tin tuyến
-                    const pType = element['plan_type'] == 1 ? 'Trong tuyến' : 'Ngoại tuyến';
+                    const pType = element['plan_type'] == 0 ? 'Trong tuyến' : 'Ngoại tuyến';
                     
                     // Địa chỉ cửa hàng
                     const shopAddress = element['shop_address'] || '';
@@ -2040,6 +2438,15 @@
                     },
                     success: function (data) {
                         const infoContainer = document.getElementById('info-route');
+                        const contentContainer = infoContainer ? infoContainer.querySelector('.bottom-sheet-content') : null;
+                        const targetContainer = contentContainer || infoContainer;
+                        
+                        // Xóa table cũ nếu có
+                        const oldTable = targetContainer.querySelector('table');
+                        if (oldTable) {
+                            oldTable.remove();
+                        }
+                        
                         const table = document.createElement('table');
                         const thead = document.createElement('thead');
                         const headerRow = document.createElement('tr');
@@ -2110,7 +2517,7 @@
                         }
 
                         table.appendChild(tbody);
-                        infoContainer.appendChild(table);
+                        targetContainer.appendChild(table);
 
                         if (data.data && data.data.length > 0) {
                             mapRoute.flyTo({
@@ -2162,7 +2569,7 @@
                             }
                             const time = formatTimeRange(data.data[index]['checkin_date'], data.data[index]['checkout_date']);
                             const hOrders = data.data[index].orders != null ? 'Có đơn hàng' : 'Không';
-                            const pType = data.data[index].plan_type == 1 ? 'Trong tuyến' : 'Ngoại tuyến';
+                            const pType = data.data[index].plan_type == 0 ? 'Trong tuyến' : 'Ngoại tuyến';
                             const popup = new maplibregl.Popup({ offset: 30 })
                                 .setLngLat([coordi[0], coordi[1]])
                                 .setHTML(`<p> ${data.data[index].shop_code}-${data.data[index].shop_name} </p>` +

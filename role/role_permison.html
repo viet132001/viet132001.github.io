@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Trận Phân Quyền Hệ Thống</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-export {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-export:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .stat-item strong {
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #667eea;
+            color: white;
+        }
+
+        th {
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #5568d3;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+
+        th:first-child,
+        th:nth-child(2),
+        th:nth-child(3) {
+            background: #5568d3;
+            position: sticky;
+            left: 0;
+            z-index: 11;
+            min-width: 200px;
+        }
+
+        th:nth-child(2) {
+            left: 200px;
+        }
+
+        th:nth-child(3) {
+            left: 400px;
+        }
+
+        td {
+            padding: 10px 8px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+
+        td:first-child,
+        td:nth-child(2),
+        td:nth-child(3) {
+            background: white;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        td:nth-child(2) {
+            left: 200px;
+        }
+
+        td:nth-child(3) {
+            left: 400px;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        tbody tr:hover td:first-child,
+        tbody tr:hover td:nth-child(2),
+        tbody tr:hover td:nth-child(3) {
+            background: #f0f0f0;
+        }
+
+        .checkmark {
+            color: #28a745;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .menu-level-1 {
+            background: #e9ecef;
+            font-weight: 600;
+        }
+
+        .menu-level-2 {
+            background: #f8f9fa;
+            padding-left: 20px;
+        }
+
+        .feature-detail {
+            padding-left: 40px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #6c757d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .empty-cell {
+            color: #ccc;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Ma Trận Phân Quyền Hệ Thống</h1>
+            <div class="header-actions">
+                <button class="btn btn-export" onclick="exportToExcel()">
+                    📊 Xuất Excel
+                </button>
+                <button class="btn btn-export" onclick="exportToCSV()">
+                    📄 Xuất CSV
+                </button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm theo menu hoặc tính năng...">
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span>Tổng vai trò: </span><strong id="totalRoles">0</strong>
+                </div>
+                <div class="stat-item">
+                    <span>Tổng tính năng: </span><strong id="totalFeatures">0</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-wrapper" id="tableWrapper">
+            <div class="loading">Đang tải dữ liệu...</div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        let allData = [];
+        let matrixData = [];
+        let roles = [];
+        let features = [];
+
+        // Load và parse dữ liệu từ data.js
+        async function loadData() {
+            try {
+                const response = await fetch('data_new.js');
+                const text = await response.text();
+                
+                const parsedData = parseDuplicateKeys(text);
+                allData = parsedData;
+                
+                if (allData.length === 0) {
+                    throw new Error('Không thể parse dữ liệu. Vui lòng kiểm tra định dạng file data.js');
+                }
+                
+                buildMatrix();
+                renderTable();
+            } catch (error) {
+                document.getElementById('tableWrapper').innerHTML = 
+                    '<div class="error">Lỗi khi tải dữ liệu: ' + error.message + '</div>';
+            }
+        }
+
+        // Parse dữ liệu có duplicate keys
+        function parseDuplicateKeys(text) {
+            const result = [];
+            const objects = [];
+            let depth = 0;
+            let currentObj = '';
+            let inString = false;
+            let escapeNext = false;
+            let arrayStartIndex = -1;
+            
+            // Tìm vị trí bắt đầu của mảng (ký tự '[' đầu tiên sau dấu ':')
+            // File data_new.js có key là câu SQL, không phải "data"
+            for (let i = 0; i < text.length; i++) {
+                if (text[i] === ':' && i + 1 < text.length) {
+                    // Tìm ký tự '[' tiếp theo (bỏ qua whitespace)
+                    let j = i + 1;
+                    while (j < text.length && /\s/.test(text[j])) {
+                        j++;
+                    }
+                    if (j < text.length && text[j] === '[') {
+                        arrayStartIndex = j;
+                        depth = 1;
+                        i = j;
+                        break;
+                    }
+                }
+            }
+            
+            if (arrayStartIndex === -1) {
+                console.warn('Không tìm thấy mảng dữ liệu trong file');
+                return result;
+            }
+            
+            // Parse các objects trong mảng, xử lý cả string literals và escape characters
+            for (let i = arrayStartIndex + 1; i < text.length; i++) {
+                const char = text[i];
+                
+                // Xử lý escape characters trong strings
+                if (escapeNext) {
+                    if (depth > 1) currentObj += char;
+                    escapeNext = false;
+                    continue;
+                }
+                
+                if (char === '\\' && inString) {
+                    escapeNext = true;
+                    if (depth > 1) currentObj += char;
+                    continue;
+                }
+                
+                if (char === '"') {
+                    inString = !inString;
+                    if (depth > 1) currentObj += char;
+                    continue;
+                }
+                
+                if (!inString) {
+                    if (char === '{') {
+                        if (depth === 1) currentObj = '';
+                        depth++;
+                        currentObj += char;
+                    } else if (char === '}') {
+                        currentObj += char;
+                        depth--;
+                        if (depth === 1) {
+                            objects.push(currentObj);
+                            currentObj = '';
+                        }
+                    } else if (depth > 1) {
+                        currentObj += char;
+                    } else if (char === ']' && depth === 1) {
+                        break;
+                    }
+                } else {
+                    if (depth > 1) currentObj += char;
+                }
+            }
+
+            objects.forEach(objStr => {
+                const ids = [];
+                const names = [];
+                
+                // Parse IDs - tìm tất cả các "id" : số
+                const idPattern = /"id"\s*:\s*(\d+)/g;
+                let idMatch;
+                while ((idMatch = idPattern.exec(objStr)) !== null) {
+                    ids.push(parseInt(idMatch[1]));
+                }
+                
+                // Parse Names - xử lý cả escape characters như \/
+                // Pattern này sẽ match cả "name" : "value" và "name" : "value\/with\/slash"
+                const namePattern = /"name"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
+                let nameMatch;
+                while ((nameMatch = namePattern.exec(objStr)) !== null) {
+                    // Unescape các ký tự đặc biệt
+                    let name = nameMatch[1]
+                        .replace(/\\\//g, '/')      // \/ -> /
+                        .replace(/\\\\/g, '\\')     // \\ -> \
+                        .replace(/\\"/g, '"')       // \" -> "
+                        .replace(/\\n/g, '\n')      // \n -> newline
+                        .replace(/\\t/g, '\t')      // \t -> tab
+                        .replace(/\\r/g, '\r');     // \r -> carriage return
+                    names.push(name);
+                }
+                
+                // Đảm bảo có đủ 3 cặp id-name
+                if (ids.length >= 3 && names.length >= 3) {
+                    result.push({
+                        roleId: ids[0],
+                        roleName: names[0],
+                        menuId: ids[1],
+                        menuName: names[1],
+                        permissionId: ids[2],
+                        permissionName: names[2]
+                    });
+                }
+            });
+
+            console.log(`Đã parse thành công ${result.length} bản ghi từ file data_new.js`);
+            return result;
+        }
+
+        // Xây dựng ma trận phân quyền
+        function buildMatrix() {
+            // Lấy danh sách tất cả các vai trò
+            const roleMap = new Map();
+            const featureMap = new Map();
+            const permissionMap = new Map();
+
+            allData.forEach(item => {
+                // Thêm role
+                const roleKey = `${item.roleId}_${item.roleName}`;
+                if (!roleMap.has(roleKey)) {
+                    roleMap.set(roleKey, {
+                        id: item.roleId,
+                        name: item.roleName
+                    });
+                }
+
+                // Tạo key cho feature (menu + permission)
+                const featureKey = `${item.menuId}_${item.menuName}|${item.permissionId}_${item.permissionName}`;
+                if (!featureMap.has(featureKey)) {
+                    // Xác định Menu cấp 1 dựa trên tên menu
+                    let menuLevel1 = "";
+                    if (item.menuName.startsWith("Action")) {
+                        menuLevel1 = "Action";
+                    } else if (item.menuName.startsWith("Menu") || item.menuName.startsWith("MENU")) {
+                        menuLevel1 = "Menu";
+                    } else {
+                        // Mặc định là "Action" nếu không rõ
+                        menuLevel1 = "Action";
+                    }
+
+                    featureMap.set(featureKey, {
+                        menuLevel1: menuLevel1,
+                        menuLevel2: item.menuName,
+                        menuId: item.menuId,
+                        permissionName: item.permissionName,
+                        permissionId: item.permissionId
+                    });
+                }
+
+                // Lưu permission
+                const permKey = `${roleKey}|${featureKey}`;
+                permissionMap.set(permKey, true);
+            });
+
+            // Sắp xếp roles
+            roles = Array.from(roleMap.values()).sort((a, b) => {
+                if (a.name === "Admin") return -1;
+                if (b.name === "Admin") return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+            // Sắp xếp features
+            features = Array.from(featureMap.values()).sort((a, b) => {
+                if (a.menuLevel2 !== b.menuLevel2) {
+                    return a.menuLevel2.localeCompare(b.menuLevel2);
+                }
+                return a.permissionName.localeCompare(b.permissionName);
+            });
+
+            // Xây dựng matrix data
+            matrixData = features.map(feature => {
+                const row = {
+                    menuLevel1: feature.menuLevel1,
+                    menuLevel2: feature.menuLevel2,
+                    featureDetail: feature.permissionName,
+                    permissions: {}
+                };
+
+                roles.forEach(role => {
+                    const roleKey = `${role.id}_${role.name}`;
+                    const featureKey = `${feature.menuId}_${feature.menuLevel2}|${feature.permissionId}_${feature.permissionName}`;
+                    const permKey = `${roleKey}|${featureKey}`;
+                    row.permissions[role.id] = permissionMap.has(permKey);
+                });
+
+                return row;
+            });
+
+            document.getElementById('totalRoles').textContent = roles.length;
+            document.getElementById('totalFeatures').textContent = features.length;
+        }
+
+        // Render bảng
+        function renderTable(filteredData = null) {
+            const dataToRender = filteredData || matrixData;
+            const wrapper = document.getElementById('tableWrapper');
+            
+            if (dataToRender.length === 0) {
+                wrapper.innerHTML = '<div class="loading">Không tìm thấy dữ liệu phù hợp</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr>';
+            
+            // Header: 3 cột đầu + các cột vai trò
+            html += '<th>Menu cấp 1</th>';
+            html += '<th>Menu cấp 2</th>';
+            html += '<th>Chi tiết tính năng</th>';
+            
+            roles.forEach(role => {
+                html += `<th>${role.name}</th>`;
+            });
+            
+            html += '</tr></thead><tbody>';
+
+            // Rows
+            let currentMenuLevel1 = '';
+            let currentMenuLevel2 = '';
+            
+            dataToRender.forEach((row, index) => {
+                const isNewMenuLevel1 = row.menuLevel1 !== currentMenuLevel1;
+                const isNewMenuLevel2 = row.menuLevel2 !== currentMenuLevel2;
+                
+                currentMenuLevel1 = row.menuLevel1;
+                currentMenuLevel2 = row.menuLevel2;
+
+                html += '<tr>';
+                
+                // Menu cấp 1
+                html += `<td class="${isNewMenuLevel1 ? 'menu-level-1' : ''}">${isNewMenuLevel1 ? row.menuLevel1 : ''}</td>`;
+                
+                // Menu cấp 2
+                html += `<td class="${isNewMenuLevel2 ? 'menu-level-2' : ''}">${isNewMenuLevel2 ? row.menuLevel2 : ''}</td>`;
+                
+                // Chi tiết tính năng
+                html += `<td class="feature-detail">${row.featureDetail}</td>`;
+                
+                // Các cột vai trò
+                roles.forEach(role => {
+                    const hasPermission = row.permissions[role.id] || false;
+                    html += `<td>${hasPermission ? '<span class="checkmark">✓</span>' : '<span class="empty-cell">-</span>'}</td>`;
+                });
+                
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            wrapper.innerHTML = html;
+        }
+
+        // Tìm kiếm
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                renderTable();
+                return;
+            }
+
+            const filtered = matrixData.filter(row => 
+                row.menuLevel1.toLowerCase().includes(searchTerm) ||
+                row.menuLevel2.toLowerCase().includes(searchTerm) ||
+                row.featureDetail.toLowerCase().includes(searchTerm)
+            );
+
+            renderTable(filtered);
+        });
+
+        // Xuất Excel
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            
+            // Tạo dữ liệu cho Excel
+            const excelData = [];
+            
+            // Header row
+            const headerRow = ['Menu cấp 1', 'Menu cấp 2', 'Chi tiết tính năng'];
+            roles.forEach(role => {
+                headerRow.push(role.name);
+            });
+            excelData.push(headerRow);
+            
+            // Data rows
+            let currentMenuLevel1 = '';
+            let currentMenuLevel2 = '';
+            
+            matrixData.forEach(row => {
+                const isNewMenuLevel1 = row.menuLevel1 !== currentMenuLevel1;
+                const isNewMenuLevel2 = row.menuLevel2 !== currentMenuLevel2;
+                
+                currentMenuLevel1 = row.menuLevel1;
+                currentMenuLevel2 = row.menuLevel2;
+                
+                const dataRow = [
+                    isNewMenuLevel1 ? row.menuLevel1 : '',
+                    isNewMenuLevel2 ? row.menuLevel2 : '',
+                    row.featureDetail
+                ];
+                
+                roles.forEach(role => {
+                    const hasPermission = row.permissions[role.id] || false;
+                    dataRow.push(hasPermission ? '✓' : '');
+                });
+                
+                excelData.push(dataRow);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            
+            // Đặt độ rộng cột
+            const colWidths = [
+                { wch: 15 }, // Menu cấp 1
+                { wch: 30 }, // Menu cấp 2
+                { wch: 40 }  // Chi tiết tính năng
+            ];
+            roles.forEach(() => colWidths.push({ wch: 12 }));
+            ws['!cols'] = colWidths;
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'Phân Quyền');
+            XLSX.writeFile(wb, 'Ma_Tran_Phan_Quyen_' + new Date().toISOString().split('T')[0] + '.xlsx');
+        }
+
+        // Xuất CSV
+        function exportToCSV() {
+            let csv = '\uFEFF'; // BOM cho UTF-8
+            
+            // Header
+            csv += 'Menu cấp 1,Menu cấp 2,Chi tiết tính năng';
+            roles.forEach(role => {
+                csv += `,"${role.name}"`;
+            });
+            csv += '\n';
+            
+            // Data
+            let currentMenuLevel1 = '';
+            let currentMenuLevel2 = '';
+            
+            matrixData.forEach(row => {
+                const isNewMenuLevel1 = row.menuLevel1 !== currentMenuLevel1;
+                const isNewMenuLevel2 = row.menuLevel2 !== currentMenuLevel2;
+                
+                currentMenuLevel1 = row.menuLevel1;
+                currentMenuLevel2 = row.menuLevel2;
+                
+                csv += `"${isNewMenuLevel1 ? row.menuLevel1 : ''}","${isNewMenuLevel2 ? row.menuLevel2 : ''}","${row.featureDetail}"`;
+                
+                roles.forEach(role => {
+                    const hasPermission = row.permissions[role.id] || false;
+                    csv += `,"${hasPermission ? '✓' : ''}"`;
+                });
+                
+                csv += '\n';
+            });
+            
+            // Tạo blob và download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'Ma_Tran_Phan_Quyen_' + new Date().toISOString().split('T')[0] + '.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Load dữ liệu khi trang được tải
+        loadData();
+    </script>
+</body>
+</html>

@@ -352,6 +352,8 @@
                 const color = routeColors[routeIndex];
                 const routeId = customer.code || `route-${routeIndex}`;
                 const routeName = customer.name || customer.code || '';
+                const userCode = customer.user_code || customer.userCode || customer.user_id || customer.userId || '';
+                const userName = customer.user_name || customer.userName || '';
 
                 const pts = [];
                 (customer.stores || []).forEach((store) => {
@@ -370,7 +372,7 @@
                 features.push({
                     type: 'Feature',
                     geometry: { type: 'Polygon', coordinates: [ring] },
-                    properties: { routeId, routeName, color }
+                    properties: { routeId, routeName, color, userCode, userName }
                 });
             });
 
@@ -419,8 +421,9 @@
 
                 const html = `
                     <div style="font-size:12px; line-height:1.4;">
-                        <div><strong>${p.routeName || ''}</strong></div>
-                        <div>Mã tuyến: <strong>${p.routeId || ''}</strong></div>
+                        <div><strong>${p.routeId || ''} - ${p.routeName || ''}</strong></div>
+                        
+                        ${(p.userCode || p.userName) ? `<div><strong>${p.userCode || ''}</strong>${p.userName ? ` - ${p.userName}` : ''}</div>` : ``}
                     </div>
                 `;
 
@@ -512,8 +515,7 @@
                             <div><strong>Mã:</strong> ${p.store_code}</div>
                             <div><strong>Địa chỉ:</strong> ${p.store_address || 'N/A'}</div>
                             <div><strong>Tần suất:</strong> ${p.store_frequency || 'N/A'}</div>
-                            <div><strong>Khách hàng:</strong> ${p.customer_name}</div>
-                            <div><strong>Tuyến:</strong> ${p.customer_code}</div>
+                            <div><strong>Tuyến:</strong> ${p.customer_code} - ${p.customer_name}</div>
                         </div>
                     </div>
                 `;

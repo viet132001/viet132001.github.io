@@ -74,6 +74,7 @@
             padding: 5px;
             border-radius: 4px;
             transition: background 0.2s;
+            gap: 8px;
         }
 
         .legend-item:hover {
@@ -98,6 +99,25 @@
             font-size: 13px;
             color: #333;
         }
+
+        .legend-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .legend-action-btn {
+            border: 1px solid rgba(0,0,0,0.12);
+            background: #fff;
+            color: #333;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .legend-action-btn:hover { background: #f5f5f5; }
+        .legend-action-btn.hide { color: #E53935; border-color: rgba(229,57,53,0.25); }
+        .legend-action-btn.show { color: #1B5E20; border-color: rgba(27,94,32,0.25); }
 
         .legend-count {
             font-size: 12px;
@@ -834,16 +854,32 @@
                         <span class="legend-count">(${storeCount})</span>
                         ${missingCoordCount > 0 ? `<span class="legend-count" style="color:#E53935; font-weight:600;"> - thiếu tọa độ: ${missingCoordCount}</span>` : ``}
                     </div>
+                    <div class="legend-actions">
+                        <button class="legend-action-btn detail" type="button">Chi tiết</button>
+                        <button class="legend-action-btn toggle" type="button">${hiddenRouteIds.has(routeId) ? 'Hiện' : 'Ẩn'}</button>
+                    </div>
                 `;
 
-                // Click: xem chi tiết tuyến | Shift+Click: ẩn/hiện tuyến
-                legendItem.addEventListener('click', (ev) => {
-                    if (ev.shiftKey) {
-                        toggleRouteVisibility(routeId);
-                        return;
-                    }
+                // Actions
+                const btnDetail = legendItem.querySelector('.legend-action-btn.detail');
+                const btnToggle = legendItem.querySelector('.legend-action-btn.toggle');
+
+                btnDetail?.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
                     openRouteDetail(routeId);
                 });
+
+                btnToggle?.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    toggleRouteVisibility(routeId);
+                    // cập nhật text nút ngay
+                    btnToggle.textContent = hiddenRouteIds.has(routeId) ? 'Hiện' : 'Ẩn';
+                    btnToggle.classList.toggle('hide', !hiddenRouteIds.has(routeId));
+                    btnToggle.classList.toggle('show', hiddenRouteIds.has(routeId));
+                });
+
+                // Click lên dòng (không bấm nút) vẫn mở chi tiết cho tiện
+                legendItem.addEventListener('click', () => openRouteDetail(routeId));
 
                 legendContent.appendChild(legendItem);
             });

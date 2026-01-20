@@ -105,6 +105,66 @@
             margin-left: 5px;
         }
 
+        /* Route detail panel */
+        .route-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 340px;
+            max-height: calc(100vh - 20px);
+            overflow: auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+            z-index: 200;
+            display: none;
+        }
+
+        .route-panel.active { display: block; }
+        .route-panel-header {
+            padding: 12px 14px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .route-panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111;
+            line-height: 1.3;
+        }
+        .route-panel-sub {
+            font-size: 12px;
+            color: #555;
+            margin-top: 4px;
+            line-height: 1.35;
+        }
+        .route-panel-close {
+            border: none;
+            background: #f2f2f2;
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .route-panel-body { padding: 12px 14px; }
+        .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip {
+            font-size: 12px;
+            padding: 6px 8px;
+            border-radius: 999px;
+            background: #f5f5f5;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+        }
+        .chip.active { background: #111; color: #fff; }
+        .chip.day { border: 1px solid rgba(0,0,0,0.08); }
+        .kv { font-size: 12px; color: #444; margin-top: 10px; line-height: 1.45; }
+        .kv strong { color: #111; }
+
         /* Loading */
         .loading-overlay {
             position: fixed;
@@ -148,6 +208,28 @@
         <div id="legend-content"></div>
     </div>
 
+    <div class="route-panel" id="route-panel">
+        <div class="route-panel-header">
+            <div>
+                <div class="route-panel-title" id="route-panel-title">Chi tiết tuyến</div>
+                <div class="route-panel-sub" id="route-panel-sub"></div>
+            </div>
+            <button class="route-panel-close" onclick="closeRouteDetail()">Đóng</button>
+        </div>
+        <div class="route-panel-body">
+            <div class="kv"><strong>Màu điểm:</strong></div>
+            <div class="chip-row" style="margin-top:8px;">
+                <div class="chip" id="chip-color-route" onclick="setColorMode('route')">Theo tuyến</div>
+                <div class="chip" id="chip-color-day" onclick="setColorMode('day')">Theo ngày</div>
+            </div>
+
+            <div class="kv" style="margin-top:12px;"><strong>Lọc theo ngày viếng thăm (`days_visit`):</strong></div>
+            <div class="chip-row" id="day-chips" style="margin-top:8px;"></div>
+
+            <div class="kv" id="route-panel-stats"></div>
+        </div>
+    </div>
+
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner"></div>
     </div>
@@ -161,11 +243,33 @@
         let selectedRoute = null;
         let hiddenRouteIds = new Set();
         let invalidCoordStores = [];
+        let selectedRouteId = null; // đang xem chi tiết tuyến nào
+        let colorMode = 'route'; // 'route' | 'day'
+        let selectedVisitDay = null; // null = tất cả
         const STORES_SOURCE_ID = 'stores-source';
         const STORES_LAYER_CIRCLE_ID = 'stores-circle';
         const ROUTE_HULL_SOURCE_ID = 'route-hull-source';
         const ROUTE_HULL_FILL_LAYER_ID = 'route-hull-fill';
         const ROUTE_HULL_LINE_LAYER_ID = 'route-hull-line';
+        const DAY_HULL_SOURCE_ID = 'day-hull-source';
+        const DAY_HULL_FILL_LAYER_ID = 'day-hull-fill';
+        const DAY_HULL_LINE_LAYER_ID = 'day-hull-line';
+
+        const dayOrder = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+        const dayLabels = {
+            monday: 'T2', tuesday: 'T3', wednesday: 'T4', thursday: 'T5', friday: 'T6', saturday: 'T7', sunday: 'CN',
+            none: 'Không rõ'
+        };
+        const dayColors = {
+            monday: '#1F77B4',
+            tuesday: '#FF7F0E',
+            wednesday: '#2CA02C',
+            thursday: '#D62728',
+            friday: '#9467BD',
+            saturday: '#8C564B',
+            sunday: '#E377C2',
+            none: '#7F7F7F'
+        };
 
         // Mảng màu sắc cho các tuyến
         // Bảng màu tương phản cao, dễ phân biệt (Tableau-like)
@@ -309,6 +413,9 @@
 
                 // Vẽ điểm bằng layer (không bị trôi khi zoom) + cho phép chồng lên nhau
                 addStoresLayer();
+
+                // Vẽ phân vùng theo ngày (chỉ khi đang xem chi tiết tuyến + màu theo ngày)
+                updateDayHullLayer();
             } catch (e) {
                 // Nếu có lỗi runtime do dữ liệu tọa độ, không để crash toàn bộ flow
                 console.error('Render map error:', e);
@@ -386,6 +493,14 @@
                 return null;
             }
             return { lng, lat };
+        }
+
+        function getVisitDayKey(daysVisit) {
+            if (!daysVisit || typeof daysVisit !== 'object') return 'none';
+            for (const k of dayOrder) {
+                if (daysVisit[k] === 1 || daysVisit[k] === true || daysVisit[k] === '1') return k;
+            }
+            return 'none';
         }
 
         function addRouteHullLayer() {
@@ -489,6 +604,109 @@
             applyRouteFilter();
         }
 
+        function buildDayHullGeoJSONForSelectedRoute() {
+            if (!selectedRouteId) return { type: 'FeatureCollection', features: [] };
+            const route = roadmapData.find(r => (r.code || '') === selectedRouteId);
+            if (!route) return { type: 'FeatureCollection', features: [] };
+
+            const groups = {};
+            [...dayOrder, 'none'].forEach(d => (groups[d] = []));
+
+            (route.stores || []).forEach((store) => {
+                const c = getValidStoreCoord(store, route);
+                if (!c) return;
+                const dk = getVisitDayKey(store.days_visit);
+                groups[dk].push([c.lng, c.lat]);
+            });
+
+            const features = [];
+            for (const d of [...dayOrder, 'none']) {
+                const pts = groups[d];
+                if (!pts || pts.length < 3) continue;
+                const hull = convexHull(pts);
+                if (!hull) continue;
+                const ring = hull.concat([hull[0]]);
+                features.push({
+                    type: 'Feature',
+                    geometry: { type: 'Polygon', coordinates: [ring] },
+                    properties: {
+                        visitDay: d,
+                        color: dayColors[d] || dayColors.none,
+                        label: dayLabels[d] || d,
+                        routeId: selectedRouteId
+                    }
+                });
+            }
+
+            return { type: 'FeatureCollection', features };
+        }
+
+        function updateDayHullLayer() {
+            if (!mapRoadmap) return;
+            const shouldShow = !!selectedRouteId && colorMode === 'day';
+
+            if (!shouldShow) {
+                if (mapRoadmap.getLayer(DAY_HULL_FILL_LAYER_ID)) mapRoadmap.removeLayer(DAY_HULL_FILL_LAYER_ID);
+                if (mapRoadmap.getLayer(DAY_HULL_LINE_LAYER_ID)) mapRoadmap.removeLayer(DAY_HULL_LINE_LAYER_ID);
+                if (mapRoadmap.getSource(DAY_HULL_SOURCE_ID)) mapRoadmap.removeSource(DAY_HULL_SOURCE_ID);
+                delete routeLayers[DAY_HULL_FILL_LAYER_ID];
+                delete routeLayers[DAY_HULL_LINE_LAYER_ID];
+                delete routeLayers[DAY_HULL_SOURCE_ID];
+                return;
+            }
+
+            const geojson = buildDayHullGeoJSONForSelectedRoute();
+
+            if (mapRoadmap.getSource(DAY_HULL_SOURCE_ID)) {
+                mapRoadmap.getSource(DAY_HULL_SOURCE_ID).setData(geojson);
+            } else {
+                mapRoadmap.addSource(DAY_HULL_SOURCE_ID, { type: 'geojson', data: geojson });
+            }
+
+            if (!mapRoadmap.getLayer(DAY_HULL_FILL_LAYER_ID)) {
+                mapRoadmap.addLayer({
+                    id: DAY_HULL_FILL_LAYER_ID,
+                    type: 'fill',
+                    source: DAY_HULL_SOURCE_ID,
+                    paint: {
+                        'fill-color': ['get', 'color'],
+                        'fill-opacity': 0.10
+                    }
+                });
+            }
+
+            if (!mapRoadmap.getLayer(DAY_HULL_LINE_LAYER_ID)) {
+                mapRoadmap.addLayer({
+                    id: DAY_HULL_LINE_LAYER_ID,
+                    type: 'line',
+                    source: DAY_HULL_SOURCE_ID,
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': ['get', 'color'],
+                        'line-width': 2,
+                        'line-opacity': 0.9
+                    }
+                });
+            }
+
+            routeLayers[DAY_HULL_FILL_LAYER_ID] = true;
+            routeLayers[DAY_HULL_LINE_LAYER_ID] = true;
+            routeLayers[DAY_HULL_SOURCE_ID] = true;
+
+            // lọc theo ngày nếu có chọn chip
+            if (selectedVisitDay) {
+                const f = ['==', ['get', 'visitDay'], selectedVisitDay];
+                mapRoadmap.setFilter(DAY_HULL_FILL_LAYER_ID, f);
+                mapRoadmap.setFilter(DAY_HULL_LINE_LAYER_ID, f);
+            } else {
+                mapRoadmap.setFilter(DAY_HULL_FILL_LAYER_ID, null);
+                mapRoadmap.setFilter(DAY_HULL_LINE_LAYER_ID, null);
+            }
+        }
+
         function addStoresLayer() {
             // Reset hidden routes khi render mới
             if (!(hiddenRouteIds instanceof Set)) hiddenRouteIds = new Set();
@@ -502,6 +720,7 @@
                 (customer.stores || []).forEach((store, storeIndex) => {
                     const c = getValidStoreCoord(store, customer);
                     if (!c) return;
+                    const visitDay = getVisitDayKey(store.days_visit);
 
                     features.push({
                         type: 'Feature',
@@ -515,7 +734,8 @@
                             store_address: store.address || '',
                             store_frequency: store.frequency || '',
                             customer_code: customer.code || '',
-                            customer_name: customer.name || customer.code || ''
+                            customer_name: customer.name || customer.code || '',
+                            visitDay
                         }
                     });
                 });
@@ -536,7 +756,8 @@
                 paint: {
                     // điểm bán: chấm tròn nhỏ
                     'circle-radius': 4,
-                    'circle-color': ['get', 'color']
+                    'circle-color': ['get', 'color'],
+                    'circle-opacity': 1
                 }
             });
 
@@ -555,6 +776,7 @@
                             <div><strong>Địa chỉ:</strong> ${p.store_address || 'N/A'}</div>
                             <div><strong>Tần suất:</strong> ${p.store_frequency || 'N/A'}</div>
                             <div><strong>Tuyến:</strong> ${p.customer_code} - ${p.customer_name}</div>
+                            <div><strong>Ngày viếng thăm:</strong> ${dayLabels[p.visitDay] || 'Không rõ'}</div>
                         </div>
                     </div>
                 `;
@@ -577,6 +799,8 @@
             routeLayers[STORES_SOURCE_ID] = true;
 
             applyRouteFilter();
+            applyDetailStyling();
+            applyColorMode();
         }
 
         // Cập nhật legend
@@ -612,9 +836,13 @@
                     </div>
                 `;
 
-                // Toggle hiển thị tuyến khi click
-                legendItem.addEventListener('click', () => {
-                    toggleRouteVisibility(routeId);
+                // Click: xem chi tiết tuyến | Shift+Click: ẩn/hiện tuyến
+                legendItem.addEventListener('click', (ev) => {
+                    if (ev.shiftKey) {
+                        toggleRouteVisibility(routeId);
+                        return;
+                    }
+                    openRouteDetail(routeId);
                 });
 
                 legendContent.appendChild(legendItem);
@@ -679,17 +907,188 @@
             if (!mapRoadmap.getLayer(STORES_LAYER_CIRCLE_ID)) return;
 
             const hidden = Array.from(hiddenRouteIds);
-            if (hidden.length === 0) {
-                mapRoadmap.setFilter(STORES_LAYER_CIRCLE_ID, null);
-                if (mapRoadmap.getLayer(ROUTE_HULL_FILL_LAYER_ID)) mapRoadmap.setFilter(ROUTE_HULL_FILL_LAYER_ID, null);
-                if (mapRoadmap.getLayer(ROUTE_HULL_LINE_LAYER_ID)) mapRoadmap.setFilter(ROUTE_HULL_LINE_LAYER_ID, null);
-                return;
+            const notHidden = hidden.length === 0 ? true : ['!', ['in', ['get', 'routeId'], ['literal', hidden]]];
+            const dayFilter = selectedVisitDay ? ['==', ['get', 'visitDay'], selectedVisitDay] : true;
+            const routeFilter = selectedRouteId ? ['==', ['get', 'routeId'], selectedRouteId] : true;
+
+            const storeFilter = ['all', notHidden, routeFilter, dayFilter];
+            mapRoadmap.setFilter(STORES_LAYER_CIRCLE_ID, storeFilter);
+
+            // hull: chỉ theo tuyến đang xem chi tiết (nếu có) + không ẩn
+            const hullFilter = selectedRouteId ? ['all', notHidden, ['==', ['get', 'routeId'], selectedRouteId]] : notHidden;
+            if (mapRoadmap.getLayer(ROUTE_HULL_FILL_LAYER_ID)) mapRoadmap.setFilter(ROUTE_HULL_FILL_LAYER_ID, hullFilter === true ? null : hullFilter);
+            if (mapRoadmap.getLayer(ROUTE_HULL_LINE_LAYER_ID)) mapRoadmap.setFilter(ROUTE_HULL_LINE_LAYER_ID, hullFilter === true ? null : hullFilter);
+
+            // day hull (nếu đang show)
+            if (mapRoadmap.getLayer(DAY_HULL_FILL_LAYER_ID) && mapRoadmap.getLayer(DAY_HULL_LINE_LAYER_ID)) {
+                if (selectedVisitDay) {
+                    const f = ['==', ['get', 'visitDay'], selectedVisitDay];
+                    mapRoadmap.setFilter(DAY_HULL_FILL_LAYER_ID, f);
+                    mapRoadmap.setFilter(DAY_HULL_LINE_LAYER_ID, f);
+                } else {
+                    mapRoadmap.setFilter(DAY_HULL_FILL_LAYER_ID, null);
+                    mapRoadmap.setFilter(DAY_HULL_LINE_LAYER_ID, null);
+                }
+            }
+        }
+
+        function openRouteDetail(routeId) {
+            selectedRouteId = routeId;
+            selectedVisitDay = null;
+            document.getElementById('route-panel')?.classList.add('active');
+
+            const route = roadmapData.find(r => (r.code || '') === routeId) || null;
+            const title = document.getElementById('route-panel-title');
+            const sub = document.getElementById('route-panel-sub');
+            const stats = document.getElementById('route-panel-stats');
+
+            if (route) {
+                const userCode = route.user_code || route.userCode || route.user_id || route.userId || '';
+                const userName = route.user_name || route.userName || '';
+                if (title) title.textContent = `${route.code || ''} - ${route.name || ''}`.trim();
+                if (sub) sub.textContent = (userCode || userName) ? `Nhân viên: ${userCode}${userName ? ' - ' + userName : ''}` : '';
+
+                const stores = route.stores || [];
+                const dayCounts = { none: 0 };
+                dayOrder.forEach(d => (dayCounts[d] = 0));
+                let missing = 0;
+
+                stores.forEach(s => {
+                    const rawLat = s?.lat;
+                    const rawLng = s?.long;
+                    const lat = parseFloat(rawLat);
+                    const lng = parseFloat(rawLng);
+                    if (!isValidLngLat(lng, lat)) missing++;
+                    const dk = getVisitDayKey(s.days_visit);
+                    dayCounts[dk] = (dayCounts[dk] || 0) + 1;
+                });
+
+                if (stats) {
+                    stats.innerHTML = `
+                        <div style="margin-top:10px;"><strong>Tổng điểm:</strong> ${stores.length}</div>
+                        <div style="margin-top:4px; color:#E53935;"><strong>Thiếu/ lỗi tọa độ:</strong> ${missing}</div>
+                        <div style="margin-top:10px;"><strong>Phân theo ngày:</strong></div>
+                        <div style="margin-top:6px;">
+                            ${dayOrder.map(d => `${dayLabels[d]}: <strong>${dayCounts[d] || 0}</strong>`).join(' | ')}
+                            <div style="margin-top:4px; color:#666;">Không rõ: <strong>${dayCounts.none || 0}</strong></div>
+                        </div>
+                    `;
+                }
+
+                // fit bounds tuyến
+                try {
+                    const bounds = new maplibregl.LngLatBounds();
+                    let has = false;
+                    (route.stores || []).forEach(s => {
+                        const c = getValidStoreCoord(s, route);
+                        if (!c) return;
+                        bounds.extend([c.lng, c.lat]);
+                        has = true;
+                    });
+                    if (has) mapRoadmap.fitBounds(bounds, { padding: 60, maxZoom: 15 });
+                } catch (e) {}
             }
 
-            const filter = ['!', ['in', ['get', 'routeId'], ['literal', hidden]]];
-            mapRoadmap.setFilter(STORES_LAYER_CIRCLE_ID, filter);
-            if (mapRoadmap.getLayer(ROUTE_HULL_FILL_LAYER_ID)) mapRoadmap.setFilter(ROUTE_HULL_FILL_LAYER_ID, filter);
-            if (mapRoadmap.getLayer(ROUTE_HULL_LINE_LAYER_ID)) mapRoadmap.setFilter(ROUTE_HULL_LINE_LAYER_ID, filter);
+            renderDayChips();
+            applyRouteFilter();
+            applyDetailStyling();
+            updateDayHullLayer();
+        }
+
+        function closeRouteDetail() {
+            selectedRouteId = null;
+            selectedVisitDay = null;
+            document.getElementById('route-panel')?.classList.remove('active');
+            applyRouteFilter();
+            applyDetailStyling();
+            updateDayHullLayer();
+        }
+
+        function renderDayChips() {
+            const container = document.getElementById('day-chips');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const mk = (label, key, color) => {
+                const el = document.createElement('div');
+                el.className = `chip day ${selectedVisitDay === key ? 'active' : ''}`;
+                el.textContent = label;
+                if (color) el.style.borderColor = color;
+                el.onclick = () => {
+                    selectedVisitDay = key;
+                    applyRouteFilter();
+                    updateDayHullLayer();
+                    renderDayChips();
+                };
+                return el;
+            };
+
+            const all = document.createElement('div');
+            all.className = `chip day ${selectedVisitDay === null ? 'active' : ''}`;
+            all.textContent = 'Tất cả';
+            all.onclick = () => { selectedVisitDay = null; applyRouteFilter(); updateDayHullLayer(); renderDayChips(); };
+            container.appendChild(all);
+
+            dayOrder.forEach(d => container.appendChild(mk(dayLabels[d], d, dayColors[d])));
+            container.appendChild(mk('Không rõ', 'none', dayColors.none));
+
+            document.getElementById('chip-color-route')?.classList.toggle('active', colorMode === 'route');
+            document.getElementById('chip-color-day')?.classList.toggle('active', colorMode === 'day');
+        }
+
+        function setColorMode(mode) {
+            colorMode = mode === 'day' ? 'day' : 'route';
+            applyColorMode();
+            updateDayHullLayer();
+            renderDayChips();
+        }
+
+        function applyColorMode() {
+            if (!mapRoadmap || !mapRoadmap.getLayer(STORES_LAYER_CIRCLE_ID)) return;
+            if (colorMode === 'day') {
+                mapRoadmap.setPaintProperty(STORES_LAYER_CIRCLE_ID, 'circle-color', [
+                    'match',
+                    ['get', 'visitDay'],
+                    'monday', dayColors.monday,
+                    'tuesday', dayColors.tuesday,
+                    'wednesday', dayColors.wednesday,
+                    'thursday', dayColors.thursday,
+                    'friday', dayColors.friday,
+                    'saturday', dayColors.saturday,
+                    'sunday', dayColors.sunday,
+                    dayColors.none
+                ]);
+            } else {
+                mapRoadmap.setPaintProperty(STORES_LAYER_CIRCLE_ID, 'circle-color', ['get', 'color']);
+            }
+
+            // Khi xem theo ngày thì ẩn vùng tuyến để đỡ rối
+            const hideRouteHull = !!selectedRouteId && colorMode === 'day';
+            if (mapRoadmap.getLayer(ROUTE_HULL_FILL_LAYER_ID)) {
+                mapRoadmap.setLayoutProperty(ROUTE_HULL_FILL_LAYER_ID, 'visibility', hideRouteHull ? 'none' : 'visible');
+            }
+            if (mapRoadmap.getLayer(ROUTE_HULL_LINE_LAYER_ID)) {
+                mapRoadmap.setLayoutProperty(ROUTE_HULL_LINE_LAYER_ID, 'visibility', hideRouteHull ? 'none' : 'visible');
+            }
+        }
+
+        function applyDetailStyling() {
+            if (!mapRoadmap) return;
+            if (mapRoadmap.getLayer(STORES_LAYER_CIRCLE_ID)) {
+                if (selectedRouteId) {
+                    mapRoadmap.setPaintProperty(STORES_LAYER_CIRCLE_ID, 'circle-opacity', [
+                        'case',
+                        ['==', ['get', 'routeId'], selectedRouteId],
+                        1,
+                        0.25
+                    ]);
+                } else {
+                    mapRoadmap.setPaintProperty(STORES_LAYER_CIRCLE_ID, 'circle-opacity', 1);
+                }
+            }
+            if (mapRoadmap.getLayer(ROUTE_HULL_FILL_LAYER_ID)) {
+                mapRoadmap.setPaintProperty(ROUTE_HULL_FILL_LAYER_ID, 'fill-opacity', selectedRouteId ? 0.16 : 0.12);
+            }
         }
 
         // Xóa tất cả markers và layers

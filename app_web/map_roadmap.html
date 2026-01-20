@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Bản đồ tuyến bán hàng</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script src="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.js"></script>
+    <link href="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Map Container */
+        #map-roadmap {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            background: #ddd;
+        }
+
+        /* Store Marker Styles */
+        .store-marker {
+            will-change: transform;
+            transform-origin: center center;
+            pointer-events: auto;
+            z-index: auto;
+        }
+
+        .store-marker > div {
+            will-change: auto;
+            pointer-events: auto;
+        }
+
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            max-width: 300px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .legend h3 {
+            margin-bottom: 10px;
+            color: #024da3;
+            font-size: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .legend-item:hover {
+            background: #f5f5f5;
+        }
+
+        .legend-item.disabled {
+            opacity: 0.4;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .legend-text {
+            flex: 1;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .legend-count {
+            font-size: 12px;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #024da3;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+
+<body>
+    <div id="map-roadmap"></div>
+
+    <div class="legend" id="legend">
+        <h3>Chú thích tuyến</h3>
+        <div id="legend-content"></div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        let mapRoadmap = null;
+        let roadmapData = [];
+        let routeColors = [];
+        let routeMarkers = {};
+        let routeLayers = {};
+        let selectedRoute = null;
+        let hiddenRouteIds = new Set();
+        const STORES_SOURCE_ID = 'stores-source';
+        const STORES_LAYER_CIRCLE_ID = 'stores-circle';
+        const ROUTE_HULL_SOURCE_ID = 'route-hull-source';
+        const ROUTE_HULL_FILL_LAYER_ID = 'route-hull-fill';
+        const ROUTE_HULL_LINE_LAYER_ID = 'route-hull-line';
+
+        // Mảng màu sắc cho các tuyến
+        // Bảng màu tương phản cao, dễ phân biệt (Tableau-like)
+        const colorPalette = [
+            '#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F',
+            '#EDC948', '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC',
+            '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD',
+            '#8C564B', '#E377C2', '#7F7F7F', '#BCBD22', '#17BECF'
+        ];
+
+        // Khởi tạo bản đồ
+        function initMap() {
+            // Tọa độ mặc định: Hồ Chí Minh
+            const defaultCenter = [106.6297, 10.8231];
+            
+            // Kiểm tra xem maplibregl có sẵn không (từ EKGIS SDK)
+            if (typeof maplibregl === 'undefined') {
+                console.error('MapLibre GL is not loaded. Please check EKGIS SDK.');
+                alert('Lỗi: Không thể tải thư viện bản đồ. Vui lòng kiểm tra kết nối mạng.');
+                return;
+            }
+            
+            mapRoadmap = new maplibregl.Map({
+                container: 'map-roadmap',
+                center: defaultCenter,
+                zoom: 12,
+                // Quan trọng: cần có style thì event `load` mới chạy ổn định
+                // (nếu không, map có thể không render + không call API)
+                style: {
+                    version: 8,
+                    sources: {
+                        'raster-tiles': {
+                            type: 'raster',
+                            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                            tileSize: 256,
+                            attribution: '© OpenStreetMap'
+                        }
+                    },
+                    layers: [{
+                        id: 'simple-tiles',
+                        type: 'raster',
+                        source: 'raster-tiles',
+                        minzoom: 0,
+                        maxzoom: 22
+                    }]
+                }
+            });
+
+            // Sử dụng EKGIS basemap
+            mapRoadmap.on('load', () => {
+                try {
+                    const basemap = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
+                    basemap.addTo(mapRoadmap);
+                } catch (e) {
+                    console.log('Using default map style');
+                }
+                
+                // Tự động load dữ liệu từ API
+                loadRoadmapData();
+            });
+
+            mapRoadmap.addControl(new maplibregl.NavigationControl(), 'top-right');
+        }
+
+        // Lấy tham số từ URL
+        function getURLParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Load dữ liệu từ API
+        function loadRoadmapData() {
+            // Lấy saleman_code từ URL
+            const salemanCode = getURLParameter('saleman_code') || getURLParameter('salemanCode');
+            
+            if (!salemanCode) {
+                console.error('saleman_code không được tìm thấy trong URL');
+                alert('Vui lòng cung cấp saleman_code trong URL. Ví dụ: ?saleman_code=3000506');
+                return;
+            }
+            
+            showLoading(true);
+
+            const url = `https://api-dms.daithuan.vn/v0/export/roadmap?saleman_code=${salemanCode}&is_data=1`;
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'accept': 'application/json, text/plain, */*',
+                    'accept-language': 'en-US,en;q=0.9,vi;q=0.8',
+                    'authorization': 'Bearer 226b116857c2788c685c66bf601222b56bdc3751b4f44b944361e84b2b1f002b',
+                    'cache-control': 'no-cache',
+                    'origin': 'https://dev-admin-daithuan.newweb.vn',
+                    'pragma': 'no-cache',
+                    'x-api-key': '88'
+                }
+            })
+            .then(async (response) => {
+                if (!response.ok) {
+                    const text = await response.text().catch(() => '');
+                    throw new Error(`HTTP ${response.status} ${response.statusText}${text ? ` - ${text}` : ''}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                showLoading(false);
+                if (data.status === 200 && data.data) {
+                    roadmapData = data.data;
+                    renderMap();
+                } else {
+                    console.error('API response:', data);
+                    alert('Không có dữ liệu (response không đúng cấu trúc). Mở DevTools Console để xem chi tiết.');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                console.error('Error loading roadmap data:', error);
+                alert(
+                    'Lỗi khi tải dữ liệu: ' + error.message +
+                    '\\n\\nGợi ý: nếu bạn đang mở bằng file:// thì có thể bị CORS — hãy chạy qua web server (vd: GitHub Pages hoặc Live Server).'
+                );
+            });
+        }
+
+        // Render bản đồ với dữ liệu
+        function renderMap() {
+            if (!mapRoadmap || !roadmapData || roadmapData.length === 0) return;
+
+            // Xóa các marker và layer cũ
+            clearMap();
+
+            // Gán màu cho mỗi tuyến
+            assignRouteColors();
+
+            // Vẽ phân vùng theo tuyến = nối các điểm biên ngoài (convex hull)
+            addRouteHullLayer();
+
+            // Vẽ điểm bằng layer (không bị trôi khi zoom) + cho phép chồng lên nhau
+            addStoresLayer();
+
+            // Cập nhật legend
+            updateLegend();
+
+            // Fit bounds để hiển thị tất cả
+            fitToBounds();
+        }
+
+        // Gán màu cho mỗi tuyến
+        function assignRouteColors() {
+            routeColors = [];
+            roadmapData.forEach((customer, index) => {
+                routeColors.push(colorPalette[index % colorPalette.length]);
+            });
+        }
+
+        // Convex hull (monotonic chain) cho tập điểm [lng, lat]
+        function convexHull(points) {
+            if (points.length < 3) return null;
+
+            // sort by lng then lat
+            const pts = points.slice().sort((a, b) => (a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]));
+            const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+
+            const lower = [];
+            for (const p of pts) {
+                while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+                lower.push(p);
+            }
+            const upper = [];
+            for (let i = pts.length - 1; i >= 0; i--) {
+                const p = pts[i];
+                while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+                upper.push(p);
+            }
+            upper.pop();
+            lower.pop();
+            const hull = lower.concat(upper);
+            return hull.length >= 3 ? hull : null;
+        }
+
+        function addRouteHullLayer() {
+            const features = [];
+
+            roadmapData.forEach((customer, routeIndex) => {
+                const color = routeColors[routeIndex];
+                const routeId = customer.code || `route-${routeIndex}`;
+                const routeName = customer.name || customer.code || '';
+
+                const pts = [];
+                (customer.stores || []).forEach((store) => {
+                    if (!store.lat || !store.long) return;
+                    const lat = parseFloat(store.lat);
+                    const lng = parseFloat(store.long);
+                    if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+                    pts.push([lng, lat]);
+                });
+
+                const hull = convexHull(pts);
+                if (!hull) return;
+
+                // Dùng hull gốc để đảm bảo bao hết các điểm (smoothing sẽ làm co vùng)
+                const ring = hull.concat([hull[0]]);
+                features.push({
+                    type: 'Feature',
+                    geometry: { type: 'Polygon', coordinates: [ring] },
+                    properties: { routeId, routeName, color }
+                });
+            });
+
+            mapRoadmap.addSource(ROUTE_HULL_SOURCE_ID, {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features }
+            });
+
+            mapRoadmap.addLayer({
+                id: ROUTE_HULL_FILL_LAYER_ID,
+                type: 'fill',
+                source: ROUTE_HULL_SOURCE_ID,
+                paint: {
+                    'fill-color': ['get', 'color'],
+                    'fill-opacity': 0.12
+                }
+            });
+
+            mapRoadmap.addLayer({
+                id: ROUTE_HULL_LINE_LAYER_ID,
+                type: 'line',
+                source: ROUTE_HULL_SOURCE_ID,
+                layout: {
+                    // Bo góc bằng style của đường viền (không làm co vùng)
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': ['get', 'color'],
+                    'line-width': 2,
+                    'line-opacity': 0.9
+                }
+            });
+
+            routeLayers[ROUTE_HULL_FILL_LAYER_ID] = true;
+            routeLayers[ROUTE_HULL_LINE_LAYER_ID] = true;
+            routeLayers[ROUTE_HULL_SOURCE_ID] = true;
+
+            // Hover popup hiển thị tên + mã tuyến
+            let routeHoverPopup = null;
+            const showRouteHover = (e) => {
+                if (!e.features || !e.features[0]) return;
+                const f = e.features[0];
+                const p = f.properties || {};
+                mapRoadmap.getCanvas().style.cursor = 'pointer';
+
+                const html = `
+                    <div style="font-size:12px; line-height:1.4;">
+                        <div><strong>${p.routeName || ''}</strong></div>
+                        <div>Mã tuyến: <strong>${p.routeId || ''}</strong></div>
+                    </div>
+                `;
+
+                if (!routeHoverPopup) {
+                    routeHoverPopup = new maplibregl.Popup({
+                        closeButton: false,
+                        closeOnClick: false,
+                        offset: 10
+                    });
+                }
+                routeHoverPopup.setLngLat(e.lngLat).setHTML(html).addTo(mapRoadmap);
+            };
+
+            const hideRouteHover = () => {
+                mapRoadmap.getCanvas().style.cursor = '';
+                if (routeHoverPopup) routeHoverPopup.remove();
+            };
+
+            mapRoadmap.on('mousemove', ROUTE_HULL_FILL_LAYER_ID, showRouteHover);
+            mapRoadmap.on('mouseleave', ROUTE_HULL_FILL_LAYER_ID, hideRouteHover);
+
+            applyRouteFilter();
+        }
+
+        function addStoresLayer() {
+            // Reset hidden routes khi render mới
+            if (!(hiddenRouteIds instanceof Set)) hiddenRouteIds = new Set();
+
+            const features = [];
+
+            roadmapData.forEach((customer, routeIndex) => {
+                const color = routeColors[routeIndex];
+                const routeId = customer.code || `route-${routeIndex}`;
+
+                (customer.stores || []).forEach((store, storeIndex) => {
+                    if (!store.lat || !store.long) return;
+                    const lat = parseFloat(store.lat);
+                    const lng = parseFloat(store.long);
+                    if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+                    features.push({
+                        type: 'Feature',
+                        geometry: { type: 'Point', coordinates: [lng, lat] },
+                        properties: {
+                            routeId,
+                            color,
+                            idx: storeIndex + 1,
+                            store_code: store.code,
+                            store_name: store.name || store.code,
+                            store_address: store.address || '',
+                            store_frequency: store.frequency || '',
+                            customer_code: customer.code || '',
+                            customer_name: customer.name || customer.code || ''
+                        }
+                    });
+                });
+            });
+
+            const geojson = { type: 'FeatureCollection', features };
+
+            mapRoadmap.addSource(STORES_SOURCE_ID, {
+                type: 'geojson',
+                data: geojson
+            });
+
+            // Vòng tròn marker (cho phép chồng lên nhau)
+            mapRoadmap.addLayer({
+                id: STORES_LAYER_CIRCLE_ID,
+                type: 'circle',
+                source: STORES_SOURCE_ID,
+                paint: {
+                    // điểm bán: chấm tròn nhỏ
+                    'circle-radius': 4,
+                    'circle-color': ['get', 'color']
+                }
+            });
+
+            // Click để popup
+            mapRoadmap.on('click', STORES_LAYER_CIRCLE_ID, (e) => {
+                if (!e.features || !e.features[0]) return;
+                const f = e.features[0];
+                const p = f.properties || {};
+                const coordinates = f.geometry.coordinates.slice();
+
+                const popupContent = `
+                    <div style="min-width: 200px;">
+                        <h4 style="margin: 0 0 10px 0; color: ${p.color}; font-size: 14px;">${p.store_name}</h4>
+                        <div style="font-size: 12px; line-height: 1.6;">
+                            <div><strong>Mã:</strong> ${p.store_code}</div>
+                            <div><strong>Địa chỉ:</strong> ${p.store_address || 'N/A'}</div>
+                            <div><strong>Tần suất:</strong> ${p.store_frequency || 'N/A'}</div>
+                            <div><strong>Khách hàng:</strong> ${p.customer_name}</div>
+                            <div><strong>Tuyến:</strong> ${p.customer_code}</div>
+                        </div>
+                    </div>
+                `;
+
+                new maplibregl.Popup({ offset: 25 })
+                    .setLngLat(coordinates)
+                    .setHTML(popupContent)
+                    .addTo(mapRoadmap);
+            });
+
+            // Cursor pointer
+            mapRoadmap.on('mouseenter', STORES_LAYER_CIRCLE_ID, () => {
+                mapRoadmap.getCanvas().style.cursor = 'pointer';
+            });
+            mapRoadmap.on('mouseleave', STORES_LAYER_CIRCLE_ID, () => {
+                mapRoadmap.getCanvas().style.cursor = '';
+            });
+
+            routeLayers[STORES_LAYER_CIRCLE_ID] = true;
+            routeLayers[STORES_SOURCE_ID] = true;
+
+            applyRouteFilter();
+        }
+
+        // Cập nhật legend
+        function updateLegend() {
+            const legendContent = document.getElementById('legend-content');
+            legendContent.innerHTML = '';
+
+            roadmapData.forEach((customer, index) => {
+                const color = routeColors[index];
+                const routeId = customer.code || `route-${index}`;
+                const stores = customer.stores || [];
+                const storeCount = stores.length;
+                const missingCoordCount = stores.reduce((acc, s) => {
+                    const lat = s?.lat;
+                    const lng = s?.long;
+                    if (!lat || !lng) return acc + 1;
+                    const plat = parseFloat(lat);
+                    const plng = parseFloat(lng);
+                    if (Number.isNaN(plat) || Number.isNaN(plng) || plat === 0 || plng === 0) return acc + 1;
+                    return acc;
+                }, 0);
+
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.dataset.routeId = routeId;
+                
+                legendItem.innerHTML = `
+                    <div class="legend-color" style="background-color: ${color};"></div>
+                    <div class="legend-text">
+                        ${customer.name || customer.code}
+                        <span class="legend-count">(${storeCount})</span>
+                        ${missingCoordCount > 0 ? `<span class="legend-count" style="color:#E53935; font-weight:600;"> - thiếu tọa độ: ${missingCoordCount}</span>` : ``}
+                    </div>
+                `;
+
+                // Toggle hiển thị tuyến khi click
+                legendItem.addEventListener('click', () => {
+                    toggleRouteVisibility(routeId);
+                });
+
+                legendContent.appendChild(legendItem);
+            });
+        }
+
+        // Toggle hiển thị tuyến
+        function toggleRouteVisibility(routeId) {
+            const legendItem = document.querySelector(`[data-route-id="${routeId}"]`);
+            const isHidden = hiddenRouteIds.has(routeId);
+            if (isHidden) hiddenRouteIds.delete(routeId);
+            else hiddenRouteIds.add(routeId);
+
+            if (legendItem) {
+                // disabled khi tuyến đang bị ẩn
+                legendItem.classList.toggle('disabled', hiddenRouteIds.has(routeId));
+            }
+
+            applyRouteFilter();
+        }
+
+        function applyRouteFilter() {
+            if (!mapRoadmap) return;
+            if (!mapRoadmap.getLayer(STORES_LAYER_CIRCLE_ID)) return;
+
+            const hidden = Array.from(hiddenRouteIds);
+            if (hidden.length === 0) {
+                mapRoadmap.setFilter(STORES_LAYER_CIRCLE_ID, null);
+                if (mapRoadmap.getLayer(ROUTE_HULL_FILL_LAYER_ID)) mapRoadmap.setFilter(ROUTE_HULL_FILL_LAYER_ID, null);
+                if (mapRoadmap.getLayer(ROUTE_HULL_LINE_LAYER_ID)) mapRoadmap.setFilter(ROUTE_HULL_LINE_LAYER_ID, null);
+                return;
+            }
+
+            const filter = ['!', ['in', ['get', 'routeId'], ['literal', hidden]]];
+            mapRoadmap.setFilter(STORES_LAYER_CIRCLE_ID, filter);
+            if (mapRoadmap.getLayer(ROUTE_HULL_FILL_LAYER_ID)) mapRoadmap.setFilter(ROUTE_HULL_FILL_LAYER_ID, filter);
+            if (mapRoadmap.getLayer(ROUTE_HULL_LINE_LAYER_ID)) mapRoadmap.setFilter(ROUTE_HULL_LINE_LAYER_ID, filter);
+        }
+
+        // Xóa tất cả markers và layers
+        function clearMap() {
+            // Xóa tất cả layers
+            Object.keys(routeLayers).forEach(layerId => {
+                if (mapRoadmap.getLayer(layerId)) {
+                    mapRoadmap.removeLayer(layerId);
+                }
+                if (mapRoadmap.getSource(layerId)) {
+                    mapRoadmap.removeSource(layerId);
+                }
+            });
+            routeLayers = {};
+        }
+
+        // Fit bounds để hiển thị tất cả markers
+        function fitToBounds() {
+            if (!mapRoadmap || roadmapData.length === 0) return;
+
+            const bounds = new maplibregl.LngLatBounds();
+            let hasBounds = false;
+
+            roadmapData.forEach(customer => {
+                if (customer.stores) {
+                    customer.stores.forEach(store => {
+                        if (store.lat && store.long) {
+                            const lat = parseFloat(store.lat);
+                            const lng = parseFloat(store.long);
+                            if (!isNaN(lat) && !isNaN(lng)) {
+                                bounds.extend([lng, lat]);
+                                hasBounds = true;
+                            }
+                        }
+                    });
+                }
+            });
+
+            if (hasBounds) {
+                mapRoadmap.fitBounds(bounds, {
+                    padding: { top: 50, bottom: 50, left: 50, right: 50 },
+                    maxZoom: 15
+                });
+            }
+        }
+
+
+        // Hiển thị/ẩn loading
+        function showLoading(show) {
+            const overlay = document.getElementById('loading-overlay');
+            if (show) {
+                overlay.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Khởi tạo khi trang load
+        window.addEventListener('load', () => {
+            // Đợi một chút để đảm bảo EKGIS SDK đã load
+            setTimeout(() => {
+                initMap();
+            }, 100);
+        });
+    </script>
+</body>
+
+</html>

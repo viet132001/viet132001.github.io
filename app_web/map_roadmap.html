@@ -160,6 +160,7 @@
         let routeLayers = {};
         let selectedRoute = null;
         let hiddenRouteIds = new Set();
+        let invalidCoordStores = [];
         const STORES_SOURCE_ID = 'stores-source';
         const STORES_LAYER_CIRCLE_ID = 'stores-circle';
         const ROUTE_HULL_SOURCE_ID = 'route-hull-source';
@@ -299,17 +300,29 @@
             // Gán màu cho mỗi tuyến
             assignRouteColors();
 
-            // Vẽ phân vùng theo tuyến = nối các điểm biên ngoài (convex hull)
-            addRouteHullLayer();
+            // Reset danh sách tọa độ lỗi mỗi lần render
+            invalidCoordStores = [];
 
-            // Vẽ điểm bằng layer (không bị trôi khi zoom) + cho phép chồng lên nhau
-            addStoresLayer();
+            try {
+                // Vẽ phân vùng theo tuyến = nối các điểm biên ngoài (convex hull)
+                addRouteHullLayer();
+
+                // Vẽ điểm bằng layer (không bị trôi khi zoom) + cho phép chồng lên nhau
+                addStoresLayer();
+            } catch (e) {
+                // Nếu có lỗi runtime do dữ liệu tọa độ, không để crash toàn bộ flow
+                console.error('Render map error:', e);
+            }
 
             // Cập nhật legend
             updateLegend();
 
             // Fit bounds để hiển thị tất cả
-            fitToBounds();
+            try {
+                fitToBounds();
+            } catch (e) {
+                console.error('fitToBounds error:', e);
+            }
         }
 
         // Gán màu cho mỗi tuyến
@@ -345,6 +358,36 @@
             return hull.length >= 3 ? hull : null;
         }
 
+        function isValidLngLat(lng, lat) {
+            return (
+                Number.isFinite(lng) &&
+                Number.isFinite(lat) &&
+                lng >= -180 &&
+                lng <= 180 &&
+                lat >= -90 &&
+                lat <= 90 &&
+                !(lng === 0 && lat === 0)
+            );
+        }
+
+        function getValidStoreCoord(store, customer) {
+            const rawLat = store?.lat;
+            const rawLng = store?.long;
+            const lat = parseFloat(rawLat);
+            const lng = parseFloat(rawLng);
+            if (!isValidLngLat(lng, lat)) {
+                invalidCoordStores.push({
+                    route: customer?.code || '',
+                    code: store?.code || '',
+                    name: store?.name || '',
+                    lat: rawLat,
+                    long: rawLng
+                });
+                return null;
+            }
+            return { lng, lat };
+        }
+
         function addRouteHullLayer() {
             const features = [];
 
@@ -357,11 +400,9 @@
 
                 const pts = [];
                 (customer.stores || []).forEach((store) => {
-                    if (!store.lat || !store.long) return;
-                    const lat = parseFloat(store.lat);
-                    const lng = parseFloat(store.long);
-                    if (Number.isNaN(lat) || Number.isNaN(lng)) return;
-                    pts.push([lng, lat]);
+                    const c = getValidStoreCoord(store, customer);
+                    if (!c) return;
+                    pts.push([c.lng, c.lat]);
                 });
 
                 const hull = convexHull(pts);
@@ -459,14 +500,12 @@
                 const routeId = customer.code || `route-${routeIndex}`;
 
                 (customer.stores || []).forEach((store, storeIndex) => {
-                    if (!store.lat || !store.long) return;
-                    const lat = parseFloat(store.lat);
-                    const lng = parseFloat(store.long);
-                    if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+                    const c = getValidStoreCoord(store, customer);
+                    if (!c) return;
 
                     features.push({
                         type: 'Feature',
-                        geometry: { type: 'Point', coordinates: [lng, lat] },
+                        geometry: { type: 'Point', coordinates: [c.lng, c.lat] },
                         properties: {
                             routeId,
                             color,
@@ -580,6 +619,44 @@
 
                 legendContent.appendChild(legendItem);
             });
+
+            // Hiển thị danh sách mã có tọa độ sai (out of range / NaN / 0)
+            if (invalidCoordStores.length > 0) {
+                const box = document.createElement('div');
+                box.style.marginTop = '12px';
+                box.style.paddingTop = '10px';
+                box.style.borderTop = '1px solid #eee';
+                box.innerHTML = `
+                    <div style="font-size:12px; font-weight:700; color:#E53935; margin-bottom:6px;">
+                        Tọa độ lỗi: ${invalidCoordStores.length} điểm
+                    </div>
+                `;
+
+                const list = document.createElement('div');
+                list.style.fontSize = '11px';
+                list.style.color = '#E53935';
+                list.style.maxHeight = '140px';
+                list.style.overflow = 'auto';
+
+                // show tối đa 50 dòng để không quá dài
+                invalidCoordStores.slice(0, 50).forEach((it) => {
+                    const row = document.createElement('div');
+                    const label = it.code || '(no_code)';
+                    row.textContent = `${label} | ${it.lat}, ${it.long} | tuyến: ${it.route}`;
+                    row.style.padding = '2px 0';
+                    list.appendChild(row);
+                });
+
+                if (invalidCoordStores.length > 50) {
+                    const more = document.createElement('div');
+                    more.textContent = `... và ${invalidCoordStores.length - 50} điểm nữa`;
+                    more.style.paddingTop = '4px';
+                    list.appendChild(more);
+                }
+
+                box.appendChild(list);
+                legendContent.appendChild(box);
+            }
         }
 
         // Toggle hiển thị tuyến
@@ -639,14 +716,10 @@
             roadmapData.forEach(customer => {
                 if (customer.stores) {
                     customer.stores.forEach(store => {
-                        if (store.lat && store.long) {
-                            const lat = parseFloat(store.lat);
-                            const lng = parseFloat(store.long);
-                            if (!isNaN(lat) && !isNaN(lng)) {
-                                bounds.extend([lng, lat]);
-                                hasBounds = true;
-                            }
-                        }
+                        const c = getValidStoreCoord(store, customer);
+                        if (!c) return;
+                        bounds.extend([c.lng, c.lat]);
+                        hasBounds = true;
                     });
                 }
             });

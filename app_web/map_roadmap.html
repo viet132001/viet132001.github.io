@@ -51,19 +51,43 @@
             bottom: 20px;
             left: 10px;
             background: white;
-            padding: 15px;
+            padding: 10px 10px 8px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 100;
-            max-width: 300px;
+            max-width: 320px;
             max-height: calc(100vh - 100px);
-            overflow-y: auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .legend-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
         }
 
         .legend h3 {
-            margin-bottom: 10px;
+            margin: 0;
             color: #024da3;
             font-size: 16px;
+        }
+
+        .legend-toggle-btn {
+            border: none;
+            background: #f2f2f2;
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .legend.collapsed #legend-content {
+            display: none;
         }
 
         .legend-item {
@@ -224,7 +248,10 @@
     <div id="map-roadmap"></div>
 
     <div class="legend" id="legend">
-        <h3>Chú thích tuyến</h3>
+        <div class="legend-header">
+            <h3>Chú thích tuyến</h3>
+            <button type="button" class="legend-toggle-btn" onclick="toggleLegend()">Thu gọn</button>
+        </div>
         <div id="legend-content"></div>
     </div>
 
@@ -243,7 +270,7 @@
                 <div class="chip" id="chip-color-day" onclick="setColorMode('day')">Theo ngày</div>
             </div>
 
-            <div class="kv" style="margin-top:12px;"><strong>Lọc theo ngày viếng thăm (`days_visit`):</strong></div>
+            <div class="kv" style="margin-top:12px;"><strong>Lọc theo ngày viếng thăm:</strong></div>
             <div class="chip-row" id="day-chips" style="margin-top:8px;"></div>
 
             <div class="kv" id="route-panel-stats"></div>
@@ -263,9 +290,11 @@
         let selectedRoute = null;
         let hiddenRouteIds = new Set();
         let invalidCoordStores = [];
+        let currentRouteDayCounts = null;
         let selectedRouteId = null; // đang xem chi tiết tuyến nào
         let colorMode = 'route'; // 'route' | 'day'
         let selectedVisitDay = null; // null = tất cả
+        let legendCollapsed = false;
         const STORES_SOURCE_ID = 'stores-source';
         const STORES_LAYER_CIRCLE_ID = 'stores-circle';
         const ROUTE_HULL_SOURCE_ID = 'route-hull-source';
@@ -352,6 +381,19 @@
             });
 
             mapRoadmap.addControl(new maplibregl.NavigationControl(), 'top-right');
+        }
+
+        function toggleLegend() {
+            const legend = document.getElementById('legend');
+            const btn = legend?.querySelector('.legend-toggle-btn');
+            legendCollapsed = !legendCollapsed;
+            if (legendCollapsed) {
+                legend?.classList.add('collapsed');
+                if (btn) btn.textContent = 'Mở rộng';
+            } else {
+                legend?.classList.remove('collapsed');
+                if (btn) btn.textContent = 'Thu gọn';
+            }
         }
 
         // Lấy tham số từ URL
@@ -999,15 +1041,12 @@
                     dayCounts[dk] = (dayCounts[dk] || 0) + 1;
                 });
 
+                currentRouteDayCounts = dayCounts;
+
                 if (stats) {
                     stats.innerHTML = `
                         <div style="margin-top:10px;"><strong>Tổng điểm:</strong> ${stores.length}</div>
-                        <div style="margin-top:4px; color:#E53935;"><strong>Thiếu/ lỗi tọa độ:</strong> ${missing}</div>
-                        <div style="margin-top:10px;"><strong>Phân theo ngày:</strong></div>
-                        <div style="margin-top:6px;">
-                            ${dayOrder.map(d => `${dayLabels[d]}: <strong>${dayCounts[d] || 0}</strong>`).join(' | ')}
-                            <div style="margin-top:4px; color:#666;">Không rõ: <strong>${dayCounts.none || 0}</strong></div>
-                        </div>
+                        <div style="margin-top:4px; color:#E53935;"><strong>Chưa xác định tọa độ:</strong> ${missing}</div>
                     `;
                 }
 
@@ -1046,9 +1085,13 @@
             container.innerHTML = '';
 
             const mk = (label, key, color) => {
+                const count = currentRouteDayCounts && key in currentRouteDayCounts
+                    ? currentRouteDayCounts[key] || 0
+                    : null;
+                const text = count !== null ? `${label}: ${count}` : label;
                 const el = document.createElement('div');
                 el.className = `chip day ${selectedVisitDay === key ? 'active' : ''}`;
-                el.textContent = label;
+                el.textContent = text;
                 if (color) el.style.borderColor = color;
                 el.onclick = () => {
                     selectedVisitDay = key;
@@ -1061,7 +1104,10 @@
 
             const all = document.createElement('div');
             all.className = `chip day ${selectedVisitDay === null ? 'active' : ''}`;
-            all.textContent = 'Tất cả';
+            const totalForRoute = currentRouteDayCounts
+                ? Object.values(currentRouteDayCounts).reduce((s, v) => s + (v || 0), 0)
+                : null;
+            all.textContent = totalForRoute !== null ? `Tất cả: ${totalForRoute}` : 'Tất cả';
             all.onclick = () => { selectedVisitDay = null; applyRouteFilter(); updateDayHullLayer(); renderDayChips(); };
             container.appendChild(all);
 

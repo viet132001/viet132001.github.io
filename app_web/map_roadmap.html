@@ -63,6 +63,15 @@
             gap: 6px;
         }
 
+        /* Scroll riêng cho danh sách tuyến */
+        #legend-content {
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 4px;
+            flex: 1 1 auto;
+            min-height: 0; /* quan trọng để flex container cho phép scroll */
+        }
+
         .legend-header {
             display: flex;
             align-items: center;

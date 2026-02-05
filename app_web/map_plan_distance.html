@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Tính quãng đường kế hoạch</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script src="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.js"></script>
+    <link href="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Map Container */
+        #map-plan-distance {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            background: #ddd;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            min-width: 280px;
+            max-width: 400px;
+            max-height: calc(100vh - 20px);
+            overflow-y: auto;
+        }
+
+        .control-panel h3 {
+            margin-bottom: 15px;
+            color: #024da3;
+            font-size: 16px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .control-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .control-button:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Result Panel */
+        .result-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            display: none;
+        }
+
+        .result-panel.active {
+            display: block;
+        }
+
+        .result-panel h3 {
+            margin-bottom: 10px;
+            color: #024da3;
+            font-size: 16px;
+        }
+
+        .result-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #024da3;
+        }
+
+        .result-item-header {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .result-item-details {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .distance-value {
+            color: #E53935;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #024da3;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map-plan-distance"></div>
+
+    <div class="control-panel">
+        <h3>Bộ lọc</h3>
+        <div class="control-group">
+            <label>Mã nhân viên:</label>
+            <input type="text" id="saleman-code" placeholder="3000353">
+        </div>
+        <div class="control-group">
+            <label>Ngày:</label>
+            <input type="date" id="plan-date" value="">
+        </div>
+        <button class="control-button" onclick="loadAndCalculate()">Tính quãng đường</button>
+        <button class="control-button" onclick="clearMap()" style="background: #E53935; margin-top: 8px;">Xóa bản đồ</button>
+    </div>
+
+    <div class="result-panel" id="result-panel">
+        <h3>Kết quả tính quãng đường</h3>
+        <div id="result-content"></div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        let mapPlanDistance = null;
+        let planData = [];
+        let routeLayers = {};
+        const PLANS_SOURCE_ID = 'plans-source';
+        const PLANS_LAYER_CIRCLE_ID = 'plans-circle';
+        const PLANS_LAYER_LABEL_ID = 'plans-label';
+        const ROUTE_LINE_SOURCE_ID = 'route-line-source';
+        const ROUTE_LINE_LAYER_ID = 'route-line';
+
+        // Khởi tạo bản đồ
+        function initMap() {
+            const defaultCenter = [106.6297, 10.8231];
+            
+            if (typeof maplibregl === 'undefined') {
+                console.error('MapLibre GL is not loaded. Please check EKGIS SDK.');
+                alert('Lỗi: Không thể tải thư viện bản đồ. Vui lòng kiểm tra kết nối mạng.');
+                return;
+            }
+            
+            mapPlanDistance = new maplibregl.Map({
+                container: 'map-plan-distance',
+                center: defaultCenter,
+                zoom: 12,
+                style: {
+                    version: 8,
+                    sources: {
+                        'raster-tiles': {
+                            type: 'raster',
+                            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                            tileSize: 256,
+                            attribution: '© OpenStreetMap'
+                        }
+                    },
+                    layers: [{
+                        id: 'simple-tiles',
+                        type: 'raster',
+                        source: 'raster-tiles',
+                        minzoom: 0,
+                        maxzoom: 22
+                    }]
+                }
+            });
+
+            mapPlanDistance.on('load', () => {
+                try {
+                    const basemap = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
+                    basemap.addTo(mapPlanDistance);
+                } catch (e) {
+                    console.log('Using default map style');
+                }
+                
+                // Load dữ liệu mẫu
+                loadPlanData();
+            });
+
+            mapPlanDistance.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+            // Set ngày mặc định là hôm nay
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('plan-date').value = today;
+        }
+
+        // Load dữ liệu từ file
+        function loadPlanData() {
+            fetch('data_plan.js')
+                .then(response => response.text())
+                .then(text => {
+                    try {
+                        // Parse JSON array từ file
+                        const jsonMatch = text.match(/\[[\s\S]*\]/);
+                        if (jsonMatch) {
+                            planData = JSON.parse(jsonMatch[0]);
+                            console.log('Loaded plan data:', planData.length, 'items');
+                        }
+                    } catch (e) {
+                        console.error('Error parsing plan data:', e);
+                        alert('Lỗi khi đọc dữ liệu từ data_plan.js');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading plan data:', error);
+                    alert('Không thể tải file data_plan.js');
+                });
+        }
+
+        // Lấy tham số từ URL
+        function getURLParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Tính khoảng cách giữa 2 điểm (Haversine - đường thẳng)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Bán kính Trái Đất (km)
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // km
+        }
+
+        // Tính quãng đường thực tế bằng routing (nếu có)
+        async function calculateRouteDistance(points) {
+            if (!points || points.length < 2) return 0;
+
+            try {
+                const routingService = new ekmapplf.service.Routing({
+                    apiKey: 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR',
+                    profile: 'driving'
+                });
+
+                // Tạo chuỗi coordinates cho routing
+                const coordinates = points.map(p => `${p.lng},${p.lat}`).join(';');
+                
+                return new Promise((resolve) => {
+                    const paramRoute = {
+                        coordinates: coordinates,
+                        overview: 'full',
+                        alternatives: false,
+                        steps: false,
+                        geometries: 'geojson'
+                    };
+
+                    routingService.getRoute(paramRoute, (error, routeData) => {
+                        if (error || !routeData?.routes?.[0]?.distance) {
+                            // Nếu routing fail, dùng khoảng cách đường thẳng
+                            let total = 0;
+                            for (let i = 0; i < points.length - 1; i++) {
+                                total += calculateDistance(
+                                    points[i].lat, points[i].lng,
+                                    points[i + 1].lat, points[i + 1].lng
+                                );
+                            }
+                            resolve(total);
+                        } else {
+                            // Quãng đường thực tế (m) -> km
+                            resolve(routeData.routes[0].distance / 1000);
+                        }
+                    });
+                });
+            } catch (e) {
+                // Fallback: tính đường thẳng
+                let total = 0;
+                for (let i = 0; i < points.length - 1; i++) {
+                    total += calculateDistance(
+                        points[i].lat, points[i].lng,
+                        points[i + 1].lat, points[i + 1].lng
+                    );
+                }
+                return total;
+            }
+        }
+
+        // Load và tính toán
+        async function loadAndCalculate() {
+            const salemanCode = document.getElementById('saleman-code').value.trim();
+            const planDate = document.getElementById('plan-date').value;
+
+            if (!salemanCode) {
+                alert('Vui lòng nhập mã nhân viên');
+                return;
+            }
+
+            if (!planDate) {
+                alert('Vui lòng chọn ngày');
+                return;
+            }
+
+            showLoading(true);
+
+            // Lọc dữ liệu
+            const filtered = planData.filter(item => {
+                if (item.plan_type !== 0) return false;
+                if (item.saleman_code !== salemanCode) return false;
+                if (!item.shop_lat || !item.shop_long) return false;
+                
+                // Lọc theo ngày (chỉ lấy phần ngày, bỏ giờ)
+                const itemDate = item.start_date ? item.start_date.split(' ')[0] : '';
+                return itemDate === planDate;
+            });
+
+            if (filtered.length === 0) {
+                showLoading(false);
+                alert('Không tìm thấy kế hoạch nào phù hợp');
+                return;
+            }
+
+            // Sắp xếp theo sales_position
+            filtered.sort((a, b) => {
+                const posA = parseInt(a.sales_position || '0');
+                const posB = parseInt(b.sales_position || '0');
+                return posA - posB;
+            });
+
+            // Tạo points để tính quãng đường
+            const points = filtered.map(item => ({
+                lat: parseFloat(item.shop_lat),
+                lng: parseFloat(item.shop_long),
+                shop_code: item.shop_code,
+                shop_name: item.shop_name,
+                sales_position: item.sales_position
+            }));
+
+            // Tính quãng đường
+            const totalDistance = await calculateRouteDistance(points);
+
+            // Vẽ bản đồ
+            renderMap(filtered, points, totalDistance);
+
+            // Hiển thị kết quả
+            displayResults(salemanCode, planDate, filtered, totalDistance);
+
+            showLoading(false);
+        }
+
+        // Vẽ bản đồ
+        function renderMap(plans, points, totalDistance) {
+            clearMap();
+
+            // Tạo features cho markers
+            const features = points.map((point, index) => ({
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [point.lng, point.lat] },
+                properties: {
+                    index: index + 1,
+                    shop_code: point.shop_code,
+                    shop_name: point.shop_name,
+                    sales_position: point.sales_position
+                }
+            }));
+
+            const geojson = { type: 'FeatureCollection', features };
+
+            // Source cho markers
+            if (mapPlanDistance.getSource(PLANS_SOURCE_ID)) {
+                mapPlanDistance.getSource(PLANS_SOURCE_ID).setData(geojson);
+            } else {
+                mapPlanDistance.addSource(PLANS_SOURCE_ID, {
+                    type: 'geojson',
+                    data: geojson
+                });
+            }
+
+            // Layer markers
+            if (!mapPlanDistance.getLayer(PLANS_LAYER_CIRCLE_ID)) {
+                mapPlanDistance.addLayer({
+                    id: PLANS_LAYER_CIRCLE_ID,
+                    type: 'circle',
+                    source: PLANS_SOURCE_ID,
+                    paint: {
+                        'circle-radius': 8,
+                        'circle-color': '#E53935',
+                        'circle-stroke-color': '#ffffff',
+                        'circle-stroke-width': 2
+                    }
+                });
+            }
+
+            // Layer labels
+            if (!mapPlanDistance.getLayer(PLANS_LAYER_LABEL_ID)) {
+                mapPlanDistance.addLayer({
+                    id: PLANS_LAYER_LABEL_ID,
+                    type: 'symbol',
+                    source: PLANS_SOURCE_ID,
+                    layout: {
+                        'text-field': ['to-string', ['get', 'index']],
+                        'text-size': 12,
+                        'text-allow-overlap': true,
+                        'text-ignore-placement': true
+                    },
+                    paint: {
+                        'text-color': '#ffffff',
+                        'text-halo-color': 'rgba(0, 0, 0, 0.5)',
+                        'text-halo-width': 1
+                    }
+                });
+            }
+
+            // Vẽ đường đi (nếu có routing)
+            if (points.length > 1) {
+                drawRouteLine(points);
+            }
+
+            // Popup cho markers
+            mapPlanDistance.on('click', PLANS_LAYER_CIRCLE_ID, (e) => {
+                if (!e.features || !e.features[0]) return;
+                const f = e.features[0];
+                const p = f.properties || {};
+                const coordinates = f.geometry.coordinates.slice();
+
+                const popupContent = `
+                    <div style="min-width: 200px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 14px;">${p.shop_name || p.shop_code}</h4>
+                        <div style="font-size: 12px; line-height: 1.6;">
+                            <div><strong>Thứ tự:</strong> ${p.index}</div>
+                            <div><strong>Mã cửa hàng:</strong> ${p.shop_code}</div>
+                            <div><strong>Vị trí:</strong> ${p.sales_position || 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
+
+                new maplibregl.Popup({ offset: 25 })
+                    .setLngLat(coordinates)
+                    .setHTML(popupContent)
+                    .addTo(mapPlanDistance);
+            });
+
+            // Cursor pointer
+            mapPlanDistance.on('mouseenter', PLANS_LAYER_CIRCLE_ID, () => {
+                mapPlanDistance.getCanvas().style.cursor = 'pointer';
+            });
+            mapPlanDistance.on('mouseleave', PLANS_LAYER_CIRCLE_ID, () => {
+                mapPlanDistance.getCanvas().style.cursor = '';
+            });
+
+            // Fit bounds
+            if (points.length > 0) {
+                const bounds = new maplibregl.LngLatBounds();
+                points.forEach(p => bounds.extend([p.lng, p.lat]));
+                mapPlanDistance.fitBounds(bounds, {
+                    padding: { top: 50, bottom: 50, left: 50, right: 50 },
+                    maxZoom: 15
+                });
+            }
+
+            routeLayers[PLANS_SOURCE_ID] = true;
+            routeLayers[PLANS_LAYER_CIRCLE_ID] = true;
+            routeLayers[PLANS_LAYER_LABEL_ID] = true;
+        }
+
+        // Vẽ đường đi
+        function drawRouteLine(points) {
+            if (points.length < 2) return;
+
+            try {
+                const routingService = new ekmapplf.service.Routing({
+                    apiKey: 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR',
+                    profile: 'driving'
+                });
+
+                const coordinates = points.map(p => `${p.lng},${p.lat}`).join(';');
+                
+                const paramRoute = {
+                    coordinates: coordinates,
+                    overview: 'full',
+                    alternatives: false,
+                    steps: false,
+                    geometries: 'geojson'
+                };
+
+                routingService.getRoute(paramRoute, (error, routeData) => {
+                    if (error || !routeData?.routes?.[0]?.geometry) {
+                        // Nếu routing fail, vẽ đường thẳng
+                        drawStraightLine(points);
+                        return;
+                    }
+
+                    const featureData = {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: routeData.routes[0].geometry.coordinates
+                        }
+                    };
+
+                    if (mapPlanDistance.getSource(ROUTE_LINE_SOURCE_ID)) {
+                        mapPlanDistance.getSource(ROUTE_LINE_SOURCE_ID).setData(featureData);
+                    } else {
+                        mapPlanDistance.addSource(ROUTE_LINE_SOURCE_ID, {
+                            type: 'geojson',
+                            data: featureData
+                        });
+                    }
+
+                    if (!mapPlanDistance.getLayer(ROUTE_LINE_LAYER_ID)) {
+                        mapPlanDistance.addLayer({
+                            id: ROUTE_LINE_LAYER_ID,
+                            type: 'line',
+                            source: ROUTE_LINE_SOURCE_ID,
+                            paint: {
+                                'line-color': '#E53935',
+                                'line-width': 3,
+                                'line-opacity': 0.8
+                            }
+                        });
+                    }
+
+                    routeLayers[ROUTE_LINE_SOURCE_ID] = true;
+                    routeLayers[ROUTE_LINE_LAYER_ID] = true;
+                });
+            } catch (e) {
+                drawStraightLine(points);
+            }
+        }
+
+        // Vẽ đường thẳng (fallback)
+        function drawStraightLine(points) {
+            const coordinates = points.map(p => [p.lng, p.lat]);
+            const featureData = {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                    type: 'LineString',
+                    coordinates: coordinates
+                }
+            };
+
+            if (mapPlanDistance.getSource(ROUTE_LINE_SOURCE_ID)) {
+                mapPlanDistance.getSource(ROUTE_LINE_SOURCE_ID).setData(featureData);
+            } else {
+                mapPlanDistance.addSource(ROUTE_LINE_SOURCE_ID, {
+                    type: 'geojson',
+                    data: featureData
+                });
+            }
+
+            if (!mapPlanDistance.getLayer(ROUTE_LINE_LAYER_ID)) {
+                mapPlanDistance.addLayer({
+                    id: ROUTE_LINE_LAYER_ID,
+                    type: 'line',
+                    source: ROUTE_LINE_SOURCE_ID,
+                    paint: {
+                        'line-color': '#E53935',
+                        'line-width': 2,
+                        'line-opacity': 0.6,
+                        'line-dasharray': [2, 2]
+                    }
+                });
+            }
+
+            routeLayers[ROUTE_LINE_SOURCE_ID] = true;
+            routeLayers[ROUTE_LINE_LAYER_ID] = true;
+        }
+
+        // Hiển thị kết quả
+        function displayResults(salemanCode, planDate, plans, totalDistance) {
+            const panel = document.getElementById('result-panel');
+            const content = document.getElementById('result-content');
+            
+            panel.classList.add('active');
+
+            let html = `
+                <div class="result-item">
+                    <div class="result-item-header">
+                        Nhân viên: ${salemanCode} | Ngày: ${planDate}
+                    </div>
+                    <div class="result-item-details">
+                        <div style="margin-top: 8px;">
+                            <strong>Tổng quãng đường:</strong>
+                            <span class="distance-value"> ${totalDistance.toFixed(2)} km</span>
+                        </div>
+                        <div style="margin-top: 6px;">
+                            <strong>Số điểm:</strong> ${plans.length}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Chi tiết từng đoạn
+            if (plans.length > 1) {
+                html += '<div style="margin-top: 15px; font-weight: 600; font-size: 13px;">Chi tiết từng đoạn:</div>';
+                
+                for (let i = 0; i < plans.length - 1; i++) {
+                    const p1 = plans[i];
+                    const p2 = plans[i + 1];
+                    const lat1 = parseFloat(p1.shop_lat);
+                    const lon1 = parseFloat(p1.shop_long);
+                    const lat2 = parseFloat(p2.shop_lat);
+                    const lon2 = parseFloat(p2.shop_long);
+                    
+                    const dist = calculateDistance(lat1, lon1, lat2, lon2);
+                    
+                    html += `
+                        <div class="result-item" style="margin-top: 8px;">
+                            <div class="result-item-details">
+                                <div><strong>Đoạn ${i + 1} → ${i + 2}:</strong></div>
+                                <div>${p1.shop_name || p1.shop_code} → ${p2.shop_name || p2.shop_code}</div>
+                                <div style="margin-top: 4px; color: #E53935;">
+                                    Khoảng cách: <strong>${dist.toFixed(2)} km</strong>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            content.innerHTML = html;
+        }
+
+        // Xóa bản đồ
+        function clearMap() {
+            Object.keys(routeLayers).forEach(layerId => {
+                if (mapPlanDistance.getLayer(layerId)) {
+                    mapPlanDistance.removeLayer(layerId);
+                }
+                if (mapPlanDistance.getSource(layerId)) {
+                    mapPlanDistance.removeSource(layerId);
+                }
+            });
+            routeLayers = {};
+            
+            document.getElementById('result-panel')?.classList.remove('active');
+        }
+
+        // Hiển thị/ẩn loading
+        function showLoading(show) {
+            const overlay = document.getElementById('loading-overlay');
+            if (show) {
+                overlay.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Khởi tạo khi trang load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                initMap();
+            }, 100);
+        });
+    </script>
+</body>
+
+</html>

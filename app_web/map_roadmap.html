@@ -261,6 +261,14 @@
             <h3>Chú thích tuyến</h3>
             <button type="button" class="legend-toggle-btn" onclick="toggleLegend()">Thu gọn</button>
         </div>
+        <div style="font-size:11px; color:#555; padding:6px 0 8px; border-bottom:1px solid #eee; margin-bottom:6px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#4E79A7; border:1px solid #666;"></span>
+                <span>Có tài sản</span>
+                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#4E79A7; margin-left:10px;"></span>
+                <span>Không có tài sản</span>
+            </div>
+        </div>
         <div id="legend-content"></div>
     </div>
 
@@ -303,6 +311,7 @@
         let selectedRouteId = null; // đang xem chi tiết tuyến nào
         let colorMode = 'route'; // 'route' | 'day'
         let selectedVisitDay = null; // null = tất cả
+        let routeExtraStats = {}; // lưu tổng hợp thêm từ API get-shop-detail-by-user theo tuyến
         let legendCollapsed = false;
         const STORES_SOURCE_ID = 'stores-source';
         const STORES_LAYER_CIRCLE_ID = 'stores-circle';
@@ -425,7 +434,7 @@
             showLoading(true);
 
             const url = `https://api-dms.daithuan.vn/v0/export/roadmap?saleman_code=${salemanCode}&is_data=1`;
-
+          //  const url = 'https://dev-api-daithuan.newweb.vn/v0/export/roadmap?saleman_code='+salemanCode+'&is_data=1';
             fetch(url, {
                 method: 'GET',
                 headers: {
@@ -672,6 +681,26 @@
             mapRoadmap.on('mousemove', ROUTE_HULL_FILL_LAYER_ID, showRouteHover);
             mapRoadmap.on('mouseleave', ROUTE_HULL_FILL_LAYER_ID, hideRouteHover);
 
+            // Click vào vùng tuyến để mở chi tiết tuyến
+            // Bỏ qua nếu click trúng điểm bán (để ưu tiên popup điểm bán)
+            mapRoadmap.on('click', ROUTE_HULL_FILL_LAYER_ID, (e) => {
+                // Kiểm tra xem có điểm bán nào tại vị trí click không
+                const storeFeatures = mapRoadmap.queryRenderedFeatures(e.point, {
+                    layers: [STORES_LAYER_CIRCLE_ID]
+                });
+                // Nếu click trúng điểm bán thì bỏ qua, để handler của điểm bán xử lý
+                if (storeFeatures && storeFeatures.length > 0) return;
+
+                if (!e.features || !e.features[0]) return;
+                const f = e.features[0];
+                const routeId = f.properties?.routeId;
+                if (routeId) {
+                    // Ẩn hover popup trước khi mở chi tiết
+                    hideRouteHover();
+                    openRouteDetail(routeId);
+                }
+            });
+
             applyRouteFilter();
         }
 
@@ -793,6 +822,7 @@
                     if (!c) return;
                     const visitDay = getVisitDayKey(store.days_visit);
 
+                    const totalAsset = parseInt(store.total_asset_of_shop, 10) || 0;
                     features.push({
                         type: 'Feature',
                         geometry: { type: 'Point', coordinates: [c.lng, c.lat] },
@@ -806,7 +836,9 @@
                             store_frequency: store.frequency || '',
                             customer_code: customer.code || '',
                             customer_name: customer.name || customer.code || '',
-                            visitDay
+                            visitDay,
+                            hasAsset: totalAsset > 0 ? 1 : 0,
+                            totalAsset
                         }
                     });
                 });
@@ -820,17 +852,69 @@
             });
 
             // Vòng tròn marker (cho phép chồng lên nhau)
+            // Điểm có tài sản (hasAsset = 1) sẽ có viền nhẹ và kích thước lớn hơn một chút
             mapRoadmap.addLayer({
                 id: STORES_LAYER_CIRCLE_ID,
                 type: 'circle',
                 source: STORES_SOURCE_ID,
                 paint: {
-                    // điểm bán: chấm tròn nhỏ
-                    'circle-radius': 4,
+                    // điểm bán: chấm tròn, lớn hơn một chút nếu có tài sản
+                    'circle-radius': [
+                        'case',
+                        ['==', ['get', 'hasAsset'], 1],
+                        5,  // có tài sản: to hơn một chút
+                        4   // không có tài sản
+                    ],
                     'circle-color': ['get', 'color'],
-                    'circle-opacity': 1
+                    'circle-opacity': 1,
+                    // Viền nhẹ cho điểm có tài sản
+                    'circle-stroke-width': [
+                        'case',
+                        ['==', ['get', 'hasAsset'], 1],
+                        1,    // có tài sản: viền mỏng
+                        0     // không có tài sản: không viền
+                    ],
+                   
+                    'circle-stroke-color': '#666'
                 }
             });
+
+            // Hàm dựng nội dung popup điểm bán (có thể kèm chi tiết doanh số)
+            function buildStorePopupContent(props, detail) {
+                const extraHtml = detail
+                    ? `
+                        <div style="margin-top:8px; padding-top:6px; border-top:1px solid #eee;">
+                            <div><strong>Doanh số tháng hiện tại:</strong> ${detail.current_month_formatted ?? detail.current_month ?? '0'}</div>
+                            <div><strong>Doanh số 3 tháng gần nhất:</strong> ${detail.three_month_formatted ?? detail.three_month ?? '0'}</div>
+                            <div><strong>Số tài sản tại điểm:</strong> ${detail.count_asset_of_shops ?? 0}</div>
+                        </div>
+                    `
+                    : `
+                        <div style="margin-top:8px; font-style:italic; color:#777;">
+                            Đang tải thông tin doanh số...
+                        </div>
+                    `;
+
+                const assetBadge = props.hasAsset == 1
+                    ? `<span style="background:#4CAF50; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:6px;">Có tài sản</span>`
+                    : '';
+
+                return `
+                    <div style="min-width: 220px;">
+                        <h4 style="margin: 0 0 10px 0; color: ${props.color}; font-size: 14px;">
+                            ${props.store_name}${assetBadge}
+                        </h4>
+                        <div style="font-size: 12px; line-height: 1.6;">
+                            <div><strong>Mã:</strong> ${props.store_code}</div>
+                            <div><strong>Địa chỉ:</strong> ${props.store_address || 'N/A'}</div>
+                            <div><strong>Tần suất:</strong> ${props.store_frequency || 'N/A'}</div>
+                            <div><strong>Tuyến:</strong> ${props.customer_code} - ${props.customer_name}</div>
+                            <div><strong>Ngày viếng thăm:</strong> ${dayLabels[props.visitDay] || 'Không rõ'}</div>
+                            ${extraHtml}
+                        </div>
+                    </div>
+                `;
+            }
 
             // Click để popup
             mapRoadmap.on('click', STORES_LAYER_CIRCLE_ID, (e) => {
@@ -838,24 +922,47 @@
                 const f = e.features[0];
                 const p = f.properties || {};
                 const coordinates = f.geometry.coordinates.slice();
+                const shopCode = p.store_code;
 
-                const popupContent = `
-                    <div style="min-width: 200px;">
-                        <h4 style="margin: 0 0 10px 0; color: ${p.color}; font-size: 14px;">${p.store_name}</h4>
-                        <div style="font-size: 12px; line-height: 1.6;">
-                            <div><strong>Mã:</strong> ${p.store_code}</div>
-                            <div><strong>Địa chỉ:</strong> ${p.store_address || 'N/A'}</div>
-                            <div><strong>Tần suất:</strong> ${p.store_frequency || 'N/A'}</div>
-                            <div><strong>Tuyến:</strong> ${p.customer_code} - ${p.customer_name}</div>
-                            <div><strong>Ngày viếng thăm:</strong> ${dayLabels[p.visitDay] || 'Không rõ'}</div>
-                        </div>
-                    </div>
-                `;
-
-                new maplibregl.Popup({ offset: 25 })
+                // Tạo popup ban đầu (chưa có chi tiết doanh số)
+                const popup = new maplibregl.Popup({ offset: 25 })
                     .setLngLat(coordinates)
-                    .setHTML(popupContent)
+                    .setHTML(buildStorePopupContent(p, null))
                     .addTo(mapRoadmap);
+
+                // Nếu không có mã điểm bán thì không gọi API bổ sung
+                if (!shopCode) return;
+
+                // Gọi API lấy thêm thông tin điểm bán để cập nhật popup
+                const detailUrl = `https://doisoat.newweb.vn/api/normal/report/get-shop-detail-by-user?shop_code=${encodeURIComponent(shopCode)}`;
+                fetch(detailUrl)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        return res.json();
+                    })
+                    .then(detailData => {
+                        // Nếu popup đã bị đóng thì bỏ qua
+                        if (!popup.isOpen()) return;
+                        // detailData có dạng:
+                        // {
+                        //   "current_month": 0,
+                        //   "current_month_formatted": "0",
+                        //   "three_month": 14982058,
+                        //   "three_month_formatted": "14.982.058",
+                        //   "count_asset_of_shops": 1
+                        // }
+                        popup.setHTML(buildStorePopupContent(p, detailData || {}));
+                    })
+                    .catch(() => {
+                        // Nếu lỗi, chỉ cần đổi đoạn text "Đang tải..." thành "Không tải được..."
+                        if (!popup.isOpen()) return;
+                        const fallbackDetail = {
+                            current_month_formatted: 'Không tải được',
+                            three_month_formatted: 'Không tải được',
+                            count_asset_of_shops: 'Không rõ'
+                        };
+                        popup.setHTML(buildStorePopupContent(p, fallbackDetail));
+                    });
             });
 
             // Cursor pointer
@@ -1056,7 +1163,27 @@
                     stats.innerHTML = `
                         <div style="margin-top:10px;"><strong>Tổng điểm:</strong> ${stores.length}</div>
                         <div style="margin-top:4px; color:#E53935;"><strong>Chưa xác định tọa độ:</strong> ${missing}</div>
+                        <div id="route-panel-extra-stats" style="margin-top:8px; font-size:12px; color:#333;">
+                            <em>Đang tải thêm thông tin doanh số cho tuyến...</em>
+                        </div>
                     `;
+                }
+
+                // Gọi API tổng hợp thông tin doanh số cho toàn tuyến (batch tối đa 10 mã / lần)
+                const validCodes = Array.from(
+                    new Set(
+                        (stores || [])
+                            .map(s => s && s.code)
+                            .filter(c => typeof c === 'string' && c.trim().length > 0)
+                    )
+                );
+                if (validCodes.length === 0) {
+                    const extraEl = document.getElementById('route-panel-extra-stats');
+                    if (extraEl) {
+                        extraEl.innerHTML = '<span>Không có mã điểm bán hợp lệ để tổng hợp.</span>';
+                    }
+                } else {
+                    startLoadRouteExtraStats(routeId, validCodes);
                 }
 
                 // fit bounds tuyến
@@ -1077,6 +1204,108 @@
             applyRouteFilter();
             applyDetailStyling();
             updateDayHullLayer();
+        }
+
+        // Bắt đầu load tổng hợp thông tin doanh số cho tuyến, chia batch 10 mã / lần
+        function startLoadRouteExtraStats(routeId, codes) {
+            // Nếu đã có dữ liệu trước đó thì chỉ hiển thị lại, không gọi lại API
+            if (routeExtraStats[routeId] && routeExtraStats[routeId].done) {
+                updateRouteExtraStatsUI(routeId, routeExtraStats[routeId]);
+                return;
+            }
+
+            routeExtraStats[routeId] = { loading: true };
+            updateRouteExtraStatsUI(routeId, { loading: true });
+
+            const batchSize = 10;
+            let index = 0;
+            const agg = {
+                current_month: 0,
+                three_month: 0,
+                count_asset_of_shops: 0,
+                requested: codes.length
+            };
+
+            function accumulateFromResponse(resp) {
+                if (!resp) return;
+
+                const addOne = (item) => {
+                    if (!item || typeof item !== 'object') return;
+                    const cm = Number(item.current_month ?? 0);
+                    const tm = Number(item.three_month ?? 0);
+                    const ca = Number(item.count_asset_of_shops ?? 0);
+                    if (!Number.isNaN(cm)) agg.current_month += cm;
+                    if (!Number.isNaN(tm)) agg.three_month += tm;
+                    if (!Number.isNaN(ca)) agg.count_asset_of_shops += ca;
+                };
+
+                if (Array.isArray(resp)) {
+                    resp.forEach(addOne);
+                } else if (resp && typeof resp === 'object') {
+                    // Một số API có thể trả về { data: [...] }
+                    if (Array.isArray(resp.data)) {
+                        resp.data.forEach(addOne);
+                    } else {
+                        addOne(resp);
+                    }
+                }
+            }
+
+            function processNextBatch() {
+                if (index >= codes.length) {
+                    routeExtraStats[routeId] = {
+                        ...agg,
+                        done: true,
+                        loading: false
+                    };
+                    updateRouteExtraStatsUI(routeId, routeExtraStats[routeId]);
+                    return;
+                }
+
+                const batch = codes.slice(index, index + batchSize);
+                index += batchSize;
+
+                const url = `https://doisoat.newweb.vn/api/normal/report/get-shop-detail-by-user?shop_code=${encodeURIComponent(batch.join(','))}`;
+
+                fetch(url)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        return res.json();
+                    })
+                    .then(data => {
+                        accumulateFromResponse(data);
+                        processNextBatch();
+                    })
+                    .catch(() => {
+                        // Nếu lỗi 1 batch, vẫn tiếp tục các batch còn lại
+                        processNextBatch();
+                    });
+            }
+
+            processNextBatch();
+        }
+
+        // Cập nhật UI phần thông tin thêm trong popup chi tiết tuyến
+        function updateRouteExtraStatsUI(routeId, state) {
+            if (selectedRouteId !== routeId) return;
+            const el = document.getElementById('route-panel-extra-stats');
+            if (!el) return;
+
+            if (state && state.loading && !state.done) {
+                el.innerHTML = '<em>Đang tải thêm thông tin doanh số cho tuyến...</em>';
+                return;
+            }
+
+            if (state && state.done) {
+                const cm = state.current_month || 0;
+                const tm = state.three_month || 0;
+                const ca = state.count_asset_of_shops || 0;
+                el.innerHTML = `
+                    <div><strong>Tổng doanh số tháng hiện tại (tất cả điểm trong tuyến):</strong> ${cm.toLocaleString('vi-VN')}</div>
+                    <div style="margin-top:2px;"><strong>Tổng doanh số 3 tháng gần nhất:</strong> ${tm.toLocaleString('vi-VN')}</div>
+                    <div style="margin-top:2px;"><strong>Tổng số tài sản tại điểm:</strong> ${ca.toLocaleString('vi-VN')}</div>
+                `;
+            }
         }
 
         function closeRouteDetail() {

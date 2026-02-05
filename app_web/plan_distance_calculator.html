@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Tính quãng đường kế hoạch - Danh sách</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script src="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.js"></script>
+    <link href="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .filter-section {
+            padding: 20px 30px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #757575;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #616161;
+        }
+
+        .result-section {
+            padding: 20px 30px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .result-summary {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .summary-item {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #024da3;
+        }
+
+        .summary-item-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .summary-item-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #024da3;
+        }
+
+        .summary-item-value.distance {
+            color: #E53935;
+            font-size: 24px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Highlight cho các plan khác nhau */
+        tbody tr.plan-group-0 {
+            background-color: #ffffff;
+        }
+
+        tbody tr.plan-group-1 {
+            background-color: #f0f8ff;
+        }
+
+        tbody tr.plan-group-2 {
+            background-color: #fff8f0;
+        }
+
+        tbody tr.plan-group-3 {
+            background-color: #f8fff0;
+        }
+
+        tbody tr.plan-group-4 {
+            background-color: #fff0f8;
+        }
+
+        tbody tr.plan-group-0:hover,
+        tbody tr.plan-group-1:hover,
+        tbody tr.plan-group-2:hover,
+        tbody tr.plan-group-3:hover,
+        tbody tr.plan-group-4:hover {
+            opacity: 0.8;
+        }
+
+        .distance-cell {
+            font-weight: 600;
+            color: #E53935;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: opacity 0.2s;
+        }
+
+        .distance-cell:hover {
+            opacity: 0.7;
+        }
+
+        .distance-cell.no-link {
+            cursor: default;
+            text-decoration: none;
+        }
+
+        .distance-cell.no-link:hover {
+            opacity: 1;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #024da3;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: #024da3;
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Tính quãng đường kế hoạch</h1>
+            <p>Tính toán và sắp xếp tối ưu quãng đường di chuyển cho nhân viên</p>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-group" style="flex: 0 0 auto;">
+                <button class="btn btn-primary" onclick="loadPlanData()">📥 Tải dữ liệu từ file</button>
+            </div>
+            <div class="filter-group" style="flex: 0 0 auto;">
+                <button class="btn btn-success" onclick="calculateAllDistances()" id="btn-calculate" disabled>🔢 Tính toán quãng đường</button>
+            </div>
+        </div>
+
+        <div class="result-section" id="data-preview-section" style="display: none;">
+            <div class="result-header">
+                <h2 style="font-size: 18px; color: #333;">Danh sách dữ liệu (${planData.length} bản ghi)</h2>
+            </div>
+
+            <div class="table-container">
+                <table id="preview-table">
+                    <thead>
+                        <tr>
+                            <th>ID Plan</th>
+                            <th>Mã nhân viên</th>
+                            <th>Ngày kế hoạch</th>
+                            <th>Mã cửa hàng</th>
+                            <th>Tên cửa hàng</th>
+                            <th>Địa chỉ</th>
+                            <th>Vĩ độ</th>
+                            <th>Kinh độ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="preview-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="result-section" id="result-section" style="display: none;">
+            <div class="result-header">
+                <h2 style="font-size: 18px; color: #333;">Kết quả tính toán</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-success" onclick="exportToExcel()">📥 Tải Excel</button>
+                    <button class="btn btn-secondary" onclick="exportToCSV()">📥 Tải CSV</button>
+                </div>
+            </div>
+
+            <div class="result-summary" id="result-summary"></div>
+
+            <div class="table-container">
+                <table id="result-table">
+                    <thead>
+                        <tr>
+                            <th>ID Plan</th>
+                            <th>Mã nhân viên</th>
+                            <th>Ngày kế hoạch</th>
+                            <th>Thứ tự</th>
+                            <th>STT</th>
+                            <th>Mã cửa hàng</th>
+                            <th>Tên cửa hàng</th>
+                            <th>Địa chỉ</th>
+                            <th>Vĩ độ</th>
+                            <th>Kinh độ</th>
+                            <th>Quãng đường từ điểm trước (km)</th>
+                            <th>Tổng quãng đường (km)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="result-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loading-text">Đang tính toán...</div>
+    </div>
+
+    <script>
+        let planData = [];
+        let calculatedResult = null;
+
+        // Khởi tạo
+        window.addEventListener('load', () => {
+            // Auto load dữ liệu khi trang load
+            loadPlanData();
+        });
+
+        // Load dữ liệu từ file data_plan.js
+        async function loadPlanData() {
+            showLoading(true, 'Đang tải dữ liệu từ file...');
+
+            try {
+                const response = await fetch('data_plan.js');
+                const text = await response.text();
+
+                // Xử lý file có thể là object với key là SQL query
+                let data = null;
+                try {
+                    // Thử parse như JSON object
+                    const parsed = JSON.parse(text);
+                    // Nếu là object, lấy giá trị đầu tiên (thường là array)
+                    if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+                        const firstKey = Object.keys(parsed)[0];
+                        data = parsed[firstKey];
+                    } else if (Array.isArray(parsed)) {
+                        data = parsed;
+                    } else {
+                        throw new Error('Invalid data structure');
+                    }
+                } catch (e) {
+                    // Nếu không parse được, thử extract array từ text
+                    const jsonMatch = text.match(/\[[\s\S]*\]/);
+                    if (jsonMatch) {
+                        data = JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error('Cannot parse data from file');
+                    }
+                }
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Data is not an array');
+                }
+
+                planData = data;
+                console.log('Loaded plan data:', planData.length, 'items');
+
+                // Hiển thị preview
+                displayDataPreview();
+                document.getElementById('btn-calculate').disabled = false;
+                showLoading(false);
+            } catch (error) {
+                console.error('Error loading plan data:', error);
+                showLoading(false);
+                alert('Lỗi khi đọc dữ liệu từ data_plan.js: ' + error.message);
+            }
+        }
+
+        // Hiển thị preview dữ liệu
+        function displayDataPreview() {
+            if (planData.length === 0) return;
+
+            const section = document.getElementById('data-preview-section');
+            section.style.display = 'block';
+            section.querySelector('h2').textContent = `Danh sách dữ liệu (${planData.length} bản ghi)`;
+
+            const tbody = document.getElementById('preview-tbody');
+            tbody.innerHTML = '';
+
+            // Nhóm theo plan: cùng start_date và saleman
+            const planGroups = {};
+            let groupIndex = 0;
+
+            planData.forEach((item, index) => {
+                // Một kế hoạch = cùng start_date + cùng saleman
+                const salemanCode = item.saleman || '';
+                const planDate = item.start_date ? item.start_date.split(' ')[0] : '';
+                const planKey = `${planDate}_${salemanCode}`; // Group theo start_date, saleman
+                
+                if (!planGroups[planKey]) {
+                    planGroups[planKey] = groupIndex % 5; // 5 màu khác nhau
+                    groupIndex++;
+                }
+
+                const row = document.createElement('tr');
+                row.className = `plan-group-${planGroups[planKey]}`;
+                
+                // Lấy dữ liệu từ cấu trúc mới
+                const shopName = item.name || '';
+                const shopCode = item.code || '';
+                const shopAddress = item.address || '';
+                const shopLat = item.lat;
+                const shopLong = item.long; // Trường là "long"
+
+                row.innerHTML = `
+                    <td>${item.id || ''}</td>
+                    <td>${item.saleman || ''}</td>
+                    <td>${item.start_date ? item.start_date.split(' ')[0] : ''}</td>
+                    <td>${shopCode}</td>
+                    <td>${shopName}</td>
+                    <td>${shopAddress}</td>
+                    <td>${shopLat ? parseFloat(shopLat).toFixed(6) : ''}</td>
+                    <td>${shopLong ? parseFloat(shopLong).toFixed(6) : ''}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Scroll to preview
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Tính khoảng cách đường thẳng (Haversine)
+        function calculateStraightDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Bán kính Trái Đất (km)
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // Tính ma trận khoảng cách bằng Matrix API với retry khi gặp 429
+        async function calculateMatrixDistance(points, retryCount = 0, maxRetries = 3) {
+            if (points.length < 2) {
+                return null;
+            }
+
+            try {
+                // Chuẩn bị locations: [longitude, latitude]
+                const locations = points.map(p => [parseFloat(p.lon), parseFloat(p.lat)]);
+
+                const apiKey = 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR';
+                const profile = 'cycling-regular';
+                const url = `https://api.ekgis.vn/navigation/matrix/${profile}?api_key=${apiKey}`;
+
+                const requestBody = {
+                    locations: locations,
+                    metrics: ['distance', 'duration'],
+                    resolve_locations: false,
+                    units: 'km'
+                };
+
+                // Đợi 1 giây trước mỗi lần gọi API để tránh rate limit
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429) {
+                        // Nếu bị rate limit và còn số lần retry
+                        if (retryCount < maxRetries) {
+                            console.warn(`Rate limit detected (429), retrying after 5 seconds... (${retryCount + 1}/${maxRetries})`);
+                            await new Promise(resolve => setTimeout(resolve, 5000)); // Đợi 5 giây
+                            // Retry lại
+                            return calculateMatrixDistance(points, retryCount + 1, maxRetries);
+                        } else {
+                            throw new Error(`Matrix API rate limit: ${response.status} (max retries reached)`);
+                        }
+                    }
+                    throw new Error(`Matrix API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Trả về ma trận khoảng cách (km)
+                if (data.distances && Array.isArray(data.distances)) {
+                    return data.distances;
+                } else {
+                    throw new Error('Invalid response from Matrix API');
+                }
+            } catch (error) {
+                // Nếu là lỗi 429 và đã retry hết, hoặc lỗi khác
+                if (error.message.includes('rate limit') && retryCount < maxRetries) {
+                    // Nếu chưa retry hết, thử lại
+                    console.warn(`Retrying after 5 seconds... (${retryCount + 1}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    return calculateMatrixDistance(points, retryCount + 1, maxRetries);
+                }
+                
+                console.error('Error calling Matrix API:', error);
+                // Fallback: tính ma trận khoảng cách đường thẳng
+                const fallbackMatrix = [];
+                for (let i = 0; i < points.length; i++) {
+                    const row = [];
+                    for (let j = 0; j < points.length; j++) {
+                        if (i === j) {
+                            row.push(0);
+                        } else {
+                            const dist = calculateStraightDistance(
+                                points[i].lat, points[i].lon,
+                                points[j].lat, points[j].lon
+                            );
+                            row.push(dist);
+                        }
+                    }
+                    fallbackMatrix.push(row);
+                }
+                return fallbackMatrix;
+            }
+        }
+
+        // Tìm điểm gần nhất dựa trên ma trận khoảng cách
+        function findNearestPointFromMatrix(currentIndex, remainingIndices, distanceMatrix) {
+            let nearestIndex = null;
+            let minDistance = Infinity;
+
+            remainingIndices.forEach(index => {
+                const dist = distanceMatrix[currentIndex][index];
+                if (dist !== null && dist !== undefined && dist < minDistance) {
+                    minDistance = dist;
+                    nearestIndex = index;
+                }
+            });
+
+            return nearestIndex;
+        }
+
+        // Sắp xếp một nhóm điểm bằng thuật toán Nearest Neighbor sử dụng Matrix API
+        async function sortPlanPoints(points, planInfo) {
+            if (points.length === 0) return [];
+            if (points.length === 1) {
+                return [{
+                    ...points[0],
+                    planId: planInfo.planId,
+                    salemanCode: planInfo.salemanCode,
+                    planDate: planInfo.planDate,
+                    order: 1,
+                    distanceFromPrevious: 0,
+                    cumulativeDistance: 0
+                }];
+            }
+
+            // Tính ma trận khoảng cách cho tất cả các điểm
+            const distanceMatrix = await calculateMatrixDistance(points);
+            if (!distanceMatrix) {
+                return [];
+            }
+
+            // Thuật toán Nearest Neighbor
+            const sortedIndices = [];
+            const remainingIndices = Array.from({ length: points.length }, (_, i) => i);
+
+            // Lấy điểm đầu tiên làm điểm gốc
+            let currentIndex = remainingIndices.shift();
+            sortedIndices.push(currentIndex);
+
+            // Lặp lại: tìm điểm gần nhất dựa trên ma trận
+            while (remainingIndices.length > 0) {
+                const nearestIndex = findNearestPointFromMatrix(currentIndex, remainingIndices, distanceMatrix);
+                
+                if (nearestIndex === null) {
+                    // Nếu không tìm thấy điểm gần nhất, lấy điểm đầu tiên còn lại
+                    currentIndex = remainingIndices.shift();
+                } else {
+                    // Xóa điểm vừa chọn khỏi danh sách còn lại
+                    const index = remainingIndices.indexOf(nearestIndex);
+                    if (index > -1) {
+                        remainingIndices.splice(index, 1);
+                    }
+                    currentIndex = nearestIndex;
+                }
+                
+                sortedIndices.push(currentIndex);
+            }
+
+            // Tạo danh sách điểm đã sắp xếp với thông tin khoảng cách
+            const sortedPoints = [];
+            let totalDistance = 0;
+
+            sortedIndices.forEach((pointIndex, order) => {
+                const point = points[pointIndex];
+                const distanceFromPrevious = order === 0 
+                    ? 0 
+                    : (distanceMatrix[sortedIndices[order - 1]][pointIndex] || 0);
+
+                // Lưu tọa độ điểm trước
+                const prevPointIndex = order > 0 ? sortedIndices[order - 1] : null;
+                const prevLat = prevPointIndex !== null ? points[prevPointIndex].lat : null;
+                const prevLon = prevPointIndex !== null ? points[prevPointIndex].lon : null;
+
+                totalDistance += distanceFromPrevious;
+
+                sortedPoints.push({
+                    ...point,
+                    // planId đã được lưu từ point.planId (là id của item)
+                    salemanCode: planInfo.salemanCode,
+                    planDate: planInfo.planDate,
+                    order: order + 1,
+                    distanceFromPrevious: distanceFromPrevious,
+                    cumulativeDistance: totalDistance,
+                    prevLat: prevLat,
+                    prevLon: prevLon
+                });
+            });
+
+            return sortedPoints;
+        }
+
+        // Tính toán và sắp xếp toàn bộ dữ liệu
+        async function calculateAllDistances() {
+            if (planData.length === 0) {
+                alert('Vui lòng tải dữ liệu trước');
+                return;
+            }
+
+            showLoading(true, 'Đang lọc dữ liệu...');
+
+            // Lọc dữ liệu: chỉ check start_date và có tọa độ (plan_type đã được filter trong SQL)
+            let filteredByNoDate = 0;
+            let filteredByCoordinates = 0;
+            
+            const filtered = planData.filter(item => {
+                // Chỉ check có start_date
+                if (!item.start_date) {
+                    filteredByNoDate++;
+                    return false;
+                }
+                
+                // Lấy tọa độ từ trường lat và long (cấu trúc mới)
+                const lat = item.lat;
+                const lon = item.long; // Lưu ý: trường là "long" không phải "long"
+                
+                // Chỉ check có tọa độ
+                if (!lat || !lon) {
+                    filteredByCoordinates++;
+                    return false;
+                }
+                
+                return true;
+            });
+
+            console.log(`Total items: ${planData.length}`);
+            console.log(`Filtered by no start_date: ${filteredByNoDate}`);
+            console.log(`Filtered by no coordinates: ${filteredByCoordinates}`);
+            console.log(`Valid items: ${filtered.length}`);
+
+            if (filtered.length === 0) {
+                showLoading(false);
+                alert(`Không tìm thấy dữ liệu kế hoạch nào (có start_date và có tọa độ) trong ${planData.length} bản ghi\n\n- Loại bỏ do không có start_date: ${filteredByNoDate}\n- Loại bỏ do thiếu tọa độ: ${filteredByCoordinates}`);
+                return;
+            }
+
+
+            // Nhóm dữ liệu theo plan: cùng start_date và saleman
+            const planGroups = {};
+            filtered.forEach(item => {
+                // Một kế hoạch = cùng start_date + cùng saleman
+                const salemanCode = item.saleman || '';
+                const planDate = item.start_date ? item.start_date.split(' ')[0] : '';
+                const planKey = `${planDate}_${salemanCode}`; // Group theo start_date, saleman
+
+                if (!planGroups[planKey]) {
+                    planGroups[planKey] = {
+                        planId: planKey,
+                        salemanCode: salemanCode,
+                        planDate: planDate,
+                        points: []
+                    };
+                }
+
+                // Lấy dữ liệu từ cấu trúc mới
+                const lat = item.lat;
+                const lon = item.long; // Trường là "long"
+                const shopName = item.name || '';
+                const shopCode = item.code || '';
+                const address = item.address || '';
+
+                planGroups[planKey].points.push({
+                    id: item.id, // plan_id
+                    planId: item.id, // Lưu id của item để hiển thị trong cột ID Plan
+                    shop_code: shopCode,
+                    shop_name: shopName,
+                    shop_full_address: address,
+                    lat: parseFloat(lat),
+                    lon: parseFloat(lon),
+                    sales_position: '' // Không có trong cấu trúc mới
+                });
+            });
+
+            const planKeys = Object.keys(planGroups);
+            const allResults = [];
+            let totalPlans = planKeys.length;
+            let processedPlans = 0;
+
+            // Log thống kê các plan
+            console.log(`Total plans after grouping: ${totalPlans}`);
+            planKeys.forEach(key => {
+                const plan = planGroups[key];
+                console.log(`Plan: ${key} - ${plan.salemanCode} - ${plan.planDate} - ${plan.points.length} points`);
+            });
+
+            // Xử lý từng plan
+            for (const planId of planKeys) {
+                const planInfo = planGroups[planId];
+                processedPlans++;
+
+                showLoading(true, `Đang xử lý kế hoạch ${processedPlans}/${totalPlans} (${planInfo.points.length} điểm)...`);
+
+                const sortedPoints = await sortPlanPoints(planInfo.points, planInfo);
+                allResults.push(...sortedPoints);
+
+                // Thêm delay giữa các lần gọi API để tránh rate limit (429)
+                if (processedPlans < totalPlans) {
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Delay 500ms
+                }
+            }
+
+            calculatedResult = {
+                allPlans: allResults,
+                totalPlans: totalPlans,
+                totalPoints: allResults.length
+            };
+
+            displayResults();
+            showLoading(false);
+        }
+
+        // Hiển thị kết quả
+        function displayResults() {
+            if (!calculatedResult) return;
+
+            const section = document.getElementById('result-section');
+            section.style.display = 'block';
+
+            // Tính tổng quãng đường của tất cả các plan
+            // Một kế hoạch = cùng start_date + cùng saleman
+            let grandTotalDistance = 0;
+            const planTotals = {};
+            calculatedResult.allPlans.forEach(point => {
+                if (point.cumulativeDistance) {
+                    const planKey = `${point.planDate}_${point.salemanCode}`;
+                    if (!planTotals[planKey]) {
+                        planTotals[planKey] = 0;
+                    }
+                    // Lấy giá trị lớn nhất trong mỗi plan (điểm cuối cùng)
+                    if (point.cumulativeDistance > planTotals[planKey]) {
+                        planTotals[planKey] = point.cumulativeDistance;
+                    }
+                }
+            });
+            grandTotalDistance = Object.values(planTotals).reduce((sum, val) => sum + val, 0);
+
+            // Summary
+            const summary = document.getElementById('result-summary');
+            summary.innerHTML = `
+                <div class="summary-item">
+                    <div class="summary-item-label">Tổng số kế hoạch</div>
+                    <div class="summary-item-value">${calculatedResult.totalPlans}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Tổng số điểm</div>
+                    <div class="summary-item-value">${calculatedResult.totalPoints}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Tổng quãng đường</div>
+                    <div class="summary-item-value distance">${grandTotalDistance.toFixed(2)} km</div>
+                </div>
+            `;
+
+            // Table
+            const tbody = document.getElementById('result-tbody');
+            tbody.innerHTML = '';
+
+            let globalIndex = 0;
+            let currentPlanId = null;
+            let planStartIndex = 0;
+
+            // Nhóm theo plan để highlight và tính tổng quãng đường cho mỗi plan
+            const planGroupsMap = {};
+            const planTotalDistances = {}; // Lưu tổng quãng đường của mỗi plan
+            let groupIndex = 0;
+
+            // Tính tổng quãng đường cho mỗi plan (là cumulativeDistance của điểm cuối cùng)
+            // Một kế hoạch = cùng start_date + cùng saleman
+            calculatedResult.allPlans.forEach((point) => {
+                const planKey = `${point.planDate}_${point.salemanCode}`;
+                if (!planTotalDistances[planKey] || (point.cumulativeDistance || 0) > planTotalDistances[planKey]) {
+                    planTotalDistances[planKey] = point.cumulativeDistance || 0;
+                }
+            });
+
+            calculatedResult.allPlans.forEach((point, index) => {
+                // Một kế hoạch = cùng start_date + cùng saleman
+                const planKey = `${point.planDate}_${point.salemanCode}`;
+                
+                // Nếu chuyển sang plan mới, reset STT
+                if (planKey !== currentPlanId) {
+                    currentPlanId = planKey;
+                    planStartIndex = globalIndex;
+                }
+
+                const row = document.createElement('tr');
+                const sttInPlan = point.order || (globalIndex - planStartIndex + 1);
+                const hasPreviousPoint = point.prevLat !== null && point.prevLon !== null;
+                const distanceCellClass = hasPreviousPoint ? 'distance-cell' : 'distance-cell no-link';
+                const distanceValue = sttInPlan === 1 ? '-' : (point.distanceFromPrevious || 0).toFixed(2);
+                
+                // Highlight theo plan (dùng planKey thay vì point.planId)
+                if (!planGroupsMap[planKey]) {
+                    planGroupsMap[planKey] = groupIndex % 5;
+                    groupIndex++;
+                }
+                row.className = `plan-group-${planGroupsMap[planKey]}`;
+                
+                // Lấy tổng quãng đường của plan (tất cả các dòng trong cùng plan có cùng giá trị)
+                const planTotalDistance = planTotalDistances[planKey] || 0;
+                
+                row.innerHTML = `
+                    <td>${point.planId || ''}</td>
+                    <td>${point.salemanCode || ''}</td>
+                    <td>${point.planDate || ''}</td>
+                    <td>${point.sales_position || sttInPlan}</td>
+                    <td>${sttInPlan}</td>
+                    <td>${point.shop_code || ''}</td>
+                    <td>${point.shop_name || ''}</td>
+                    <td>${point.shop_full_address || ''}</td>
+                    <td>${point.lat.toFixed(6)}</td>
+                    <td>${point.lon.toFixed(6)}</td>
+                    <td class="${distanceCellClass}" ${hasPreviousPoint ? `onclick="openGoogleMaps(${point.prevLat}, ${point.prevLon}, ${point.lat}, ${point.lon})"` : ''}>${distanceValue}</td>
+                    <td class="distance-cell no-link">${planTotalDistance.toFixed(2)}</td>
+                `;
+                tbody.appendChild(row);
+                globalIndex++;
+            });
+
+            // Scroll to result
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            if (!calculatedResult) {
+                alert('Chưa có dữ liệu để xuất');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            
+            // Sheet 1: Tổng quan
+            // Tính tổng quãng đường theo plan: cùng mã nhân viên + cùng ngày kế hoạch
+            let grandTotalDistance = 0;
+            const planTotals = {};
+            calculatedResult.allPlans.forEach(point => {
+                if (point.cumulativeDistance) {
+                    const planKey = `${point.salemanCode}_${point.planDate}`;
+                    if (!planTotals[planKey]) {
+                        planTotals[planKey] = 0;
+                    }
+                    if (point.cumulativeDistance > planTotals[planKey]) {
+                        planTotals[planKey] = point.cumulativeDistance;
+                    }
+                }
+            });
+            grandTotalDistance = Object.values(planTotals).reduce((sum, val) => sum + val, 0);
+
+            const summaryData = [
+                ['Tổng số kế hoạch', calculatedResult.totalPlans],
+                ['Tổng số điểm', calculatedResult.totalPoints],
+                ['Tổng quãng đường (km)', grandTotalDistance.toFixed(2)]
+            ];
+            const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, ws1, 'Tổng quan');
+
+            // Sheet 2: Chi tiết
+            const detailData = [
+                ['ID Plan', 'Mã nhân viên', 'Ngày kế hoạch', 'Thứ tự', 'STT', 'Mã cửa hàng', 'Tên cửa hàng', 'Địa chỉ', 'Vĩ độ', 'Kinh độ', 'Quãng đường từ điểm trước (km)', 'Tổng quãng đường (km)']
+            ];
+
+            let globalIndex = 0;
+            let currentPlanKey = null;
+            let planStartIndex = 0;
+
+            calculatedResult.allPlans.forEach((point) => {
+                // Một kế hoạch = cùng start_date + cùng saleman
+                const planKey = `${point.planDate}_${point.salemanCode}`;
+                
+                if (planKey !== currentPlanKey) {
+                    currentPlanKey = planKey;
+                    planStartIndex = globalIndex;
+                }
+                const sttInPlan = point.order || (globalIndex - planStartIndex + 1);
+                
+                // Lấy tổng quãng đường của plan (tất cả các điểm trong cùng plan có cùng giá trị)
+                const planTotalDistance = planTotals[planKey] || 0;
+                
+                detailData.push([
+                    point.planId || '',
+                    point.salemanCode || '',
+                    point.planDate || '',
+                    point.sales_position || sttInPlan,
+                    sttInPlan,
+                    point.shop_code || '',
+                    point.shop_name || '',
+                    point.shop_full_address || '',
+                    point.lat.toFixed(6),
+                    point.lon.toFixed(6),
+                    sttInPlan === 1 ? '0' : (point.distanceFromPrevious || 0).toFixed(2), // Điểm đầu tiên = 0 thay vì '-'
+                    planTotalDistance.toFixed(2) // Tổng quãng đường của plan
+                ]);
+                globalIndex++;
+            });
+
+            const ws2 = XLSX.utils.aoa_to_sheet(detailData);
+            XLSX.utils.book_append_sheet(wb, ws2, 'Chi tiết');
+
+            // Tên file
+            const fileName = `QuangDuong_ToanBo_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            if (!calculatedResult) {
+                alert('Chưa có dữ liệu để xuất');
+                return;
+            }
+
+            let csv = 'ID Plan,Mã nhân viên,Ngày kế hoạch,Thứ tự,STT,Mã cửa hàng,Tên cửa hàng,Địa chỉ,Vĩ độ,Kinh độ,Quãng đường từ điểm trước (km),Tổng quãng đường (km)\n';
+
+            // Tính tổng quãng đường theo plan: cùng start_date + cùng saleman
+            const planTotals = {};
+            calculatedResult.allPlans.forEach(point => {
+                if (point.cumulativeDistance) {
+                    const planKey = `${point.planDate}_${point.salemanCode}`;
+                    if (!planTotals[planKey]) {
+                        planTotals[planKey] = 0;
+                    }
+                    if (point.cumulativeDistance > planTotals[planKey]) {
+                        planTotals[planKey] = point.cumulativeDistance;
+                    }
+                }
+            });
+
+            let globalIndex = 0;
+            let currentPlanKey = null;
+            let planStartIndex = 0;
+
+            calculatedResult.allPlans.forEach((point) => {
+                // Một kế hoạch = cùng start_date + cùng saleman
+                const planKey = `${point.planDate}_${point.salemanCode}`;
+                
+                if (planKey !== currentPlanKey) {
+                    currentPlanKey = planKey;
+                    planStartIndex = globalIndex;
+                }
+                const sttInPlan = point.order || (globalIndex - planStartIndex + 1);
+                
+                // Lấy tổng quãng đường của plan (tất cả các điểm trong cùng plan có cùng giá trị)
+                const planTotalDistance = planTotals[planKey] || 0;
+                
+                csv += `"${point.planId || ''}","${point.salemanCode || ''}","${point.planDate || ''}","${point.sales_position || sttInPlan}",${sttInPlan},"${point.shop_code || ''}","${point.shop_name || ''}","${point.shop_full_address || ''}",${point.lat.toFixed(6)},${point.lon.toFixed(6)},${sttInPlan === 1 ? '0' : (point.distanceFromPrevious || 0).toFixed(2)},${planTotalDistance.toFixed(2)}\n`;
+                globalIndex++;
+            });
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `QuangDuong_ToanBo_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Hiển thị/ẩn loading
+        function showLoading(show, text = 'Đang tính toán...') {
+            const overlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
+            if (show) {
+                loadingText.textContent = text;
+                overlay.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Mở Google Maps với 2 tọa độ
+        function openGoogleMaps(lat1, lon1, lat2, lon2) {
+            // Format: https://www.google.com/maps/dir/{lat1},{lon1}/{lat2},{lon2}
+            const url = `https://www.google.com/maps/dir/${lat1},${lon1}/${lat2},${lon2}`;
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+
+</html>

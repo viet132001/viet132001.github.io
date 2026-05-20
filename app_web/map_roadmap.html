@@ -338,13 +338,12 @@
             none: '#7F7F7F'
         };
 
-        // Mảng màu sắc cho các tuyến
-        // Bảng màu tương phản cao, dễ phân biệt (Tableau-like)
         const colorPalette = [
             '#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F',
             '#EDC948', '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC',
             '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD',
-            '#8C564B', '#E377C2', '#7F7F7F', '#BCBD22', '#17BECF'
+            '#8C564B', '#E377C2', '#7F7F7F', '#BCBD22', '#17BECF',
+            '#FF5722', '#3F51B5', '#00796B', '#D81B60', '#1B5E20'
         ];
 
         // Khởi tạo bản đồ
@@ -867,15 +866,15 @@
                     ],
                     'circle-color': ['get', 'color'],
                     'circle-opacity': 1,
-                    // Viền nhẹ cho điểm có tài sản
+                    // Viền nhẹ cho tất cả các điểm để giúp các điểm màu sáng vẫn hiển thị rõ ràng trên nền bản đồ
                     'circle-stroke-width': [
                         'case',
                         ['==', ['get', 'hasAsset'], 1],
-                        1,    // có tài sản: viền mỏng
-                        0     // không có tài sản: không viền
+                        1.5,  // có tài sản: viền rõ nét
+                        0.8   // không có tài sản: viền mỏng định hình màu
                     ],
                    
-                    'circle-stroke-color': '#666'
+                    'circle-stroke-color': '#444'
                 }
             });
 

@@ -300,14 +300,14 @@
     <div class="map-style-selector" id="map-style-selector">
         <label for="basemap-select">Loại bản đồ</label>
         <select id="basemap-select" onchange="changeBasemap(this.value)">
-            <option value="carto-light" selected>Bản đồ sáng (CartoDB)</option>
-            <option value="carto-dark">Bản đồ tối (CartoDB)</option>
-            <option value="carto-voyager">Bản đồ Voyager (CartoDB)</option>
-            <option value="osm">Bản đồ tiêu chuẩn (OSM)</option>
-            <option value="google-road">Bản đồ giao thông (Google)</option>
+            <option value="google-road" selected>Bản đồ giao thông (Google)</option>
             <option value="google-satellite">Bản đồ vệ tinh (Google)</option>
             <option value="google-hybrid">Bản đồ hỗn hợp (Google)</option>
             <option value="google-terrain">Bản đồ địa hình (Google)</option>
+            <option value="carto-light">Bản đồ sáng (CartoDB)</option>
+            <option value="carto-dark">Bản đồ tối (CartoDB)</option>
+            <option value="carto-voyager">Bản đồ Voyager (CartoDB)</option>
+            <option value="osm">Bản đồ tiêu chuẩn (OSM)</option>
         </select>
     </div>
 
@@ -432,9 +432,9 @@
                     sources: {
                         'raster-tiles': {
                             type: 'raster',
-                            tiles: [basemaps['carto-light']],
+                            tiles: [basemaps['google-road']],
                             tileSize: 256,
-                            attribution: '© CartoDB, © OpenStreetMap'
+                            attribution: '© Google'
                         }
                     },
                     layers: [{

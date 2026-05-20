@@ -790,10 +790,8 @@
                         style="width: 100%; padding: 8px; border: none; outline: none; cursor: pointer; background: transparent; position: relative; z-index: 1;">
                 </div>
                 <button class="control-button" onclick="triggerDrawRouteMap()" id="draw-route-map-btn"
-                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #0d47a1; background: #e3f2fd; cursor: pointer; color: #0d47a1; font-weight: 600; box-shadow: none;">Vẽ
-                    lộ trình</button>
-                <select class="basemap-select" onchange="changeBasemap('map', this.value)"
-                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 13px; font-weight: 500; outline: none; color: #333;">
+                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #0d47a1; background: #e3f2fd; cursor: pointer; color: #0d47a1; font-weight: 600; box-shadow: none;">Vẽ lộ trình</button>
+                <select class="basemap-select" onchange="changeBasemap('map', this.value)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 13px; font-weight: 500; outline: none; color: #333;">
                     <option value="google-road" selected>Bản đồ Google</option>
                     <option value="google-satellite">Vệ tinh Google</option>
                     <option value="carto-light">Bản đồ sáng (CartoDB)</option>
@@ -853,16 +851,12 @@
                         style="width: 100%; padding: 8px; border: none; outline: none; cursor: pointer; background: transparent; position: relative; z-index: 1;">
                 </div>
                 <button class="control-button" onclick="triggerRun1()" id="run1-btn"
-                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #006064; background: #e0f7fa; cursor: pointer; color: #006064; font-weight: 600; box-shadow: none;">Vẽ
-                    tối ưu</button>
+                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #006064; background: #e0f7fa; cursor: pointer; color: #006064; font-weight: 600; box-shadow: none;">Vẽ tối ưu</button>
                 <button class="control-button" onclick="triggerRun2()" id="run2-btn"
-                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #1b5e20; background: #e8f5e9; cursor: pointer; color: #1b5e20; font-weight: 600; box-shadow: none;">Vẽ
-                    thực tế</button>
+                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #1b5e20; background: #e8f5e9; cursor: pointer; color: #1b5e20; font-weight: 600; box-shadow: none;">Vẽ thực tế</button>
                 <button class="control-button" onclick="toggleRouteInfo()" id="toggle-route-info-btn"
-                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; color: #000;">Ẩn
-                    danh sách</button>
-                <select class="basemap-select" onchange="changeBasemap('route', this.value)"
-                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 13px; font-weight: 500; outline: none; color: #333;">
+                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; color: #000;">Ẩn danh sách</button>
+                <select class="basemap-select" onchange="changeBasemap('route', this.value)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 13px; font-weight: 500; outline: none; color: #333;">
                     <option value="google-road" selected>Bản đồ Google</option>
                     <option value="google-satellite">Vệ tinh Google</option>
                     <option value="carto-light">Bản đồ sáng (CartoDB)</option>
@@ -1439,12 +1433,12 @@
                     alert('Chưa có dữ liệu tuyến bán hàng để vẽ lộ trình.');
                     return;
                 }
-
+                
                 const loadingOverlay = document.getElementById('loading-overlay');
                 if (loadingOverlay) {
                     loadingOverlay.classList.add('active');
                 }
-
+                
                 drawRouteMap(window.currentSortedDataMap, () => {
                     if (loadingOverlay) {
                         loadingOverlay.classList.remove('active');

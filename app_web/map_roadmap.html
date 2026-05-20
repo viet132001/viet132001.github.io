@@ -5,8 +5,8 @@
     <meta charset="utf-8" />
     <title>Bản đồ tuyến bán hàng</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <script src="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.js"></script>
-    <link href="https://files.ekgis.vn/sdks/v2.0.0/ekmap-platform.min.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     
 
@@ -250,11 +250,66 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Map Style Selector */
+        .map-style-selector {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .map-style-selector label {
+            font-size: 11px;
+            color: #666;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .map-style-selector select {
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            color: #333;
+            font-weight: 500;
+            transition: border-color 0.2s;
+        }
+
+        .map-style-selector select:hover {
+            border-color: #024da3;
+        }
+
     </style>
 </head>
 
 <body>
     <div id="map-roadmap"></div>
+
+    <div class="map-style-selector" id="map-style-selector">
+        <label for="basemap-select">Loại bản đồ</label>
+        <select id="basemap-select" onchange="changeBasemap(this.value)">
+            <option value="carto-light" selected>Bản đồ sáng (CartoDB)</option>
+            <option value="carto-dark">Bản đồ tối (CartoDB)</option>
+            <option value="carto-voyager">Bản đồ Voyager (CartoDB)</option>
+            <option value="osm">Bản đồ tiêu chuẩn (OSM)</option>
+            <option value="google-road">Bản đồ giao thông (Google)</option>
+            <option value="google-satellite">Bản đồ vệ tinh (Google)</option>
+            <option value="google-hybrid">Bản đồ hỗn hợp (Google)</option>
+            <option value="google-terrain">Bản đồ địa hình (Google)</option>
+        </select>
+    </div>
 
     <div class="legend" id="legend">
         <div class="legend-header">
@@ -347,13 +402,23 @@
         ];
 
         // Khởi tạo bản đồ
+        const basemaps = {
+            'osm': 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            'carto-light': 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+            'carto-dark': 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+            'carto-voyager': 'https://a.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}.png',
+            'google-road': 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+            'google-satellite': 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+            'google-hybrid': 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+            'google-terrain': 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'
+        };
+
         function initMap() {
             // Tọa độ mặc định: Hồ Chí Minh
             const defaultCenter = [106.6297, 10.8231];
             
-            // Kiểm tra xem maplibregl có sẵn không (từ EKGIS SDK)
             if (typeof maplibregl === 'undefined') {
-                console.error('MapLibre GL is not loaded. Please check EKGIS SDK.');
+                console.error('MapLibre GL is not loaded.');
                 alert('Lỗi: Không thể tải thư viện bản đồ. Vui lòng kiểm tra kết nối mạng.');
                 return;
             }
@@ -362,16 +427,14 @@
                 container: 'map-roadmap',
                 center: defaultCenter,
                 zoom: 12,
-                // Quan trọng: cần có style thì event `load` mới chạy ổn định
-                // (nếu không, map có thể không render + không call API)
                 style: {
                     version: 8,
                     sources: {
                         'raster-tiles': {
                             type: 'raster',
-                            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                            tiles: [basemaps['carto-light']],
                             tileSize: 256,
-                            attribution: '© OpenStreetMap'
+                            attribution: '© CartoDB, © OpenStreetMap'
                         }
                     },
                     layers: [{
@@ -384,20 +447,47 @@
                 }
             });
 
-            // Sử dụng EKGIS basemap
             mapRoadmap.on('load', () => {
-                try {
-                    const basemap = new ekmapplf.VectorBaseMap('OSM:Bright', 'ZGpF9y7Xuoq9aXMHlKftb2gIaW1fF1FEYvUTEEDR');
-                    basemap.addTo(mapRoadmap);
-                } catch (e) {
-                    console.log('Using default map style');
-                }
-                
                 // Tự động load dữ liệu từ API
                 loadRoadmapData();
             });
 
             mapRoadmap.addControl(new maplibregl.NavigationControl(), 'top-right');
+        }
+
+        function changeBasemap(type) {
+            const tileUrl = basemaps[type];
+            if (!tileUrl || !mapRoadmap) return;
+            
+            if (mapRoadmap.getLayer('simple-tiles')) {
+                mapRoadmap.removeLayer('simple-tiles');
+            }
+            if (mapRoadmap.getSource('raster-tiles')) {
+                mapRoadmap.removeSource('raster-tiles');
+            }
+            
+            let attribution = '© OpenStreetMap';
+            if (type.startsWith('carto')) {
+                attribution = '© CartoDB, © OpenStreetMap';
+            } else if (type.startsWith('google')) {
+                attribution = '© Google';
+            }
+
+            mapRoadmap.addSource('raster-tiles', {
+                type: 'raster',
+                tiles: [tileUrl],
+                tileSize: 256,
+                attribution: attribution
+            });
+            
+            const beforeId = mapRoadmap.getLayer(ROUTE_HULL_FILL_LAYER_ID) ? ROUTE_HULL_FILL_LAYER_ID : undefined;
+            mapRoadmap.addLayer({
+                id: 'simple-tiles',
+                type: 'raster',
+                source: 'raster-tiles',
+                minzoom: 0,
+                maxzoom: 22
+            }, beforeId);
         }
 
         function toggleLegend() {

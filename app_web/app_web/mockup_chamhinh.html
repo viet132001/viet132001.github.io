@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chấm Ảnh Điểm Bán (Tối Ưu Giao Diện & Phím Tắt 2-Enter)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #333;
+            margin: 10px 15px;
+            background-color: #f4f6f9;
+        }
+
+        /* BỘ LỌC TÌM KIẾM */
+        .filter-section {
+            background: #fff;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: flex-end;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .filter-group label {
+            font-weight: bold;
+            color: #555;
+            font-size: 10px;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 11px;
+            color: #333;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1px;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .btn-search {
+            background-color: #1a2238;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-clear {
+            background-color: #fff;
+            color: #555;
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        /* THANH CÔNG CỤ & BẢNG */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .btn-export {
+            background-color: #6b4c1a;
+            border: none;
+            padding: 6px 12px;
+            color: white;
+            cursor: pointer;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+
+        th {
+            background-color: #1b4d3e;
+            color: white;
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            border: 1px solid #144033;
+        }
+
+        td {
+            border: 1px solid #e0e0e0;
+            padding: 8px 10px;
+            vertical-align: top;
+            background-color: #fff;
+            line-height: 1.4;
+        }
+
+        .lbl {
+            font-weight: bold;
+            color: #555;
+            display: inline-block;
+            width: 65px;
+        }
+
+        .info-group {
+            margin-bottom: 3px;
+        }
+
+        .text-highlight {
+            color: #d35400;
+            font-weight: bold;
+        }
+
+        .text-blue {
+            color: #2980b9;
+            font-weight: bold;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* TRẠNG THÁI */
+        .badge-pending {
+            color: #555;
+            font-weight: normal;
+        }
+
+        .badge-approved {
+            background: #27ae60;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .badge-rejected {
+            background: #c0392b;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .reject-note {
+            color: #c0392b;
+            font-style: italic;
+            font-size: 10px;
+            margin-top: 3px;
+            display: block;
+        }
+
+        /* CỘT SỐ TỦ */
+        .cabinet-item {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .cabinet-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .cab-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 3px;
+            font-size: 11px;
+        }
+
+        .cab-stat {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            border: 1px solid #27ae60;
+            color: #27ae60;
+            background: #eafaf1;
+            margin-top: 1px;
+        }
+
+        .cab-stat.missing {
+            border-color: #c0392b;
+            color: #c0392b;
+            background: #fdeaea;
+        }
+
+        .cab-stat.partial {
+            border-color: #e67e22;
+            color: #d35400;
+            background: #fdf2e9;
+        }
+
+        /* HÌNH ẢNH NGOÀI BẢNG (KHỐI TRƠN) */
+        .image-col {
+            width: 100px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .img-block {
+            width: 70px;
+            height: 40px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .img-block:hover {
+            transform: scale(1.05);
+        }
+
+        .bg-green {
+            background-color: #2e7d32;
+        }
+
+        .bg-red-dark {
+            background-color: #87362a;
+        }
+
+        .bg-blue {
+            background-color: #1976d2;
+        }
+
+        .bg-orange {
+            background-color: #d35400;
+        }
+
+        .bg-gray {
+            background-color: #607d8b;
+        }
+
+        /* VIEW SWITCHING PANELS */
+        .view-panel {
+            display: block;
+        }
+
+        /* TỐI ƯU HÓA MÀN CHI TIẾT ĐỂ VỪA 1 KHUNG HÌNH (NO SCROLL) */
+        #detailView {
+            display: none;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            max-height: 96vh;
+            box-sizing: border-box;
+        }
+
+        /* HEADER CHI TIẾT COMPACT STICKY */
+        .detail-header-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1b4d3e;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            z-index: 999;
+            padding-top: 10px;
+        }
+
+        .detail-header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-back-compact {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            padding: 4px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #333;
+            font-size: 11px;
+        }
+
+        .btn-back-compact:hover {
+            background: #e5e5e5;
+        }
+
+        .detail-title-compact {
+            font-size: 13px;
+            font-weight: bold;
+            color: #1b4d3e;
+            margin: 0;
+        }
+
+        /* TIẾN ĐỘ INLINE */
+        .stats-inline {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .stats-label {
+            font-weight: bold;
+            color: #1b4d3e;
+        }
+
+        .stats-filter-date {
+            font-size: 10px;
+            color: #666;
+            font-style: italic;
+            margin-right: 5px;
+            background: #eef2f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #dcdde1;
+        }
+
+        .stat-inline-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            color: #fff;
+            font-size: 10px;
+        }
+
+        .stat-inline-total {
+            background: #1a2238;
+        }
+
+        .stat-inline-done {
+            background: #27ae60;
+        }
+
+        .stat-inline-fail {
+            background: #c0392b;
+        }
+
+        .stat-inline-remain {
+            background: #f39c12;
+        }
+
+        /* BỐ CỤC CHUNG */
+        .detail-layout {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .detail-main {
+            flex: 7.2;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .detail-sidebar {
+            flex: 2.8;
+            min-width: 270px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: sticky;
+            top: 50px;
+        }
+
+        /* CARD THÔNG TIN */
+        .info-card {
+            background: #fcfcfc;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 6px 10px;
+        }
+
+        .info-card-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #1b4d3e;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .info-row .info-lbl {
+            font-weight: bold;
+            color: #666;
+            width: 75px;
+            flex-shrink: 0;
+        }
+
+        .info-row .info-val {
+            color: #333;
+            word-break: break-word;
+        }
+
+        /* KHU VỰC THAO TÁC / CHẤM ĐIỂM */
+        .action-card {
+            background: #fff;
+            border: 1px solid #1b4d3e;
+            border-radius: 4px;
+            padding: 6px 10px;
+            box-shadow: 0 1px 5px rgba(27, 77, 62, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn-action-ok,
+        .btn-action-fail {
+            flex: 1;
+            border: none;
+            padding: 8px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+            cursor: pointer;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            color: #fff;
+        }
+
+        .btn-action-ok {
+            background-color: #27ae60;
+        }
+
+        .btn-action-ok:hover {
+            background-color: #219653;
+        }
+
+        .btn-action-fail {
+            background-color: #c0392b;
+        }
+
+        .btn-action-fail:hover {
+            background-color: #a93226;
+        }
+
+        .reject-input-panel {
+            border-top: 1px dashed #ccc;
+            padding-top: 10px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .reject-input-panel.active {
+            display: block;
+        }
+
+        .reject-input-title {
+            font-weight: bold;
+            color: #c0392b;
+            margin-bottom: 5px;
+            font-size: 11px;
+        }
+
+        .txt-reason-detail {
+            width: 100%;
+            height: 40px;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+            resize: vertical;
+            margin-top: 5px;
+            font-family: inherit;
+            font-size: 11px;
+        }
+
+        .btn-save-reject {
+            background: #c0392b;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 5px;
+            width: 100%;
+            font-size: 11px;
+        }
+
+        .btn-save-reject:disabled {
+            background: #e0a3a1;
+            cursor: not-allowed;
+        }
+
+        /* KHU VỰC TRẠNG THÁI HIỆN TẠI VÀ NÚT CHẤM LẠI */
+        .re-evaluate-panel {
+            display: none;
+            border-top: 1px solid #eee;
+            padding-top: 6px;
+            margin-top: 6px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .re-evaluate-status {
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .btn-re-evaluate {
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .btn-re-evaluate:hover {
+            background-color: #d68910;
+        }
+
+        .shortcut-tip {
+            margin-top: 5px;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            background: #f9f9f9;
+            padding: 4px;
+            border-radius: 3px;
+            border: 1px solid #eee;
+        }
+
+        .kbd-key {
+            background: #eee;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 0px 4px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* KHU VỰC HÌNH ẢNH (BÊN TRÁI - TẬP TRUNG 100% KHÔNG GIAN CHO ẢNH THỰC TẾ) */
+        .img-block-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .img-block-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #1b4d3e;
+            border-left: 3px solid #1b4d3e;
+            padding-left: 6px;
+            margin: 0;
+        }
+
+        .img-group-container-layout {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .img-group-container-layout:last-child {
+            margin-bottom: 0;
+        }
+
+        .img-group-left-flow {
+            flex: 1;
+        }
+
+        .img-group-right-ref {
+            width: 320px;
+            border-left: 1px dashed #ccc;
+            padding-left: 15px;
+            flex-shrink: 0;
+        }
+
+        /* TĂNG KÍCH THƯỚC HÌNH ẢNH THỰC TẾ LÊN THÊM ĐỂ DỄ QUAN SÁT */
+        .real-img-single {
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            background: #fafafa;
+            max-width: 320px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .real-img-single::after {
+            content: '\f00e';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            bottom: 25px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .real-img-single:hover::after {
+            opacity: 1;
+        }
+
+        .real-img-single img {
+            width: 100%;
+            height: 160px;
+            object-fit: contain;
+            background: #eaeaea;
+        }
+
+        .real-img-label {
+            background: #555;
+            color: #fff;
+            text-align: center;
+            padding: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* ẢNH ĐẠT GẦN NHẤT PHÓNG TO BẰNG ẢNH THỰC TẾ */
+        .ref-img-card-inline {
+            border: 1px solid #a3e4d7;
+            border-radius: 3px;
+            overflow: hidden;
+            background: #f4faf7;
+            max-width: 320px;
+            cursor: pointer;
+        }
+
+        .ref-img-card-inline img {
+            width: 100%;
+            height: 160px;
+            object-fit: contain;
+            background: #eafaf1;
+        }
+
+        .ref-img-label-inline {
+            background: #27ae60;
+            color: #fff;
+            text-align: center;
+            padding: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* LƯỚI HÌNH CHO PHẦN CÓ NHIỀU HÌNH (QR VÀ TRƯNG BÀY) */
+        .images-grid-flow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* POPUP LỚN XEM HÌNH FULL MÀN HÌNH */
+        .fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 10002;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+
+        .fullscreen-overlay img {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .fullscreen-close {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            color: #fff;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* POPUP XÁC NHẬN ENTER LẦN 2 */
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .confirm-box {
+            background: #fff;
+            padding: 15px 25px;
+            border-radius: 5px;
+            border: 2px solid #1b4d3e;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 350px;
+        }
+
+        .confirm-box h3 {
+            margin: 0 0 10px 0;
+            color: #1b4d3e;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .confirm-box p {
+            margin: 0 0 15px 0;
+            font-size: 12px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .confirm-actions-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-confirm-yes {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .btn-confirm-no {
+            background: #fff;
+            border: 1px solid #ccc;
+            color: #333;
+            padding: 6px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        /* TOAST THÔNG BÁO */
+        .quick-toast {
+            display: none;
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(39, 174, 96, 0.95);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 10000;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- MÀN HÌNH 1: DANH SÁCH & BỘ LỌC -->
+    <div id="listView" class="view-panel">
+        <!-- BỘ LỌC TÌM KIẾM -->
+        <div class="filter-section">
+            <div class="filter-group"><label>Mã saleman</label><input type="text" id="filterStaffCode" placeholder="Nhập mã..."></div>
+            <div class="filter-group"><label>Tên saleman</label><input type="text" id="filterStaffName" placeholder="Nhập tên..."></div>
+            <div class="filter-group"><label>Mã cửa hàng</label><input type="text" id="filterCustomerCode" placeholder="Nhập mã KH..."></div>
+            <div class="filter-group"><label>Kênh KH</label><select id="filterChannel">
+                    <option>Tất cả</option>
+                    <option>GT</option>
+                    <option>MT</option>
+                    <option>HRC</option>
+                </select></div>
+            <div class="filter-group"><label>Khu Vực</label><select id="filterRegion">
+                    <option>Tất cả</option>
+                    <option>Miền Bắc</option>
+                    <option>Miền Trung</option>
+                    <option>Miền Nam</option>
+                </select></div>
+            <div class="filter-group"><label>Trực thuộc</label><select id="filterParent">
+                    <option>Tất cả</option>
+                    <option>Đại Thuận</option>
+                    <option>NPP Khác</option>
+                </select></div>
+            <div class="filter-group"><label>Trạng thái</label><select id="filterStatus">
+                    <option>Tất cả</option>
+                    <option>Chưa chấm</option>
+                    <option>Đạt</option>
+                    <option>Không đạt</option>
+                </select></div>
+            <div class="filter-group"><label>Ngày bắt đầu</label><input type="date" id="filterStartDate" value="2026-07-01"></div>
+            <div class="filter-group"><label>Ngày kết thúc</label><input type="date" id="filterEndDate" value="2026-07-16"></div>
+            <div class="filter-actions">
+                <button class="btn-search" onclick="renderTable()">Tìm kiếm</button>
+                <button class="btn-clear" onclick="clearFilters()">Làm trống</button>
+            </div>
+        </div>
+
+        <!-- TIẾN ĐỘ CHẤM ĐIỂM NGÀY -->
+        <div style="display: flex; gap: 15px; margin-bottom: 15px; background: white; padding: 10px 15px; border-radius: 4px; border: 1px solid #e0e0e0; font-size: 11px; align-items: center; justify-content: space-between; font-family: Arial, sans-serif;">
+            <div style="font-weight: bold; font-size: 12px; color: #1b4d3e;"><i class="fas fa-chart-line"></i> TIẾN ĐỘ NGÀY 17/07/2026</div>
+            <div class="stats-inline" style="margin: 0; display: flex; gap: 8px;">
+                <span class="stat-inline-badge stat-inline-total" id="listStatTotal">Tổng: 120</span>
+                <span class="stat-inline-badge stat-inline-done" id="listStatDone">Đạt: 85</span>
+                <span class="stat-inline-badge stat-inline-fail" id="listStatFail">Lỗi: 12</span>
+                <span class="stat-inline-badge stat-inline-remain" id="listStatRemain">Chưa chấm: 23</span>
+            </div>
+        </div>
+
+        <!-- THANH CÔNG CỤ -->
+        <div class="toolbar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                Hiển thị: 
+                <select style="padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit; font-size: 11px;">
+                    <option>10</option>
+                    <option>50</option>
+                </select>
+                
+                <!-- BỘ CHỌN HIỂN THỊ CỘT DẠNG DROPDOWN -->
+                <div style="position: relative; display: inline-block; margin-left: 5px;" id="colDropdownContainer">
+                    <button id="btnColDropdown" style="background: #fff; border: 1px solid #ccc; border-radius: 3px; padding: 4px 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 11px; height: 26px; box-sizing: border-box; font-family: Arial, sans-serif;">
+                        <span id="btnColDropdownBadge" style="background-color: #2980b9; color: white; padding: 1px 5px; border-radius: 3px; font-weight: bold; font-size: 9px; display: none;">0</span>
+                        <span>Cột báo cáo</span>
+                        <i class="fas fa-caret-down" style="color: #666;"></i>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="colDropdownMenu" style="display: none; position: absolute; top: 100%; left: 0; z-index: 1000; background: #fff; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 240px; padding: 10px; margin-top: 5px; box-sizing: border-box; font-family: Arial, sans-serif;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 6px; cursor: pointer; font-size: 11px; color: #333;">
+                            <input type="checkbox" id="selectAllCols" style="margin: 0;"> Chọn tất cả
+                        </label>
+                        <div style="border-bottom: 1px solid #eee; margin-bottom: 8px;"></div>
+                        <input type="text" id="searchCols" placeholder="Search" style="width: 100%; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; margin-bottom: 8px; box-sizing: border-box; outline: none;">
+                        <div id="colsList" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;">
+                            
+                            <!-- Nhóm 1: Nhân viên -->
+                            <div class="col-group-wrapper" style="display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: #f5f5f5; padding: 4px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; color: #1b4d3e;" onclick="toggleGroupCollapse('groupStaff')">
+                                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; font-size: 11px;" onclick="event.stopPropagation();">
+                                        <input type="checkbox" class="group-checkbox" data-group="groupStaff" checked style="margin: 0;"> Nhân viên
+                                    </label>
+                                    <i class="fas fa-chevron-down" id="arrow-groupStaff" style="font-size: 9px; transition: 0.2s;"></i>
+                                </div>
+                                <div id="groupStaff" style="display: flex; flex-direction: column; gap: 6px; padding-left: 15px; margin-top: 4px; margin-bottom: 4px;">
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-staff-code" checked style="margin: 0;"> Mã NV
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-staff-name" checked style="margin: 0;"> Tên NV
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-route" checked style="margin: 0;"> Mã tuyến
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-manager" checked style="margin: 0;"> QLTT
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Nhóm 2: Thông tin cửa hàng -->
+                            <div class="col-group-wrapper" style="display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: #f5f5f5; padding: 4px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; color: #1b4d3e;" onclick="toggleGroupCollapse('groupStore')">
+                                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; font-size: 11px;" onclick="event.stopPropagation();">
+                                        <input type="checkbox" class="group-checkbox" data-group="groupStore" checked style="margin: 0;"> Thông tin cửa hàng
+                                    </label>
+                                    <i class="fas fa-chevron-down" id="arrow-groupStore" style="font-size: 9px; transition: 0.2s;"></i>
+                                </div>
+                                <div id="groupStore" style="display: flex; flex-direction: column; gap: 6px; padding-left: 15px; margin-top: 4px; margin-bottom: 4px;">
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-cust-code" checked style="margin: 0;"> Mã KH
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-store-name" checked style="margin: 0;"> Tên cửa hàng
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-channel" style="margin: 0;"> Kênh KH
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-region" style="margin: 0;"> Khu vực
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-parent" style="margin: 0;"> Trực thuộc
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-address" style="margin: 0;"> Địa chỉ
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Nhóm 3: Các cột khác -->
+                            <div class="col-group-wrapper" style="display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: #f5f5f5; padding: 4px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; color: #1b4d3e;" onclick="toggleGroupCollapse('groupOthers')">
+                                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; font-size: 11px;" onclick="event.stopPropagation();">
+                                        <input type="checkbox" class="group-checkbox" data-group="groupOthers" checked style="margin: 0;"> Các cột khác
+                                    </label>
+                                    <i class="fas fa-chevron-down" id="arrow-groupOthers" style="font-size: 9px; transition: 0.2s;"></i>
+                                </div>
+                                <div id="groupOthers" style="display: flex; flex-direction: column; gap: 6px; padding-left: 15px; margin-top: 4px; margin-bottom: 4px;">
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-assets" checked style="margin: 0;"> Số tủ (Brand)
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-status" checked style="margin: 0;"> Trạng thái
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-reject" style="margin: 0;"> Lý do lỗi
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-time" checked style="margin: 0;"> Thời gian
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-auditor" checked style="margin: 0;"> Người chấm
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-img-in" style="margin: 0;"> Ảnh check-in
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-img-qr" style="margin: 0;"> Ảnh Barcode/QR
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-img-disp" style="margin: 0;"> Ảnh Trưng bày
+                                    </label>
+                                    <label class="col-item-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #333; font-weight: normal; margin: 0;">
+                                        <input type="checkbox" class="col-toggle" data-col="col-img-out" style="margin: 0;"> Ảnh check-out
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                | Tổng số ảnh: <strong>8180</strong>
+            </div>
+            <button class="btn-export" onclick="exportReportToCSV()"><i class="fas fa-file-excel"></i> Xuất File Báo Cáo</button>
+        </div>
+
+        <!-- BẢNG DỮ LIỆU ĐA DẠNG -->
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 30px;" class="text-center"><input type="checkbox"></th>
+                    <th style="width: 220px;">NHÂN VIÊN</th>
+                    <th>THÔNG TIN CỬA HÀNG</th>
+                    
+                    <!-- Các cột báo cáo bổ sung động -->
+                    <th class="col-route">MÃ TUYẾN</th>
+                    <th class="col-manager">QLTT</th>
+                    <th class="col-channel">KÊNH KH</th>
+                    <th class="col-region">KHU VỰC</th>
+                    <th class="col-parent">TRỰC THUỘC</th>
+                    <th class="col-address">ĐỊA CHỈ</th>
+                    
+                    <th style="width: 230px;">SỐ TỦ (BRAND)</th>
+                    <th style="width: 100px;">TRẠNG THÁI</th>
+                    
+                    <!-- Các cột báo cáo bổ sung động -->
+                    <th class="col-reject">LÝ DO LỖI</th>
+                    
+                    <th style="width: 130px;">THỜI GIAN</th>
+                    
+                    <!-- Các cột báo cáo bổ sung động -->
+                    <th class="col-auditor">NGƯỜI CHẤM</th>
+                    <th class="col-img-in">ẢNH CHECK-IN</th>
+                    <th class="col-img-qr">ẢNH BARCODE/QR</th>
+                    <th class="col-img-disp">ẢNH TRƯNG BÀY</th>
+                    <th class="col-img-out">ẢNH CHECK-OUT</th>
+
+                    <th class="text-center" style="width: 110px;">HÌNH ẢNH / THAO TÁC</th>
+                </tr>
+            </thead>
+            <tbody id="storeTableBody">
+                <!-- Dữ liệu được nạp động từ JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- MÀN HÌNH 2: CHI TIẾT CHẤM HÌNH ẢNH TOÀN MÀN HÌNH -->
+    <div id="detailView" class="view-panel">
+
+        <!-- HEADER VÀ TIẾN ĐỘ GỘP CHUNG 1 DÒNG COMPACT -->
+        <div class="detail-header-compact">
+            <div class="detail-header-left">
+                <button class="btn-back-compact" onclick="backToListView()"><i class="fas fa-arrow-left"></i> Quay
+                    lại</button>
+                <h2 class="detail-title-compact" id="detailStoreNameHeader">WINMART+ Yên Hòa</h2>
+            </div>
+
+            <div class="stats-inline">
+                <span class="stats-label"><i class="fas fa-chart-line"></i> TIẾN ĐỘ NGÀY 17/07/2026:</span>
+                <span class="stat-inline-badge stat-inline-total" id="statTotal">Tổng: 120</span>
+                <span class="stat-inline-badge stat-inline-done" id="statDone">Đạt: 85</span>
+                <span class="stat-inline-badge stat-inline-fail" id="statFail">Lỗi: 12</span>
+                <span class="stat-inline-badge stat-inline-remain" id="statRemain">Chưa chấm: 23</span>
+            </div>
+        </div>
+
+        <!-- BỐ CỤC CHI TIẾT -->
+        <div class="detail-layout">
+
+            <!-- CỘT BÊN TRÁI: HÌNH ẢNH THỰC TẾ & HÌNH MẪU ĐẠT GẦN NHẤT SONG SONG (THEO VỊ TRÍ ĐÁNH DẤU) -->
+            <div class="detail-main">
+
+                <!-- 1. ẢNH SELFIE CHECK-IN -->
+                <div class="img-group-container-layout">
+                    <div class="img-group-left-flow">
+                        <div class="img-block-header-row">
+                            <h4 class="img-block-title"><i class="fas fa-camera"></i> 1. ẢNH SELFIE CHECK-IN (1 ảnh)
+                            </h4>
+                        </div>
+                        <div class="real-img-single" onclick="viewFullscreenImage(this.querySelector('img').src)">
+                            <img src="https://placehold.co/400x300/eeeeee/333333?text=Selfie+Check-in"
+                                id="imgRealSelfie">
+                            <div class="real-img-label">Hình Thực Tế (Click zoom)</div>
+                        </div>
+                    </div>
+                    <div class="img-group-right-ref">
+                        <div class="img-block-header-row">
+                            <h4 class="img-block-title" style="color: #27ae60; border-left-color: #27ae60;"><i
+                                    class="fas fa-shield-alt"></i> Ảnh đạt gần nhất</h4>
+                        </div>
+                        <div class="ref-img-card-inline" id="refCheckinCardInline">
+                            <img src="https://placehold.co/400x300/eafaf1/27ae60?text=Selfie+Chuan" id="imgRefSelfie">
+                            <div class="ref-img-label-inline">Check-in mẫu chuẩn (Click zoom)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. ẢNH BARCODE / QR CODE TỦ ĐÔNG -->
+                <div class="img-group-container-layout">
+                    <div class="img-group-left-flow">
+                        <div class="img-block-header-row">
+                            <h4 class="img-block-title"><i class="fas fa-qrcode"></i> 2. ẢNH BARCODE / QR CODE TỦ ĐÔNG
+                                (Nhiều ảnh)</h4>
+                            <span id="qrImgCountBadge"
+                                style="background:#1b4d3e; color:white; padding:1px 5px; border-radius:10px; font-size:9px;">2
+                                ảnh</span>
+                        </div>
+                        <div class="images-grid-flow" id="qrImagesGrid">
+                            <!-- Nạp động ảnh QR thực tế -->
+                        </div>
+                    </div>
+                    <div class="img-group-right-ref">
+                        <div class="img-block-header-row">
+                            <h4 class="img-block-title" style="color: #27ae60; border-left-color: #27ae60;"><i
+                                    class="fas fa-shield-alt"></i> QR đạt gần nhất</h4>
+                        </div>
+                        <div id="refQrCardInlineContainer">
+                            <!-- Nạp động 1 ảnh QR mẫu đối chiếu -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ẢNH TRƯNG BÀY TỦ ĐÔNG -->
+                <div class="img-group-container-layout">
+                    <div class="img-group-left-flow">
+                        <div class="img-block-header-row">
+                            <h4 class="img-block-title"><i class="fas fa-ice-cream"></i> 3. ẢNH TRƯNG BÀY TỦ ĐÔNG (Nhiều
+                                ảnh)</h4>
+                            <span id="displayImgCountBadge"
+                                style="background:#1b4d3e; color:white; padding:1px 5px; border-radius:10px; font-size:9px;">3
+                                ảnh</span>
+                        </div>
+                        <div class="images-grid-flow" id="displayImagesGrid">
+                            <!-- Nạp động ảnh trưng bày thực tế -->
+                        </div>
+                    </div>
+                    <div class="img-group-right-ref">
+                        <div class="img-block-header-row">
+                            <h4 class="img-block-title" style="color: #27ae60; border-left-color: #27ae60;"><i
+                                    class="fas fa-shield-alt"></i> Trưng bày đạt gần nhất</h4>
+                        </div>
+                        <div id="refDisplayCardInlineContainer">
+                            <!-- Nạp động 1 ảnh Trưng bày mẫu đối chiếu -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CỘT BÊN PHẢI: KHU VỰC THÔNG TIN VÀ CHẤM DUYỆT -->
+            <div class="detail-sidebar">
+
+                <!-- THÔNG TIN CỬA HÀNG (ĐƯA LÊN TRÊN ĐẦU SIDEBAR) -->
+                <div class="info-card">
+                    <div class="info-card-title"><i class="fas fa-store"></i> THÔNG TIN KHÁCH HÀNG</div>
+                    <div class="info-row">
+                        <div class="info-lbl">Mã KH:</div>
+                        <div class="info-val" id="infoCustomerCode">2001100-00506</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-lbl">Cửa hàng:</div>
+                        <div class="info-val" id="infoStoreName" style="font-weight:bold;">WINMART+ Số 152 Yên Hòa</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-lbl">Kênh KH:</div>
+                        <div class="info-val" id="infoChannel">GT</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-lbl">Khu vực:</div>
+                        <div class="info-val" id="infoRegion">Miền Bắc</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-lbl">Trực thuộc:</div>
+                        <div class="info-val text-blue" id="infoParent">Đại Thuận</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-lbl">Địa chỉ:</div>
+                        <div class="info-val" id="infoAddress">152 Yên Hòa, Cầu Giấy, HN</div>
+                    </div>
+                    <div class="info-row" id="infoAdminCheckoutRow" style="display: none;">
+                        <div class="info-lbl" style="color: #d35400; font-weight: bold;">Check-out hộ:</div>
+                        <div class="info-val" style="color: #d35400; font-weight: bold;"><i class="fas fa-user-shield"></i> Admin Check-out hộ</div>
+                    </div>
+                    <div class="info-row" id="infoStoreStatusRow">
+                        <div class="info-lbl">Trạng thái CH:</div>
+                        <div class="info-val" id="infoStoreStatus" style="font-weight: bold;">Đang hoạt động</div>
+                    </div>
+                </div>
+
+                <!-- THÔNG TIN NHÂN VIÊN -->
+                <div class="info-card">
+                    <div class="info-card-title"><i class="fas fa-user-tie"></i> THÔNG TIN NHÂN VIÊN</div>
+                    <div class="info-row">
+                        <div class="info-lbl">Mã NV:</div>
+                        <div class="info-val" id="infoStaffCode">3000764</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-lbl">Họ & Tên:</div>
+                        <div class="info-val" id="infoStaffName">Nguyễn Thị Khánh Vân</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-lbl">Tuyến bán:</div>
+                        <div class="info-val" id="infoRoute">T-HN-001</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-lbl">QLTT:</div>
+                        <div class="info-val text-highlight" id="infoManager">Trần Văn A</div>
+                    </div>
+                </div>
+
+                <!-- TÀI SẢN KIỂM KÊ -->
+                <div class="info-card">
+                    <div class="info-card-title"><i class="fas fa-box"></i> TÀI SẢN KIỂM KÊ (BRAND)</div>
+                    <div id="infoAssetsList">
+                        <!-- Nạp động -->
+                    </div>
+                </div>
+
+                <!-- TIÊU CHÍ CHẤM ẢNH (CHỈ ĐỂ THÔNG TIN) -->
+                <div class="info-card" style="background-color: #fff9e6; border: 1px solid #ffe8a1;">
+                    <div class="info-card-title" style="color: #b7791f;"><i class="fas fa-list-check"></i> TIÊU CHÍ CHẤM ẢNH</div>
+                    <div style="line-height: 1.5; font-size: 10px; color: #744210; display: flex; flex-direction: column; gap: 4px;">
+                        <div><strong>1. Selfie Check-in:</strong> Đúng người, rõ mặt & điểm bán.</div>
+                        <div><strong>2. Barcode/QR:</strong> Rõ nét, không bị khuất & khớp tủ.</div>
+                        <div><strong>3. Trưng bày:</strong> Đúng quy chuẩn trưng bày sản phẩm.</div>
+                    </div>
+                </div>
+
+                <!-- CARD HÀNH ĐỘNG DUYỆT VÀ CHẤM LẠI (NẰM DƯỚI CÙNG SIDEBAR - DƯỚI TÀI SẢN KIỂM KÊ) -->
+                <div class="action-card" id="evaluationActionCard">
+                    <div class="info-card-title"><i class="fas fa-gavel"></i> ĐÁNH GIÁ PHÊ DUYỆT</div>
+
+                    <!-- Khung thao tác chấm điểm chính (chỉ hiện khi chưa chấm) -->
+                    <div id="evaluationActionBox">
+                        <div class="action-buttons">
+                            <button class="btn-action-ok" onclick="triggerApproveConfirm()"><i
+                                    class="fas fa-check-circle"></i> ĐẠT (Enter)</button>
+                            <button class="btn-action-fail" onclick="toggleRejectPanel()"><i
+                                    class="fas fa-times-circle"></i> KHÔNG ĐẠT</button>
+                        </div>
+
+                        <!-- Panel nhập lý do Không Đạt -->
+                        <div class="reject-input-panel" id="detailRejectPanel">
+                            <div class="reject-input-title"><i class="fas fa-exclamation-triangle"></i> Chọn lý do lỗi:
+                            </div>
+                            <select id="detailRejectSelect" class="reject-select" style="font-size:11px; padding:4px;"
+                                onchange="handleRejectSelectChange()">
+                                <option value="">-- Chọn lý do mẫu --</option>
+                                <option value="Ảnh mờ, không nhận diện được điểm bán">Ảnh mờ, không nhận diện được điểm
+                                    bán</option>
+                                <option value="Mã Barcode / QR Code bị mờ hoặc bị khuất">Mã Barcode / QR Code bị mờ hoặc
+                                    bị khuất</option>
+                                <option value="Trưng bày sai quy định (Thiếu hàng, sai vị trí)">Trưng bày sai quy định
+                                    (Thiếu hàng, sai vị trí)</option>
+                                <option value="Khác">Lý do khác (Nhập thủ công)...</option>
+                            </select>
+                            <textarea id="detailTxtReason" class="txt-reason-detail"
+                                placeholder="Vui lòng nhập lý do cụ thể..."
+                                onkeyup="validateRejectSaveBtn()"></textarea>
+                            <button class="btn-save-reject" id="btnSaveRejectConfirm" disabled
+                                onclick="submitEvaluation(false)">Xác nhận Không Đạt</button>
+                        </div>
+                    </div>
+
+                    <!-- KHU VỰC HIỂN THỊ NÚT CHẤM LẠI KHI XEM BẢN GHI ĐÃ CÓ TRẠNG THÁI -->
+                    <div class="re-evaluate-panel" id="reEvaluatePanel">
+                        <div class="re-evaluate-status" id="reEvaluateStatusLabel">
+                            Trạng thái: <span class="badge-rejected">Không đạt</span>
+                        </div>
+                        <button class="btn-re-evaluate" onclick="enableReEvaluation()"><i class="fas fa-redo"></i> Chấm
+                            Lại</button>
+                    </div>
+
+                    <div class="shortcut-tip" id="shortcutTip">
+                        Nhấn <span class="kbd-key">Enter</span> để duyệt nhanh Đạt (Xác nhận 2 lần).
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- POPUP XEM ẢNH FULL MÀN HÌNH -->
+    <div class="fullscreen-overlay" id="fullscreenOverlay" onclick="closeFullscreenImage()">
+        <span class="fullscreen-close" onclick="closeFullscreenImage()">&times;</span>
+        <img id="fullscreenImg" src="">
+    </div>
+
+    <!-- POPUP XÁC NHẬN ENTER LẦN 2 -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+            <h3><i class="fas fa-question-circle" style="color:#27ae60;"></i> Xác nhận Duyệt Đạt?</h3>
+            <p>Nhấn phím <span class="kbd-key" style="font-size:12px;">Enter</span> lần nữa để Xác nhận Đạt<br>hoặc nhấn
+                phím <span class="kbd-key" style="font-size:12px;">Esc</span> / nút Hủy để đóng.</p>
+            <div class="confirm-actions-row">
+                <button class="btn-confirm-yes" onclick="confirmApprove()">Đồng ý (Enter)</button>
+                <button class="btn-confirm-no" onclick="closeConfirmOverlay()">Hủy (Esc)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST THÔNG BÁO NHANH 1 GIÂY -->
+    <div class="quick-toast" id="quickToast">
+        <i class="fas fa-check-circle" style="font-size: 20px; vertical-align: middle; margin-right: 8px;"></i>
+        <span>ĐÃ DUYỆT ĐẠT! ĐANG CHUYỂN TIẾP...</span>
+    </div>
+
+    <!-- JAVASCRIPT & LOGIC XỬ LÝ -->
+    <script>
+        // Mẫu dữ liệu
+        let storesData = [
+            {
+                id: 0,
+                staffCode: "3000764",
+                staffName: "Nguyễn Thị Khánh Vân",
+                route: "T-HN-001",
+                manager: "Trần Văn A",
+                customerCode: "2001100-00506",
+                storeName: "WINMART+ Số 152 Yên Hòa",
+                channel: "GT",
+                region: "Miền Bắc",
+                parent: "Đại Thuận",
+                address: "152 Yên Hòa, Cầu Giấy, HN",
+                assets: [
+                    { name: "Đại Thuận (5 tủ)", stat: "Đã kiểm kê: 2 | Chưa: 3", type: "partial" },
+                    { name: "Wall's (1 tủ)", stat: "Đã kiểm kê: 0 | Chưa: 1", type: "missing" }
+                ],
+                status: "Chưa chấm",
+                rejectReason: "",
+                auditor: "",
+                adminCheckout: false,
+                isClosed: false,
+                time: "01-07-2026 04:07:41",
+                qrImages: [
+                    { url: "https://placehold.co/400x300/eeeeee/333333?text=QR+Code+Tu+Dong+1", serial: "DT-00192A", scanned: true, cantScanReason: "" },
+                    { url: "https://placehold.co/400x300/eeeeee/333333?text=QR+Tu+2+-+Khong+Quet+Duoc", serial: "DT-00192B", scanned: false, cantScanReason: "Mã QR bị mờ xước nặng" }
+                ],
+                displayImages: [
+                    "https://placehold.co/400x300/eeeeee/333333?text=Trung+Bay+Tu+1",
+                    "https://placehold.co/400x300/eeeeee/333333?text=Trung+Bay+Tu+2",
+                    "https://placehold.co/400x300/eeeeee/333333?text=Trung+Bay+Tu+3"
+                ],
+                viewOnly: false
+            },
+            {
+                id: 1,
+                staffCode: "3000521",
+                staffName: "Phùng Thị Hồng Vân",
+                route: "T-HN-005",
+                manager: "Lê Thị B",
+                customerCode: "2001100-00255",
+                storeName: "WINMART+ 4B Tràng Thi",
+                channel: "MT",
+                region: "Miền Bắc",
+                parent: "Đại Thuận",
+                address: "4B Tràng Thi, Hoàn Kiếm, HN",
+                assets: [
+                    { name: "Đại Thuận (2 tủ)", stat: "Đã kiểm kê: 2 | Chưa: 0", type: "ok" }
+                ],
+                status: "Chưa chấm",
+                rejectReason: "",
+                auditor: "",
+                adminCheckout: false,
+                isClosed: false,
+                time: "01-07-2026 03:07:04",
+                qrImages: [
+                    { url: "https://placehold.co/400x300/eeeeee/333333?text=QR+Code+Tu+Dong+1", serial: "DT-00511C", scanned: true, cantScanReason: "" }
+                ],
+                displayImages: [
+                    "https://placehold.co/400x300/eeeeee/333333?text=Trung+Bay+Tu+1",
+                    "https://placehold.co/400x300/eeeeee/333333?text=Trung+Bay+Tu+2"
+                ],
+                viewOnly: false
+            },
+            {
+                id: 2,
+                staffCode: "3000112",
+                staffName: "Trần Minh Tuấn",
+                route: "T-HCM-002",
+                manager: "Phạm Văn C",
+                customerCode: "MT-0122",
+                storeName: "Coop Smile Q1",
+                channel: "MT",
+                region: "Hồ Chí Minh",
+                parent: "NPP Miền Nam",
+                address: "12 Nguyễn Huệ, Quận 1, HCM",
+                assets: [
+                    { name: "Wall's (1 tủ)", stat: "Đã kiểm kê: 1 | Chưa: 0", type: "ok" }
+                ],
+                status: "Đạt",
+                rejectReason: "",
+                auditor: "Trần Thế Anh",
+                adminCheckout: false,
+                isClosed: false,
+                time: "01-07-2026 02:15:00",
+                qrImages: [
+                    { url: "https://placehold.co/400x300/eeeeee/333333?text=QR+Code+Tu+Dong+1", serial: "WL-02293K", scanned: true, cantScanReason: "" }
+                ],
+                displayImages: [
+                    "https://placehold.co/400x300/eeeeee/333333?text=Trung+Bay+Tu+1"
+                ],
+                viewOnly: true
+            },
+            {
+                id: 3,
+                staffCode: "3000999",
+                staffName: "Hoàng Văn Dũng",
+                route: "T-DN-001",
+                manager: "Ngô Thị D",
+                customerCode: "HRC-5512",
+                storeName: "K-Mart Đà Nẵng",
+                channel: "HRC",
+                region: "Nam Miền Trung",
+                parent: "NPP Miền Trung",
+                address: "45 Lê Duẩn, Đà Nẵng",
+                assets: [
+                    { name: "Đại Thuận (1 tủ)", stat: "Đã kiểm kê: 1 | Chưa: 0", type: "ok" }
+                ],
+                status: "Không đạt",
+                rejectReason: "Mã Barcode/QR Code bị mờ hoặc bị khuất.",
+                auditor: "Lê Văn Bình",
+                adminCheckout: false,
+                isClosed: true,
+                time: "01-07-2026 01:10:22",
+                qrImages: [
+                    { url: "https://placehold.co/400x300/eeeeee/333333?text=QR+Tu+Dong+1+-+Loi+Quet", serial: "WL-03112P", scanned: false, cantScanReason: "Mã Barcode/QR Code bị mờ hoặc bị khuất." }
+                ],
+                displayImages: [
+                    "https://placehold.co/400x300/eeeeee/333333?text=Trung+Bay+Tu+1"
+                ],
+                viewOnly: true
+            },
+            {
+                id: 4,
+                staffCode: "3001222",
+                staffName: "Lê Hoàng Giang",
+                route: "T-MD-009",
+                manager: "Phạm Văn C",
+                customerCode: "DL-998",
+                storeName: "Đại Lý Xuân Thủy",
+                channel: "ĐẠI LÝ",
+                region: "Miền Đông",
+                parent: "Đại Thuận",
+                address: "150 Biên Hòa, Đồng Nai",
+                assets: [
+                    { name: "Đại Thuận (2 tủ)", stat: "Đã kiểm kê: 0 | Chưa: 2", type: "missing" },
+                    { name: "Wall's (1 tủ)", stat: "Đã kiểm kê: 0 | Chưa: 1", type: "missing" }
+                ],
+                status: "Chưa chấm",
+                rejectReason: "",
+                auditor: "",
+                adminCheckout: true,
+                isClosed: false,
+                time: "01-07-2026 00:45:11",
+                qrImages: [],
+                displayImages: [
+                    "https://placehold.co/400x300/eeeeee/333333?text=Trung+Bay+Tu+1"
+                ],
+                viewOnly: false
+            }
+        ];
+
+        let currentStoreIndex = 0;
+        let isDetailMode = false;
+        let isConfirmOpen = false;
+
+        let progressStats = {
+            total: 120,
+            done: 85,
+            fail: 12,
+            remain: 23
+        };
+
+        function clearFilters() {
+            document.getElementById("filterStartDate").value = "2026-07-01";
+            document.getElementById("filterEndDate").value = "2026-07-16";
+            const textInputs = document.querySelectorAll(".filter-group input[type='text']");
+            textInputs.forEach(i => i.value = "");
+            const selects = document.querySelectorAll(".filter-group select");
+            selects.forEach(s => s.selectedIndex = 0);
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById("storeTableBody");
+            tbody.innerHTML = "";
+
+            const staffCode = document.getElementById("filterStaffCode").value.trim().toLowerCase();
+            const staffName = document.getElementById("filterStaffName").value.trim().toLowerCase();
+            const customerCode = document.getElementById("filterCustomerCode").value.trim().toLowerCase();
+            const channel = document.getElementById("filterChannel").value;
+            const region = document.getElementById("filterRegion").value;
+            const parent = document.getElementById("filterParent").value;
+            const status = document.getElementById("filterStatus").value;
+            const startDate = document.getElementById("filterStartDate").value;
+            const endDate = document.getElementById("filterEndDate").value;
+
+            const filteredData = storesData.filter(store => {
+                if (staffCode && !store.staffCode.toLowerCase().includes(staffCode)) return false;
+                if (staffName && !store.staffName.toLowerCase().includes(staffName)) return false;
+                if (customerCode && !store.customerCode.toLowerCase().includes(customerCode)) return false;
+                if (channel !== "Tất cả" && store.channel !== channel) return false;
+                if (region !== "Tất cả" && store.region !== region) return false;
+                if (parent !== "Tất cả" && store.parent !== parent) return false;
+                if (status !== "Tất cả" && store.status !== status) return false;
+
+                if (store.time) {
+                    const storeDateStr = store.time.split(" ")[0]; // "01-07-2026"
+                    const parts = storeDateStr.split("-"); // ["01", "07", "2026"]
+                    const storeISODate = `${parts[2]}-${parts[1]}-${parts[0]}`; // "2026-07-01"
+                    
+                    if (startDate && storeISODate < startDate) return false;
+                    if (endDate && storeISODate > endDate) return false;
+                }
+                return true;
+            });
+
+            filteredData.forEach((store) => {
+                const index = storesData.findIndex(s => s.id === store.id);
+                let statusBadge = "";
+                if (store.status === "Chưa chấm") {
+                    statusBadge = `<span class="badge-pending">Chưa chấm</span>`;
+                } else if (store.status === "Đạt") {
+                    statusBadge = `<span class="badge-approved">Đạt</span>`;
+                } else {
+                    statusBadge = `<span class="badge-rejected">Không đạt</span>`;
+                }
+
+                let assetHTML = "";
+                store.assets.forEach(asset => {
+                    let statClass = "";
+                    if (asset.type === "missing") statClass = "missing";
+                    else if (asset.type === "partial") statClass = "partial";
+                    assetHTML += `
+                        <div class="cabinet-item" style="margin-bottom: 2px;">
+                            <div class="cab-name" style="font-size: 10px;">${asset.name}</div>
+                            <div class="cab-stat ${statClass}" style="font-size: 9px; padding: 1px 4px;">${asset.stat}</div>
+                        </div>
+                    `;
+                });
+
+                let totalImages = 1 + store.qrImages.length + store.displayImages.length;
+                let imageBtn = "";
+                if (store.status === "Chưa chấm") {
+                    if (index === 4) {
+                        imageBtn = `<div class="img-block bg-gray" onclick="goToDetail(${index})" style="border: 2px solid #c0392b;">+${totalImages} Ảnh (Thiếu)</div>`;
+                    } else {
+                        imageBtn = `<div class="img-block bg-green" onclick="goToDetail(${index})">+${totalImages} Ảnh</div>`;
+                    }
+                } else if (store.status === "Đạt") {
+                    imageBtn = `<div class="img-block bg-blue" onclick="goToDetail(${index})">Xem lại</div>`;
+                } else {
+                    imageBtn = `<div class="img-block bg-orange" onclick="goToDetail(${index})">Xem lại</div>`;
+                }
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="text-center"><input type="checkbox" ${store.viewOnly ? 'disabled' : ''}></td>
+                    <td>
+                        <div class="info-group col-staff-code"><span class="lbl">Mã:</span> ${store.staffCode}</div>
+                        <div class="info-group col-staff-name"><span class="lbl">Tên:</span> ${store.staffName}</div>
+                        <div class="info-group col-route"><span class="lbl">Mã tuyến:</span> ${store.route}</div>
+                        <div class="info-group col-manager"><span class="lbl text-highlight">QLTT:</span> <span class="text-highlight">${store.manager}</span></div>
+                    </td>
+                    <td>
+                        <div class="info-group col-cust-code"><span class="lbl">Mã KH:</span> ${store.customerCode}</div>
+                        <div class="info-group col-store-name"><span class="lbl">Cửa hàng:</span> <strong>${store.storeName}</strong></div>
+                        <div class="info-group col-channel"><span class="lbl">Kênh KH:</span> ${store.channel}</div>
+                        <div class="info-group col-region"><span class="lbl">Khu vực:</span> ${store.region}</div>
+                        <div class="info-group col-parent"><span class="lbl">Trực thuộc:</span> <span class="text-blue">${store.parent}</span></div>
+                        <div class="info-group col-address"><span class="lbl">Địa chỉ:</span> ${store.address}</div>
+                    </td>
+                    
+                    <!-- Các cột báo cáo bổ sung động -->
+                    <td class="col-route">${store.route}</td>
+                    <td class="col-manager text-highlight">${store.manager}</td>
+                    <td class="col-channel">${store.channel}</td>
+                    <td class="col-region">${store.region}</td>
+                    <td class="col-parent text-blue">${store.parent}</td>
+                    <td class="col-address">${store.address}</td>
+                    
+                    <td>${assetHTML}</td>
+                    <td>${statusBadge}</td>
+                    
+                    <!-- Các cột báo cáo bổ sung động -->
+                    <td class="col-reject text-highlight" style="font-style: italic;">${store.rejectReason || "-"}</td>
+                    
+                    <td>${store.time.split(" ")[0]}<br>${store.time.split(" ")[1]}</td>
+                    
+                    <!-- Các cột báo cáo bổ sung động -->
+                    <td class="col-auditor" style="font-weight: bold; color: #27ae60;">${store.auditor || "-"}</td>
+                    <td class="col-img-in text-center">
+                        <a href="#" onclick="viewFullscreenImage('https://placehold.co/400x300/eeeeee/333333?text=Selfie+In+-+${store.customerCode}'); return false;" style="color:#2980b9; text-decoration:underline;">Link</a>
+                    </td>
+                    <td class="col-img-qr text-center">
+                        ${store.qrImages && store.qrImages.length > 0 ? `<a href="#" onclick="viewFullscreenImage('${store.qrImages[0]}'); return false;" style="color:#2980b9; text-decoration:underline;">Link (${store.qrImages.length})</a>` : '-'}
+                    </td>
+                    <td class="col-img-disp text-center">
+                        ${store.displayImages && store.displayImages.length > 0 ? `<a href="#" onclick="viewFullscreenImage('${store.displayImages[0]}'); return false;" style="color:#2980b9; text-decoration:underline;">Link (${store.displayImages.length})</a>` : '-'}
+                    </td>
+                    <td class="col-img-out text-center">
+                        <a href="#" onclick="viewFullscreenImage('https://placehold.co/400x300/eeeeee/333333?text=Selfie+Out'); return false;" style="color:#2980b9; text-decoration:underline;">Link</a>
+                    </td>
+                    
+                    <td class="image-col">${imageBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            updateStatsBar();
+            updateColumnVisibility();
+        }
+
+        // Dropdown toggle logic
+        document.getElementById("btnColDropdown").addEventListener("click", function(e) {
+            e.stopPropagation();
+            const menu = document.getElementById("colDropdownMenu");
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        });
+
+        document.getElementById("colDropdownMenu").addEventListener("click", function(e) {
+            e.stopPropagation();
+        });
+
+        document.addEventListener("click", function() {
+            document.getElementById("colDropdownMenu").style.display = "none";
+        });
+
+        // Search columns inside dropdown
+        document.getElementById("searchCols").addEventListener("input", function(e) {
+            const query = e.target.value.toLowerCase();
+            const labels = document.querySelectorAll("#colsList .col-item-label");
+            labels.forEach(lbl => {
+                const text = lbl.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    lbl.style.display = "flex";
+                } else {
+                    lbl.style.display = "none";
+                }
+            });
+        });
+
+        // Toggle collapsible nhóm cột trong dropdown
+        function toggleGroupCollapse(groupId) {
+            const groupEl = document.getElementById(groupId);
+            const arrow = document.getElementById("arrow-" + groupId);
+            if (groupEl.style.display === "none") {
+                groupEl.style.display = "flex";
+                arrow.style.transform = "rotate(0deg)";
+            } else {
+                groupEl.style.display = "none";
+                arrow.style.transform = "rotate(-90deg)";
+            }
+        }
+
+        // Chọn tất cả cột
+        document.getElementById("selectAllCols").addEventListener("change", function(e) {
+            const checked = e.target.checked;
+            const toggles = document.querySelectorAll(".col-toggle");
+            toggles.forEach(t => {
+                t.checked = checked;
+            });
+            const groupCBs = document.querySelectorAll(".group-checkbox");
+            groupCBs.forEach(g => {
+                g.checked = checked;
+                g.indeterminate = false;
+            });
+            updateColumnVisibility();
+        });
+
+        // Click checkbox cha (Group) -> Đổi trạng thái tất cả con của nhóm đó
+        document.querySelectorAll(".group-checkbox").forEach(groupCB => {
+            groupCB.addEventListener("change", function(e) {
+                const groupId = this.getAttribute("data-group");
+                const checked = this.checked;
+                const childCBs = document.querySelectorAll("#" + groupId + " .col-toggle");
+                childCBs.forEach(cb => {
+                    cb.checked = checked;
+                });
+                updateColumnVisibility();
+            });
+        });
+
+        function updateColumnVisibility() {
+            const toggles = document.querySelectorAll(".col-toggle");
+            let checkedCount = 0;
+            
+            // Ẩn/Hiện cột
+            toggles.forEach(toggle => {
+                const colClass = toggle.getAttribute("data-col");
+                const visible = toggle.checked;
+                if (visible) checkedCount++;
+                const cells = document.querySelectorAll(`.${colClass}`);
+                cells.forEach(cell => {
+                    cell.style.display = visible ? "" : "none";
+                });
+            });
+
+            // Update badge hiển thị số cột bổ sung đang chọn
+            const badge = document.getElementById("btnColDropdownBadge");
+            if (checkedCount > 0) {
+                badge.innerText = "+" + checkedCount;
+                badge.style.display = "inline-block";
+            } else {
+                badge.style.display = "none";
+            }
+
+            // Đồng bộ trạng thái checkbox cha (Group) dựa theo các con
+            const groups = ["groupStaff", "groupStore", "groupOthers"];
+            groups.forEach(groupId => {
+                const groupCB = document.querySelector(`.group-checkbox[data-group="${groupId}"]`);
+                if (groupCB) {
+                    const childCBs = document.querySelectorAll("#" + groupId + " .col-toggle");
+                    const allChecked = Array.from(childCBs).every(cb => cb.checked);
+                    const noneChecked = Array.from(childCBs).every(cb => !cb.checked);
+                    
+                    if (allChecked) {
+                        groupCB.checked = true;
+                        groupCB.indeterminate = false;
+                    } else if (noneChecked) {
+                        groupCB.checked = false;
+                        groupCB.indeterminate = false;
+                    } else {
+                        groupCB.checked = false;
+                        groupCB.indeterminate = true;
+                    }
+                }
+            });
+
+            // Đồng bộ checkbox "Chọn tất cả"
+            const allChecked = Array.from(toggles).every(t => t.checked);
+            document.getElementById("selectAllCols").checked = allChecked;
+        }
+
+        document.addEventListener("change", function(event) {
+            if (event.target.classList.contains("col-toggle")) {
+                updateColumnVisibility();
+            }
+        });
+
+        function updateStatsBar() {
+            // Cập nhật trên màn hình chi tiết
+            document.getElementById("statTotal").innerText = `Tổng: ${progressStats.total}`;
+            document.getElementById("statDone").innerText = `Đạt: ${progressStats.done}`;
+            document.getElementById("statFail").innerText = `Lỗi: ${progressStats.fail}`;
+            document.getElementById("statRemain").innerText = `Chưa chấm: ${progressStats.remain}`;
+
+            // Cập nhật trên màn hình danh sách
+            if (document.getElementById("listStatTotal")) {
+                document.getElementById("listStatTotal").innerText = `Tổng: ${progressStats.total}`;
+                document.getElementById("listStatDone").innerText = `Đạt: ${progressStats.done}`;
+                document.getElementById("listStatFail").innerText = `Lỗi: ${progressStats.fail}`;
+                document.getElementById("listStatRemain").innerText = `Chưa chấm: ${progressStats.remain}`;
+            }
+        }
+
+        // Vào màn hình chi tiết
+        function goToDetail(index) {
+            currentStoreIndex = index;
+            isDetailMode = true;
+            const store = storesData[index];
+
+            // Header chi tiết
+            document.getElementById("detailStoreNameHeader").innerText = store.storeName + " (" + store.parent + ")";
+
+            // Nạp thông tin khách hàng
+            document.getElementById("infoCustomerCode").innerText = store.customerCode;
+            document.getElementById("infoStoreName").innerText = store.storeName;
+            document.getElementById("infoChannel").innerText = store.channel;
+            document.getElementById("infoRegion").innerText = store.region;
+            document.getElementById("infoParent").innerText = store.parent;
+            document.getElementById("infoAddress").innerText = store.address;
+
+            // Nạp thông tin nhân viên
+            document.getElementById("infoStaffCode").innerText = store.staffCode;
+            document.getElementById("infoStaffName").innerText = store.staffName;
+            document.getElementById("infoRoute").innerText = store.route;
+            document.getElementById("infoManager").innerText = store.manager;
+
+            // Nạp danh sách tài sản
+            const assetsList = document.getElementById("infoAssetsList");
+            assetsList.innerHTML = "";
+            store.assets.forEach(asset => {
+                let statClass = "";
+                if (asset.type === "missing") statClass = "missing";
+                else if (asset.type === "partial") statClass = "partial";
+                assetsList.innerHTML += `
+                    <div class="cabinet-item" style="margin-bottom: 4px; padding-bottom: 4px;">
+                        <div class="cab-name" style="font-size:10px;">${asset.name}</div>
+                        <div class="cab-stat ${statClass}" style="font-size:9px; padding: 1px 4px;">${asset.stat}</div>
+                    </div>
+                `;
+            });
+
+            // 1. Nạp ảnh Selfie Checkin thực tế & đối chiếu
+            document.getElementById("imgRealSelfie").src = `https://placehold.co/400x300/eeeeee/333333?text=Selfie+In+-+${store.customerCode}`;
+            document.getElementById("imgRefSelfie").src = `https://placehold.co/400x300/eafaf1/27ae60?text=Selfie+Chuan+-+${store.parent}`;
+            document.getElementById("refCheckinCardInline").setAttribute("onclick", `viewFullscreenImage('https://placehold.co/400x300/eafaf1/27ae60?text=Selfie+Chuan+-+${store.parent}')`);
+
+            // 2. Nạp QR code tủ đông thực tế & đối chiếu (chỉ hiện 1 ảnh chuẩn tương ứng)
+            const qrGrid = document.getElementById("qrImagesGrid");
+            qrGrid.innerHTML = "";
+            document.getElementById("qrImgCountBadge").innerText = `${store.qrImages.length} ảnh`;
+            if (store.qrImages.length === 0) {
+                qrGrid.innerHTML = `<div style="color:#aaa; font-style:italic;">Không có ảnh QR Code</div>`;
+            } else {
+                store.qrImages.forEach((qrObj, i) => {
+                    let labelHTML = `<div class="real-img-label">Seri: ${qrObj.serial}</div>`;
+                    if (!qrObj.scanned) {
+                        labelHTML = `
+                            <div class="real-img-label" style="background: #c0392b;">Seri: ${qrObj.serial} (Lỗi Quét)</div>
+                            <div style="background: #fdeaea; color: #c0392b; font-size: 10px; padding: 4px; font-weight: bold; border-top: 1px solid #fbc4c4; text-align: center; line-height: 1.3;">
+                                Lỗi: ${qrObj.cantScanReason}
+                            </div>
+                        `;
+                    }
+                    qrGrid.innerHTML += `
+                        <div class="real-img-single" onclick="viewFullscreenImage('${qrObj.url}')" style="display: flex; flex-direction: column; min-height: 200px; justify-content: space-between;">
+                            <img src="${qrObj.url}">
+                            ${labelHTML}
+                        </div>
+                    `;
+                });
+            }
+
+            const refQrContainer = document.getElementById("refQrCardInlineContainer");
+            refQrContainer.innerHTML = "";
+            if (store.qrImages.length > 0) {
+                refQrContainer.innerHTML = `
+                    <div class="ref-img-card-inline" onclick="viewFullscreenImage('https://placehold.co/400x300/eafaf1/27ae60?text=Mau+QR+Tu+Chuan+Ok')">
+                        <img src="https://placehold.co/400x300/eafaf1/27ae60?text=Mau+QR+Tu+Chuan+Ok">
+                        <div class="ref-img-label-inline">QR Mẫu Chuẩn (Click zoom)</div>
+                    </div>
+                `;
+            } else {
+                refQrContainer.innerHTML = `<div style="color:#aaa; font-style:italic; font-size:10px;">Không yêu cầu</div>`;
+            }
+
+            // 3. Nạp ảnh Trưng bày thực tế & đối chiếu (chỉ hiện 1 ảnh chuẩn tương ứng)
+            const displayGrid = document.getElementById("displayImagesGrid");
+            displayGrid.innerHTML = "";
+            document.getElementById("displayImgCountBadge").innerText = `${store.displayImages.length} ảnh`;
+            if (store.displayImages.length === 0) {
+                displayGrid.innerHTML = `<div style="color:#aaa; font-style:italic;">Không có ảnh Trưng bày</div>`;
+            } else {
+                store.displayImages.forEach((imgUrl, i) => {
+                    displayGrid.innerHTML += `
+                        <div class="real-img-single" onclick="viewFullscreenImage('${imgUrl}')">
+                            <img src="${imgUrl}">
+                            <div class="real-img-label">Trưng Bày Thực Tế #${i + 1}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            const refDisplayContainer = document.getElementById("refDisplayCardInlineContainer");
+            refDisplayContainer.innerHTML = "";
+            if (store.displayImages.length > 0) {
+                refDisplayContainer.innerHTML = `
+                    <div class="ref-img-card-inline" onclick="viewFullscreenImage('https://placehold.co/400x300/eafaf1/27ae60?text=Mau+Trung+Bay+Chuan+Ok')">
+                        <img src="https://placehold.co/400x300/eafaf1/27ae60?text=Mau+Trung+Bay+Chuan+Ok">
+                        <div class="ref-img-label-inline">Trưng Bày Chuẩn (Click zoom)</div>
+                    </div>
+                `;
+            } else {
+                refDisplayContainer.innerHTML = `<div style="color:#aaa; font-style:italic; font-size:10px;">Không yêu cầu</div>`;
+            }
+
+            // Hiển thị thông tin Admin checkout hộ
+            const checkoutRow = document.getElementById("infoAdminCheckoutRow");
+            if (checkoutRow) {
+                checkoutRow.style.display = store.adminCheckout ? "flex" : "none";
+            }
+
+            // Hiển thị thông tin cửa hàng đóng cửa
+            const statusLabel = document.getElementById("infoStoreStatus");
+            if (statusLabel) {
+                if (store.isClosed) {
+                    statusLabel.innerHTML = `<span style="color: #c0392b;"><i class="fas fa-door-closed"></i> Đóng cửa</span>`;
+                } else {
+                    statusLabel.innerHTML = `<span style="color: #27ae60;"><i class="fas fa-door-open"></i> Đang hoạt động</span>`;
+                }
+            }
+
+            // Đồng bộ trạng thái chấm và hiển thị giao diện phù hợp
+            syncEvaluationPanelState();
+
+            // Chuyển panel hiển thị
+            document.getElementById("listView").style.display = "none";
+            document.getElementById("detailView").style.display = "block";
+            window.scrollTo(0, 0);
+        }
+
+        // ĐỒNG BỘ TRẠNG THÁI PANEL CHẤM ĐIỂM (CŨ VS CHẤM LẠI)
+        function syncEvaluationPanelState() {
+            const store = storesData[currentStoreIndex];
+            const actionBox = document.getElementById("evaluationActionBox");
+            const reEvalPanel = document.getElementById("reEvaluatePanel");
+            const reEvalLabel = document.getElementById("reEvaluateStatusLabel");
+            const shortcutTip = document.getElementById("shortcutTip");
+
+            // Reset Panel Không Đạt
+            const rejectPanel = document.getElementById("detailRejectPanel");
+            rejectPanel.classList.remove("active");
+            document.getElementById("detailRejectSelect").value = "";
+            document.getElementById("detailTxtReason").value = "";
+            document.getElementById("detailTxtReason").style.display = "none";
+            document.getElementById("btnSaveRejectConfirm").disabled = true;
+
+            if (store.status === "Chưa chấm") {
+                // Hiển thị cụm chấm điểm, ẩn nút Chấm lại
+                actionBox.style.display = "block";
+                reEvalPanel.style.display = "none";
+                shortcutTip.style.display = "block";
+            } else {
+                // Ẩn cụm chấm điểm, hiển thị trạng thái và nút Chấm lại
+                actionBox.style.display = "none";
+                reEvalPanel.style.display = "flex";
+                shortcutTip.style.display = "none";
+
+                if (store.status === "Đạt") {
+                    reEvalLabel.innerHTML = `Trạng thái: <span class="badge-approved">Đạt</span>`;
+                } else {
+                    reEvalLabel.innerHTML = `Trạng thái: <span class="badge-rejected">Không đạt</span><br><span style="font-size:10px; color:#c0392b; font-style:italic;">Lý do: ${store.rejectReason}</span>`;
+                }
+            }
+        }
+
+        // KÍCH HOẠT CHẾ ĐỘ CHẤM LẠI
+        function enableReEvaluation() {
+            const store = storesData[currentStoreIndex];
+
+            // Cập nhật lại số liệu thống kê chung
+            if (store.status === "Đạt") {
+                progressStats.done -= 1;
+            } else if (store.status === "Không đạt") {
+                progressStats.fail -= 1;
+            }
+            progressStats.remain += 1;
+            updateStatsBar();
+
+            // Set lại trạng thái chưa chấm trong bộ dữ liệu
+            store.status = "Chưa chấm";
+            store.rejectReason = "";
+
+            // Đồng bộ hiển thị
+            syncEvaluationPanelState();
+        }
+
+        function backToListView() {
+            isDetailMode = false;
+            document.getElementById("detailView").style.display = "none";
+            document.getElementById("listView").style.display = "block";
+            renderTable();
+        }
+
+        function toggleRejectPanel() {
+            const panel = document.getElementById("detailRejectPanel");
+            panel.classList.toggle("active");
+        }
+
+        function handleRejectSelectChange() {
+            const select = document.getElementById("detailRejectSelect");
+            const txt = document.getElementById("detailTxtReason");
+            if (select.value === "Khác") {
+                txt.style.display = "block";
+            } else {
+                txt.style.display = "none";
+                txt.value = "";
+            }
+            validateRejectSaveBtn();
+        }
+
+        // XEM HÌNH FULL MÀN HÌNH
+        function viewFullscreenImage(imgUrl) {
+            document.getElementById("fullscreenImg").src = imgUrl;
+            document.getElementById("fullscreenOverlay").style.display = "flex";
+        }
+        function closeFullscreenImage() {
+            document.getElementById("fullscreenOverlay").style.display = "none";
+        }
+
+        function validateRejectSaveBtn() {
+            const select = document.getElementById("detailRejectSelect");
+            const txt = document.getElementById("detailTxtReason");
+            const btn = document.getElementById("btnSaveRejectConfirm");
+
+            if (select.value === "") {
+                btn.disabled = true;
+            } else if (select.value === "Khác") {
+                btn.disabled = (txt.value.trim().length === 0);
+            } else {
+                btn.disabled = false;
+            }
+        }
+
+        function triggerApproveConfirm() {
+            const store = storesData[currentStoreIndex];
+            if (store.status !== "Chưa chấm") return;
+
+            document.getElementById("confirmOverlay").style.display = "flex";
+            isConfirmOpen = true;
+        }
+
+        function closeConfirmOverlay() {
+            document.getElementById("confirmOverlay").style.display = "none";
+            isConfirmOpen = false;
+        }
+
+        function confirmApprove() {
+            closeConfirmOverlay();
+            submitEvaluation(true);
+        }
+
+        function submitEvaluation(isApproved) {
+            const store = storesData[currentStoreIndex];
+
+            if (isApproved) {
+                store.status = "Đạt";
+                store.rejectReason = "";
+                store.auditor = "Nguyễn Văn Admin";
+                progressStats.done += 1;
+                progressStats.remain -= 1;
+                showQuickToast("ĐÃ CHẤM ĐẠT!");
+                setTimeout(() => {
+                    moveToNextRecord();
+                }, 1000);
+            } else {
+                const select = document.getElementById("detailRejectSelect");
+                const txt = document.getElementById("detailTxtReason");
+                let reason = select.value;
+                if (reason === "Khác") {
+                    reason = txt.value.trim();
+                }
+                store.status = "Không đạt";
+                store.rejectReason = reason;
+                store.auditor = "Nguyễn Văn Admin";
+                progressStats.fail += 1;
+                progressStats.remain -= 1;
+                alert(`ĐÃ CHẤM KHÔNG ĐẠT!\nLý do: ${reason}`);
+                moveToNextRecord();
+            }
+        }
+
+        function showQuickToast(message) {
+            const toast = document.getElementById("quickToast");
+            toast.querySelector("span").innerText = message + " ĐANG CHUYỂN TIẾP...";
+            toast.style.display = "block";
+            setTimeout(() => {
+                toast.style.display = "none";
+            }, 1000);
+        }
+
+        function moveToNextRecord() {
+            let nextIndex = -1;
+            for (let i = currentStoreIndex + 1; i < storesData.length; i++) {
+                if (storesData[i].status === "Chưa chấm") {
+                    nextIndex = i;
+                    break;
+                }
+            }
+            if (nextIndex === -1) {
+                for (let i = 0; i < currentStoreIndex; i++) {
+                    if (storesData[i].status === "Chưa chấm") {
+                        nextIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (nextIndex !== -1) {
+                goToDetail(nextIndex);
+            } else {
+                alert("Hoàn thành! Tất cả các điểm bán trong danh sách đã được chấm duyệt.");
+                backToListView();
+            }
+        }
+
+        window.addEventListener("keydown", function (event) {
+            if (!isDetailMode) return;
+
+            if (event.key === "Escape") {
+                if (document.getElementById("fullscreenOverlay").style.display === "flex") {
+                    closeFullscreenImage();
+                    event.preventDefault();
+                    return;
+                }
+                if (isConfirmOpen) {
+                    closeConfirmOverlay();
+                    event.preventDefault();
+                }
+                return;
+            }
+
+            if (event.key === "Enter") {
+                const activeEl = document.activeElement;
+                if (activeEl && (activeEl.id === "detailTxtReason" || activeEl.id === "detailRejectSelect")) {
+                    return;
+                }
+
+                const rejectPanel = document.getElementById("detailRejectPanel");
+                const saveRejectBtn = document.getElementById("btnSaveRejectConfirm");
+                if (rejectPanel.classList.contains("active") && !saveRejectBtn.disabled) {
+                    submitEvaluation(false);
+                    event.preventDefault();
+                    return;
+                }
+
+                const store = storesData[currentStoreIndex];
+                if (store.status === "Chưa chấm") {
+                    if (isConfirmOpen) {
+                        confirmApprove();
+                    } else {
+                        triggerApproveConfirm();
+                    }
+                    event.preventDefault();
+                }
+            }
+        });
+
+        // Xuất CSV
+        function exportReportToCSV() {
+            const data = [
+                ["Mã NV", "Tên NV", "Mã Tuyến", "Mã KH", "Tên Cửa Hàng", "Kênh KH", "Khu Vực", "Brand", "Số Tủ", "Trạng Thái", "Lý Do Không Đạt", "Thời Gian Chấm", "Người Chấm", "Link ảnh Check-in", "Link ảnh Barcode", "Link ảnh Trưng bày", "Link ảnh Check-out"],
+            ];
+
+            storesData.forEach(store => {
+                store.assets.forEach(asset => {
+                    let totalCabinets = "0";
+                    const match = asset.name.match(/\((\d+)\s*tủ\)/);
+                    if (match) {
+                        totalCabinets = match[1];
+                    }
+                    const brandName = asset.name.split(" ")[0];
+
+                    data.push([
+                        store.staffCode,
+                        store.staffName,
+                        store.route,
+                        store.customerCode,
+                        store.storeName,
+                        store.channel,
+                        store.region,
+                        brandName,
+                        totalCabinets,
+                        store.status,
+                        store.status === "Không đạt" ? store.rejectReason : "",
+                        store.time,
+                        store.auditor || "",
+                        `https://placehold.co/400x300/eeeeee/333333?text=Selfie+In+-+${store.customerCode}`,
+                        store.qrImages && store.qrImages.length > 0 ? store.qrImages[0].url : "",
+                        store.displayImages && store.displayImages.length > 0 ? store.displayImages[0] : "",
+                        "https://placehold.co/400x300/eeeeee/333333?text=Selfie+Out"
+                    ]);
+                });
+            });
+
+            let csvContent = "\uFEFF";
+            data.forEach(function (rowArray) {
+                let row = rowArray.map(item => `"${item}"`).join(",");
+                csvContent += row + "\r\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "Bao_Cao_Audit_Hinh_Anh_Final.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        window.onload = function () {
+            renderTable();
+        };
+    </script>
+</body>
+
+</html>
